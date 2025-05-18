@@ -1,0 +1,86 @@
+# This workflow builds and signs the iOS IPA file for your Flutter app
+# using your Apple Distribution Certificate and App Store Provisioning Profile
+# stored securely as GitHub Secrets.
+
+name: Build iOS IPA
+
+# Controls when the workflow will run
+on:
+  push:
+    branches:
+      - main # Trigger the workflow on pushes to the 'main' branch.
+      # You can add other branches here if needed, e.g., '- develop'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  build_ios:
+    # Specify the operating system for the runner
+    runs-on: macos-latest
+
+    steps:
+      # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Set up Flutter environment
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Specify the Flutter channel (stable, beta, or dev)
+          # flutter-version: '3.x.x' # Optional: Specify a specific Flutter version
+
+      # Get Flutter dependencies (packages)
+      - name: Get Flutter dependencies
+        run: flutter pub get
+
+      # Install iOS native dependencies (CocoaPods)
+      # This step is necessary if your Flutter project uses packages with native iOS code.
+      - name: Install iOS dependencies (CocoaPods)
+        run: |
+          cd ios # Navigate into the iOS directory
+          pod install # Install CocoaPods dependencies
+        # Ensure you have a Podfile in your ios/ directory.
+        # If 'pod install' fails, check your Podfile and package dependencies.
+
+      # Install the Apple Provisioning Profile from GitHub Secret
+      # This action decodes the Base64 profile and installs it on the runner.
+      - name: Install Apple Provisioning Profile
+        uses: apple-actions/install-provisioning-profile@v1
+        with:
+          profile-base64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+
+      # Install the Apple Distribution Certificate (.p12) from GitHub Secrets
+      # This action decodes the Base64 certificate and installs it on the runner's keychain.
+      - name: Install Apple Certificate
+        uses: apple-actions/install-certificate@v1
+        with:
+          certificate-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      # Build the iOS IPA file for release
+      # This command uses the installed certificate and profile for signing.
+      - name: Build iOS IPA
+        run: |
+          # Ensure you have the correct Bundle ID set in your Xcode project,
+          # or override it here if necessary (less common for release builds).
+          # The installed provisioning profile must match the Bundle ID.
+          flutter build ipa --release \
+            --build-number=${{ github.run_number }} \
+            --build-name=1.0.${{ github.run_number }} \
+            # The bundle-id flag can override the one in Xcode, but it's usually
+            # best to ensure they match and let the profile handle it.
+            # --bundle-id=${{ secrets.APP_BUNDLE_ID }} \
+            # --team-id=${{ secrets.APPLE_TEAM_ID }} # Optional: Specify team ID
+
+          # Note: If you use Flutter flavors, you might need to add --flavor=<flavor_name>
+
+      # Upload the generated IPA file as a build artifact
+      # You can download this artifact from the GitHub Actions run summary page.
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-${{ github.run_number }} # Name of the artifact
+          path: build/ios/ipa/*.ipa # Path to the generated IPA file
+          # The default output path for flutter build ipa is build/ios/ipa/
