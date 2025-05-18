@@ -54,12 +54,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyBU7wEfndYUbBD9jIsXW-ZCW_dcpoJqyBY',
-    appId: '1:328734103172:ios:40b6bc2fd5bd7a65a894d1',
+    appId: '1:328734103172:ios:e739787c9c12acbca894d1',
     messagingSenderId: '328734103172',
     projectId: 'production-ab9c8',
     databaseURL: 'https://production-ab9c8-default-rtdb.firebaseio.com',
     storageBucket: 'production-ab9c8.appspot.com',
-    iosBundleId: 'com.example.kangarule',
+    iosBundleId: 'com.literalomicus.kangarule',
   );
 
 }

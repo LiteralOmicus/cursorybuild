@@ -1,4 +1,4 @@
-name: bangrulell
+name: Kangarule
 description: "A new Flutter project."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
@@ -71,7 +71,8 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^2.0.0
+  flutter_lints: ^4.0.0 # Use the latest version
+  flutter_native_splash: ^2.4.0 # Use the latest version
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -124,3 +125,24 @@ flutter_icons:
   image_path: "assets/pics/movetopics.jpg"
   min_sdk_android: 21
 
+flutter_native_splash:
+  # This package generates native code to add a splash screen.
+  # Customize the following settings:
+
+  color: "#ffffff" # Background color for the splash screen (hex code)
+  # OR
+  # background_image: "assets/background.png" # Use a background image
+
+  image: "assets/pics/isthis.png" # Path to your splash image (e.g., logo)
+
+  # Optional: Configure for dark mode
+  # color_dark: "#042a49"
+  # image_dark: "assets/splash_image_dark.png"
+
+  # Optional: Configure image gravity (how the image is aligned)
+  # image_mode: flutter_native_splash_image_mode.scaleCenter
+
+  # Optional: Configure for different platforms
+  # android: false
+  # ios: false
+  # web: false

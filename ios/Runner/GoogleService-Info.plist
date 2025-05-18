@@ -9,7 +9,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.kangarule</string>
+	<string>com.literalomicus.kangarule</string>
 	<key>PROJECT_ID</key>
 	<string>production-ab9c8</string>
 	<key>STORAGE_BUCKET</key>
@@ -25,7 +25,7 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:328734103172:ios:40b6bc2fd5bd7a65a894d1</string>
+	<string>1:328734103172:ios:e739787c9c12acbca894d1</string>
 	<key>DATABASE_URL</key>
 	<string>https://production-ab9c8-default-rtdb.firebaseio.com</string>
 </dict>
