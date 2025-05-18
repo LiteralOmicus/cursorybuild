@@ -1,3 +1,4 @@
+# This workflow builds and uploads an iOS app to TestFlight
 # using Apple signing credentials and App Store Connect API Key secrets.
 
 name: build-test
