@@ -44,6 +44,13 @@ jobs:
         # Ensure you have a Podfile in your ios/ directory.
         # If 'pod install' fails, check your Podfile and package dependencies.
 
+        # Install the Apple Provisioning Profile from GitHub Secret
+      # This action decodes the Base64 profile and installs it on the runner.
+      - name: Install Apple Provisioning Profile
+        uses: apple-actions/install-provisioning-profile@v4
+        with:
+          profile-base64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }}
+
       
 
       # Install the Apple Distribution Certificate (.p12) from GitHub Secrets
