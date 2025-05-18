@@ -1,19 +1,24 @@
-# This workflow builds and uplo
-# using Apple signing credentials and App St
+# using Apple signing credentials and App Store Connect API Key secrets.
 
 name: build-test
 
 # Controls when the workflow will run
 on:
+  # rebuild any PRs and main branch changes
+  pull_request:
   push:
     branches:
-      - main # Trigger the workflow on pushes to the 'master' branch.
+      - master # Trigger the workflow on pushes to the 'master' branch.
 
 jobs:
   build: # make sure build/ci work properly
     # Specify the operating system for the runner
     runs-on: macos-latest
     # timeout-minutes: 30 # Removed as requested
+
+    # Grant permissions for the github_token for this job
+    permissions:
+      contents: write # This grants write access to repository contents, including refs
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
@@ -28,13 +33,14 @@ jobs:
       # Downloads provisioning profiles from Apple using App Store Connect API Key
       - uses: Apple-Actions/download-provisioning-profiles@v1
         with:
-          bundle-id: com.literalomicus.kangarule # Replace with your app's Bundle ID
+          bundle-id: com.literalomicus.kangarule # Your app's Bundle ID
           profile-type: 'IOS_APP_STORE' # Specify the profile type (e.g., IOS_APP_STORE, IOS_APP_DEVELOPMENT)
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
 
       # Generates a unique build number for the app
+      # This action requires write permissions to create/update a Git ref.
       - name: "#️⃣ Generate Build Number"
         id: buildnumber # Assigns an ID to this step
         uses: einaregilsson/build-number@v2
@@ -42,6 +48,7 @@ jobs:
           # The github_token is automatically provided by GitHub Actions
           # and is used by this action to interact with the GitHub API
           # to get information needed to generate the build number.
+          # The 'contents: write' permission is needed for this.
           token: ${{ secrets.github_token }}
 
       # Runs your custom build script
