@@ -48,7 +48,7 @@ jobs:
           # and is used by this action to interact with the GitHub API
           # to get information needed to generate the build number.
           # The 'contents: write' permission is needed for this.
-          token: ${{ secrets.github_token }}
+          token: ${{ secrets.G_TOKEN }}
 
       # Runs your custom build script
       - run: ./Build # Executes a script named 'Build' in your repository root
