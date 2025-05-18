@@ -1,5 +1,5 @@
 # This workflow builds and uplo
-# using Apple signing credentials and App Store Connect API Key secrets.
+# using Apple signing credentials and App St
 
 name: build-test
 
