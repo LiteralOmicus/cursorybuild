@@ -86,6 +86,34 @@ jobs:
           # Look for a file ending in .mobileprovision that matches your App Store profile.
         # This step helps confirm if the previous action downloaded and placed the profile correctly.
       # --- End Diagnostic Step ---
+      - name: Configure Keychain for Build
+  run: |
+    # List available identities in the *default* search path for debugging
+    echo "Listing identities in default search path:"
+    security find-identity -v -p codesigning || true # Use || true to prevent step failure if no identities found
+    
+    # Make signing_temp.keychain searchable by adding it to the user's search list
+    echo "Adding signing_temp.keychain to user search list:"
+    security list-keychains -d user -s signing_temp.keychain login.keychain
+    
+    # Set default keychain (sometimes needed, but list-keychains -s is often sufficient)
+    # echo "Setting signing_temp.keychain as default:"
+    # security default-keychain -d user -s signing_temp.keychain # Uncomment if needed
+    
+    # Unlock the keychain (required for CI to access private keys)
+    echo "Unlocking signing_temp.keychain:"
+    security unlock-keychain -p "" signing_temp.keychain # Use your actual KEYCHAIN_PASSWORD secret here if you set one when creating the keychain!
+    
+    # --- Added Diagnostic Command ---
+    # Verify the signing identity is present *specifically* in signing_temp.keychain
+    echo "Listing identities specifically in signing_temp.keychain:"
+    security find-identity -v -p codesigning signing_temp.keychain || true # Use || true to prevent step failure if no identities found
+    # --- End Added Diagnostic Command ---
+    
+    # Verify the certificate is accessible (optional, but good check)
+    # Replace "Apple Development" with the common name of your certificate if different
+    echo "Checking for 'Apple Development' certificate in signing_temp.keychain:"
+    security find-certificate -c "Apple Development" signing_temp.keychain || true
 
       # Generates a unique build number for the app
       # This action requires write permissions to create/update a Git ref.
