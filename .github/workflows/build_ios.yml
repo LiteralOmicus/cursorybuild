@@ -5,11 +5,9 @@ name: build-test
 
 # Controls when the workflow will run
 on:
-  # rebuild any PRs and main branch changes
-  pull_request:
   push:
     branches:
-      - master # Trigger the workflow on pushes to the 'master' branch.
+      - main # Trigger the workflow on pushes to the 'master' branch.
 
 jobs:
   build: # make sure build/ci work properly
