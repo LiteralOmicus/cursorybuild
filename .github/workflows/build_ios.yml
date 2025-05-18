@@ -60,4 +60,14 @@ jobs:
           token: ${{ secrets.github_token }}
 
       # Runs your custom build script
-      - run: ./Build # Executes a script named 'Build' in your repository root
+      - name: Build iOS IPA
+        run: |
+          # Ensure you have the correct Bundle ID set in your Xcode project.
+          # The installed provisioning profile must match the Bundle ID.
+          flutter build ipa --release \
+            --build-number=${{ steps.buildnumber.outputs.build_number }} \
+            --build-name=1.0.${{ github.run_number }} \
+            # The bundle-id flag can override the one in Xcode, but it's usually
+            # best to ensure they match and let the profile handle it.
+            # --bundle-id=com.literalomicus.kangarule \ # Uncomment and use if needed
+            # --team-id=${{ secrets.APPLE_TEAM_ID }} # Optional: Specify team ID if needed by your setup
