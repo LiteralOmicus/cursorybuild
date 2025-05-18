@@ -32,6 +32,24 @@ jobs:
       # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
       - uses: actions/checkout@v2
 
+      # Set up Flutter SDK
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Specify the Flutter channel
+
+      # --- Diagnostic Step ---
+      # Check if flutter command is available and show the PATH
+      - name: Check Flutter setup
+        run: |
+          echo "Checking flutter command availability:"
+          which flutter || echo "flutter command not found after setup."
+          echo "Current PATH:"
+          echo $PATH
+        # This step will help determine if the previous setup action worked.
+      # --- End Diagnostic Step ---
+
+
       # Imports Apple signing certificates from GitHub Secrets
       - uses: Apple-Actions/import-codesign-certs@v1
         with:
