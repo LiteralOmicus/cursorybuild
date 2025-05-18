@@ -1,92 +1,50 @@
-# This workflow builds and signs the iOS IPA file for your Flutter app.
-# It installs the Apple Distribution Certificate from a Base64 secret
-# and downloads the App Store Provisioning Profile using an App Store Connect API Key.
+# This workflow builds and uploads an iOS app to TestFlight
+# using Apple signing credentials and App Store Connect API Key secrets.
 
-name: Build iOS IPA
+name: build-test
 
 # Controls when the workflow will run
 on:
+  # rebuild any PRs and main branch changes
+  pull_request:
   push:
     branches:
-      - main # Trigger the workflow on pushes to the 'main' branch.
-      # You can add other branches here if needed, e.g., '- develop'
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
+      - master # Trigger the workflow on pushes to the 'master' branch.
 
 jobs:
-  build_ios:
+  build: # make sure build/ci work properly
     # Specify the operating system for the runner
     runs-on: macos-latest
+    # timeout-minutes: 30 # Removed as requested
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v2
 
-      # Set up Flutter environment
-      - name: Set up Flutter
-        uses: subosito/flutter-action@v2
+      # Imports Apple signing certificates from GitHub Secrets
+      - uses: Apple-Actions/import-codesign-certs@v1
         with:
-          channel: 'stable' # Specify the Flutter channel (stable, beta, or dev)
-          # flutter-version: '3.x.x' # Optional: Specify a specific Flutter version
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Base64 content of your .p12 certificate
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
 
-      # Get Flutter dependencies (packages)
-      - name: Get Flutter dependencies
-        run: flutter pub get
-
-      # Install iOS native dependencies (CocoaPods)
-      # This step is necessary if your Flutter project uses packages with native iOS code.
-      - name: Install iOS dependencies (CocoaPods)
-        run: |
-          cd ios # Navigate into the iOS directory
-          pod install # Install CocoaPods dependencies
-        # Ensure you have a Podfile in your ios/ directory.
-        # If 'pod install' fails, check your Podfile and package dependencies.
-
-      # Download and install the App Store Provisioning Profile using App Store Connect API Key
-      # This action uses the API Key to fetch the profile directly from Apple.
-      - name: Download Provisioning Profiles
-        uses: apple-actions/download-provisioning-profiles@v4
+      # Downloads provisioning profiles from Apple using App Store Connect API Key
+      - uses: Apple-Actions/download-provisioning-profiles@v1
         with:
-          # Use secrets. for API Key credentials
-          bundle-id: 'com.literalomicus.kangarule' # Your app's Bundle ID
-          profile-type: 'IOS_APP_STORE' # Specify the profile type needed for TestFlight/App Store
+          bundle-id: codes.orj.Example-iOS # Replace with your app's Bundle ID
+          profile-type: 'IOS_APP_STORE' # Specify the profile type (e.g., IOS_APP_STORE, IOS_APP_DEVELOPMENT)
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
 
-      # Install the Apple Distribution Certificate (.p12) from GitHub Secrets
-      # This action decodes the Base64 certificate and installs it on the runner's keychain.
-      # This step is still needed as the API Key is for profiles, not certificates.
-      - name: Install Apple Certificate
-        uses: apple-actions/install-certificate@v1
+      # Generates a unique build number for the app
+      - name: "#️⃣ Generate Build Number"
+        id: buildnumber # Assigns an ID to this step
+        uses: einaregilsson/build-number@v2
         with:
-          certificate-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          certificate-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          # The github_token is automatically provided by GitHub Actions
+          # and is used by this action to interact with the GitHub API
+          # to get information needed to generate the build number.
+          token: ${{ secrets.github_token }}
 
-      # Build the iOS IPA file for release
-      # This command uses the installed certificate and profile for signing.
-      - name: Build iOS IPA
-        run: |
-          # Ensure you have the correct Bundle ID set in your Xcode project.
-          # The downloaded provisioning profile will match this Bundle ID.
-          flutter build ipa --release \
-            --build-number=${{ github.run_number }} \
-            --build-name=1.0.${{ github.run_number }} \
-            # The bundle-id flag can override the one in Xcode, but it's usually
-            # best to ensure they match and let the profile handle it.
-            # --bundle-id=${{ secrets.APP_BUNDLE_ID }} \
-            # --team-id=${{ secrets.APPLE_TEAM_ID }} # Optional: Specify team ID if needed by your setup
-
-          # Note: If you use Flutter flavors, you might need to add --flavor=<flavor_name>
-
-      # Upload the generated IPA file as a build artifact
-      # You can download this artifact from the GitHub Actions run summary page.
-      - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ios-build-${{ github.run_number }} # Name of the artifact
-          path: build/ios/ipa/*.ipa # Path to the generated IPA file
-          # The default output path for flutter build ipa is build/ios/ipa/
-
+      # Runs your custom build script
+      - run: ./Build # Executes a script named 'Build' in your repository root
