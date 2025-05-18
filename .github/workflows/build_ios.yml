@@ -56,6 +56,17 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Base64 content of your .p12 certificate
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
 
+      # --- Diagnostic Step ---
+      # Check if the certificate was installed in the keychain
+      - name: Verify Certificate Installation
+        run: |
+          echo "Checking keychains for installed identities:"
+          security find-identity -p codesigning -v
+          # This command lists valid code signing identities found in accessible keychains.
+          # Look for your "Apple Distribution: Your Name (Team ID)" identity here.
+        # This step helps confirm if the previous action successfully imported the certificate.
+      # --- End Diagnostic Step ---
+
       # Downloads provisioning profiles from Apple using App Store Connect API Key
       - uses: Apple-Actions/download-provisioning-profiles@v1
         with:
@@ -63,10 +74,21 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Specify the profile type (e.g., IOS_APP_STORE, IOS_APP_DEVELOPMENT)
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
-          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
+
+      # --- Diagnostic Step ---
+      # Check if the provisioning profile was downloaded to the correct directory
+      - name: Verify Provisioning Profile Download
+        run: |
+          echo "Checking provisioning profile directory:"
+          ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/
+          # This command lists the contents of the standard provisioning profiles directory.
+          # Look for a file ending in .mobileprovision that matches your App Store profile.
+        # This step helps confirm if the previous action downloaded and placed the profile correctly.
+      # --- End Diagnostic Step ---
 
       # Generates a unique build number for the app
-      # This action uses a deprecated command, requiring ACTIONS_ALLOW_UNSECURE_COMMANDS.
+      # This action requires write permissions to create/update a Git ref.
       - name: "#️⃣ Generate Build Number"
         id: buildnumber # Assigns an ID to this step
         uses: einaregilsson/build-number@v2
@@ -77,7 +99,7 @@ jobs:
           # The 'contents: write' permission is needed for this.
           token: ${{ secrets.github_token }}
 
-      # Runs your custom build script
+      # Run the Flutter build command to create the iOS IPA
       - name: Build iOS IPA
         run: |
           # Ensure you have the correct Bundle ID set in your Xcode project.
@@ -89,3 +111,14 @@ jobs:
             # best to ensure they match and let the profile handle it.
             # --bundle-id=com.literalomicus.kangarule \ # Uncomment and use if needed
             # --team-id=${{ secrets.APPLE_TEAM_ID }} # Optional: Specify team ID if needed by your setup
+
+          # Note: If you use Flutter flavors, you might need to add --flavor=<flavor_name>
+
+      # Uploads the generated IPA file to App Store Connect for TestFlight
+      - uses: Apple-Actions/upload-testflight-build@master # Using the 'master' branch of the action
+        with:
+          # The default output path for flutter build ipa is build/ios/ipa/
+          app-path: build/ios/ipa/*.ipa # Path to the built IPA file
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
