@@ -7,7 +7,7 @@ name: build-test
 on:
   push:
     branches:
-      - master # Trigger the workflow on pushes to the 'master' branch.
+      - main # Trigger the workflow on pushes to the 'master' branch.
 
 jobs:
   build: # make sure build/ci work properly
