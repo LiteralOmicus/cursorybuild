@@ -23,7 +23,7 @@ jobs:
       - uses: Apple-Actions/import-codesign-certs@v1
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Base64 content of your .p12 certificate
-          p12-password: combat22 #${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
 
       # Downloads provisioning profiles from Apple using App Store Connect API Key
       - uses: Apple-Actions/download-provisioning-profiles@v1
