@@ -5,6 +5,7 @@ name: build-test
 
 # Controls when the workflow will run
 on:
+  # rebuild any PRs and main branch changes
   push:
     branches:
       - main # Trigger the workflow on pushes to the 'master' branch.
@@ -18,6 +19,14 @@ jobs:
     # Grant permissions for the github_token for this job
     permissions:
       contents: write # This grants write access to repository contents, including refs
+
+    # Set environment variables for the job
+    env:
+      # WARNING: This allows the use of deprecated and potentially insecure commands
+      # like ::set-env and ::add-path. Only use this if necessary and understand
+      # the security implications. It's recommended to update actions to use
+      # environment files instead.
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
@@ -39,7 +48,7 @@ jobs:
           api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
 
       # Generates a unique build number for the app
-      # This action requires write permissions to create/update a Git ref.
+      # This action uses a deprecated command, requiring ACTIONS_ALLOW_UNSECURE_COMMANDS.
       - name: "#️⃣ Generate Build Number"
         id: buildnumber # Assigns an ID to this step
         uses: einaregilsson/build-number@v2
@@ -48,7 +57,7 @@ jobs:
           # and is used by this action to interact with the GitHub API
           # to get information needed to generate the build number.
           # The 'contents: write' permission is needed for this.
-          token: ${{ secrets.G_TOKEN }}
+          token: ${{ secrets.github_token }}
 
       # Runs your custom build script
       - run: ./Build # Executes a script named 'Build' in your repository root
