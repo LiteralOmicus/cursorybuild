@@ -21,7 +21,7 @@ jobs:
     permissions:
       contents: write # This grants write access to repository contents, including refs
 
-    # Set environment variables for the job
+    # Set environment variables that can be defined directly
     env:
       # WARNING: This allows the use of deprecated and potentially insecure commands
       # like ::set-env and ::add-path. Only use this if necessary and understand
@@ -30,10 +30,9 @@ jobs:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       # Make the private key available as an environment variable for xcodebuild authentication
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
-      # Define the temporary keychain path created by Apple-Actions
+      # Define the temporary keychain name created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db"
-      # Corrected: Use $RUNNER_USER_HOME environment variable to get the runner's home directory
-      KEYCHAIN_PATH: "$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}" # Corrected Line ~35
+      # KEYCHAIN_PATH cannot be defined here referencing KEYCHAIN_NAME using ${{ env... }}
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -50,6 +49,20 @@ jobs:
       - name: Flutter Pub Get
         run: flutter pub get
 
+      # --- New Step to Calculate and Export Keychain Path ---
+      # Calculate the full path to the temporary keychain and export it as an environment variable.
+      # This needs to be done in a run step because we need to use the $RUNNER_USER_HOME env var
+      # and reference the KEYCHAIN_NAME env var set in the job env block.
+      - name: Set Keychain Path Environment Variable
+        run: |
+          # Construct the full path using RUNNER_USER_HOME and the defined KEYCHAIN_NAME
+          # $RUNNER_USER_HOME is automatically set by GitHub Actions for the runner's user's home directory.
+          FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}"
+          echo "Calculated Keychain Path: $FULL_KEYCHAIN_PATH"
+          # Export the full path as an environment variable using the GITHUB_ENV file
+          # This makes the KEYCHAIN_PATH variable available to all subsequent steps in this job.
+          echo "KEYCHAIN_PATH=$FULL_KEYCHAIN_PATH" >> $GITHUB_ENV
+
       # Imports Apple signing certificates from GitHub Secrets
       - name: Import Code Signing Certificate
         uses: Apple-Actions/import-codesign-certs@v2 # Use v2
@@ -58,15 +71,16 @@ jobs:
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
           keychain: ${{ env.KEYCHAIN_NAME }} # Use the defined keychain name
           create-keychain: true # Explicitly create the keychain
-          # The action should make this keychain searchable, but we can add diagnostic checks
+          # The action should make this keychain searchable, but we add diagnostics and explicit path use
 
       # --- Diagnostic Step ---
       # Verify the signing identity is present specifically in the created keychain file
+      # This step now uses the KEYCHAIN_PATH environment variable set in the previous step.
       - name: Verify Identity in Specific Keychain
         run: |
           echo "Listing identities specifically in ${{ env.KEYCHAIN_NAME }} at ${{ env.KEYCHAIN_PATH }}:"
           # This command is the most direct check to see if the certificate is usable in the keychain file.
-          # It explicitly targets the temporary keychain file path.
+          # It explicitly targets the temporary keychain file path using the environment variable.
           # Use || true to prevent step failure if no identities found yet, allowing workflow to continue for more logs
           security find-identity -v -p codesigning "${{ env.KEYCHAIN_PATH }}" || true
 
@@ -89,6 +103,7 @@ jobs:
 
       # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
       # This is needed for the CODE_SIGN_IDENTITY argument in xcodebuild archive
+      # This step now uses the KEYCHAIN_PATH environment variable set earlier.
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -96,7 +111,7 @@ jobs:
 
           # Find the exact name of the Distribution identity in the keychain
           # Adjust the grep pattern "Apple Distribution:" if your certificate type is different (e.g., "Apple Development:")
-          # This specifically searches the temporary keychain created earlier.
+          # This specifically searches the temporary keychain created earlier using the environment variable.
           IDENTITY_NAME=$(security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
 
           if [ -z "$IDENTITY_NAME" ]; then
@@ -124,6 +139,7 @@ jobs:
           token: ${{ secrets.github_token }}
 
       # --- Use xcodebuild archive instead of flutter build ipa ---
+      # This step now uses the KEYCHAIN_PATH and CODE_SIGN_IDENTITY_NAME environment variables.
       - name: Build and Archive iOS App
         run: |
           # Define paths and settings
@@ -139,7 +155,7 @@ jobs:
           echo "Profile Specifier: literalomicus" # Assuming 'literalomicus' is the name of your App Store profile
 
           # Execute the xcodebuild archive command
-          # Explicitly specify the keychain, signing identity, and team ID.
+          # Explicitly specify the keychain, signing identity, and team ID using environment variables.
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -155,13 +171,14 @@ jobs:
             -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
             -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
             -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
-            # Explicitly specify the temporary keychain created by Apple-Actions
+            # Explicitly specify the temporary keychain using the environment variable
             -keychain "${{ env.KEYCHAIN_PATH }}" \
             # Add verbose output to help debug signing issues
             -verbose
           echo "xcodebuild archive command finished."
 
       # --- Use xcodebuild -exportArchive to create the IPA ---
+      # This step now uses the KEYCHAIN_PATH environment variable.
       - name: Export IPA from Archive
         run: |
           # Define paths and settings
@@ -190,7 +207,7 @@ jobs:
             -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
             -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
             -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
-            # Explicitly specify the temporary keychain again
+            # Explicitly specify the temporary keychain using the environment variable
             -keychain "${{ env.KEYCHAIN_PATH }}" \
             # Add verbose output
             -verbose
@@ -210,11 +227,12 @@ jobs:
 
       # Important! Cleanup: remove the certificate and provisioning profile from the runner!
       # Use 'always()' to ensure this runs even if previous steps fail.
+      # This step now uses the KEYCHAIN_PATH environment variable.
       - name: Clean up keychain
         if: ${{ always() }}
         run: |
           echo "Cleaning up keychain: ${{ env.KEYCHAIN_PATH }}"
-          # Delete the temporary keychain file
+          # Delete the temporary keychain file using the environment variable
           security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true # Use || true in case it wasn't created or already deleted
           echo "Keychain cleanup attempted."
 
@@ -224,4 +242,3 @@ jobs:
           # echo "Cleaning up provisioning profiles..."
           # rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/* || true
           # echo "Provisioning profile cleanup attempted."
-
