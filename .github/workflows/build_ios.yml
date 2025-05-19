@@ -32,7 +32,7 @@ jobs:
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       # Define the temporary keychain name created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db"
-      # KEYCHAIN_PATH will be set in a separate run step
+      # KEYCHAIN_PATH will be set in a separate run step using $HOME
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -49,41 +49,40 @@ jobs:
       - name: Flutter Pub Get
         run: flutter pub get
 
-      # --- Enhanced Step to Calculate and Export Keychain Path ---
+      # --- Corrected Step to Calculate and Export Keychain Path ---
       # Calculate the full path to the temporary keychain and export it as an environment variable.
-      # This needs to be done in a run step because we need to use the $RUNNER_USER_HOME env var
-      # and reference the KEYCHAIN_NAME env var set in the job env block.
+      # Use the standard $HOME environment variable to get the runner's home directory.
       - name: Set Keychain Path Environment Variable
         run: |
           echo "Running Set Keychain Path Environment Variable step..."
-          echo "RUNNER_USER_HOME is: '$RUNNER_USER_HOME'"
-          echo "KEYCHAIN_NAME is: '${{ env.KEYCHAIN_NAME }}'"
+          echo "HOME is: '$HOME'" # Print the HOME variable
 
-          # Check if RUNNER_USER_HOME or KEYCHAIN_NAME are empty
-          if [ -z "$RUNNER_USER_HOME" ]; then
-            echo "Error: RUNNER_USER_HOME is not set or empty!"
-            exit 1
+          # Check if HOME is empty
+          if [ -z "$HOME" ]; then
+            echo "Error: \$HOME is not set or empty! Cannot calculate keychain path."
+            exit 1 # Fail the step if HOME is not available
           fi
+
+          # Construct the full path using $HOME and the defined KEYCHAIN_NAME
+          FULL_KEYCHAIN_PATH="$HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}"
+          echo "Calculated FULL_KEYCHAIN_PATH using \$HOME: '$FULL_KEYCHAIN_PATH'"
+
+          # Check if KEYCHAIN_NAME is empty (keep this check)
            if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
-            echo "Error: KEYCHAIN_NAME is not set or empty!"
+            echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
             exit 1
           fi
-
-          # Construct the full path using RUNNER_USER_HOME and the defined KEYCHAIN_NAME
-          FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}"
-          echo "Calculated FULL_KEYCHAIN_PATH: '$FULL_KEYCHAIN_PATH'"
 
           # Export the full path as an environment variable using the GITHUB_ENV file
           # This makes the KEYCHAIN_PATH variable available to all subsequent steps in this job.
-          echo "Setting KEYCHAIN_PATH environment variable..."
+          echo "Setting KEYCHAIN_PATH environment variable to: '$FULL_KEYCHAIN_PATH'"
           echo "KEYCHAIN_PATH=$FULL_KEYCHAIN_PATH" >> $GITHUB_ENV
 
           echo "Contents of GITHUB_ENV after adding KEYCHAIN_PATH:"
-          cat $GITHUB_ENV || echo "GITHUB_ENV file not found." # Show what was written to the file
+          cat $GITHUB_ENV || echo "GITHUB_ENV file not found or empty." # Show what was written to the file
 
           echo "Finished setting KEYCHAIN_PATH environment variable."
-          echo "Environment variables available to the next step might not immediately reflect changes made via \$GITHUB_ENV in the *current* step's shell."
-          echo "Next step will use the updated environment."
+          echo "Environment variables available to the next step will include KEYCHAIN_PATH."
 
 
       # Imports Apple signing certificates from GitHub Secrets
@@ -142,7 +141,7 @@ jobs:
 
           # Check if KEYCHAIN_PATH is empty before attempting to use it
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot search for identity. Exiting Get Code Signing Identity Name step."
+            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot search for identity. Exiting Get Code Signing Identity step."
             exit 1
           fi
 
@@ -152,7 +151,7 @@ jobs:
           IDENTITY_NAME=$(security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
 
           if [ -z "$IDENTITY_NAME" ]; then
-            echo "Error: Code signing identity not found in ${{ env.KEYCHAIN_PATH }}. Build cannot proceed. Exiting Get Code Signing Identity Name step."
+            echo "Error: Code signing identity not found in ${{ env.KEYCHAIN_PATH }}. Build cannot proceed. Exiting Get Code Signing Identity step."
             # Exit the step with a failure code if identity is not found
             exit 1
           else
