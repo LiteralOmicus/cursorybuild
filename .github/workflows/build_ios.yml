@@ -46,7 +46,7 @@ jobs:
 
       # Run flutter pub get to fetch dependencies
       - name: Flutter Pub Get
-        run: flutter pub get
+        run: flutter pub get --verbose
 
       # --- Step to Calculate and Export Keychain Path ---
       - name: Set Keychain Path Environment Variable
