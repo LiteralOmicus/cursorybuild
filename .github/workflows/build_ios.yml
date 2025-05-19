@@ -3,7 +3,7 @@
 # Corrected keychain path construction based on observed filename suffix.
 # Added step to show resolved build settings.
 # Corrected YAML syntax error.
-name: build-test-xcodebuild-show-settings-fix-yaml
+name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
 on:
@@ -221,10 +221,10 @@ jobs:
           xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release || true
 
           echo "Finished dumping resolved build settings."
-      # ---------------------------------------------------
+      # --------------------------------------------------- # End of Show Build Settings step block
 
       # --- Use xcodebuild archive instead of flutter build ipa ---
-      # This step now uses the CORRECTED KEYCHAIN_PATH and CODE_SIGN_IDENTITY_NAME environment variables.
+      # This step uses the imported certificate, downloaded profile, and resolved settings.
       - name: Build and Archive iOS App
         run: |
           echo "Running Build and Archive iOS App step..."
