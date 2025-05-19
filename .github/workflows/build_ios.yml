@@ -32,7 +32,8 @@ jobs:
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       # Define the temporary keychain path created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db"
-      KEYCHAIN_PATH: "${{ runner.user.directory }}/Library/Keychains/${{ env.KEYCHAIN_NAME }}" # Construct path using runner.user.directory
+      # Corrected: Use $RUNNER_USER_HOME environment variable to get the runner's home directory
+      KEYCHAIN_PATH: "$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}" # Corrected Line ~35
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
@@ -63,10 +64,11 @@ jobs:
       # Verify the signing identity is present specifically in the created keychain file
       - name: Verify Identity in Specific Keychain
         run: |
-          echo "Listing identities specifically in ${{ env.KEYCHAIN_NAME }}:"
+          echo "Listing identities specifically in ${{ env.KEYCHAIN_NAME }} at ${{ env.KEYCHAIN_PATH }}:"
           # This command is the most direct check to see if the certificate is usable in the keychain file.
           # It explicitly targets the temporary keychain file path.
-          security find-identity -v -p codesigning "${{ env.KEYCHAIN_PATH }}" || true # Use || true to prevent step failure if no identities found
+          # Use || true to prevent step failure if no identities found yet, allowing workflow to continue for more logs
+          security find-identity -v -p codesigning "${{ env.KEYCHAIN_PATH }}" || true
 
       # Downloads provisioning profiles from Apple using App Store Connect API Key
       - name: Download Provisioning Profiles
@@ -82,10 +84,8 @@ jobs:
       # Check if the provisioning profile was downloaded to the correct directory
       - name: Verify Provisioning Profile Download
         run: |
-          echo "Checking provisioning profile directory:"
-          ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/
-          # This command lists the contents of the standard provisioning profiles directory.
-          # Look for a file ending in .mobileprovision that matches your App Store profile.
+          echo "Checking provisioning profile directory: ~/Library/MobileDevice/Provisioning Profiles/"
+          ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/ || true # Use || true if directory is empty
 
       # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
       # This is needed for the CODE_SIGN_IDENTITY argument in xcodebuild archive
@@ -107,7 +107,8 @@ jobs:
             echo "Found signing identity name: '$IDENTITY_NAME'"
             # Export the identity name as an environment variable for subsequent steps
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
-            echo "::set-output name=identity_name::$IDENTITY_NAME" # Also set as step output for potential future use (deprecated)
+            # Use GITHUB_OUTPUT for setting step outputs (recommended over ::set-output)
+            echo "identity_name=$IDENTITY_NAME" >> $GITHUB_OUTPUT
           fi
 
       # Generates a unique build number for the app
@@ -127,7 +128,7 @@ jobs:
         run: |
           # Define paths and settings
           # Adjust to .xcodeproj if you don't have a workspace, or if your workspace name is different
-          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
+          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace" # Or ./ios/Runner.xcodeproj
           SCHEME_NAME="Runner" # Adjust if your scheme is named differently
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive" # Standard output location
 
