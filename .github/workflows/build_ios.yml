@@ -78,7 +78,7 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Specify the profile type (e.g., IOS_APP_STORE, IOS_APP_DEVELOPMENT)
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
+          api-private-key: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
 
       # --- Diagnostic Step ---
       # Check if the provisioning profile was downloaded to the correct directory
