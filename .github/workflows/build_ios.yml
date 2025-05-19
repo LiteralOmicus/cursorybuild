@@ -2,7 +2,8 @@
 # using direct xcodebuild commands for reliable code signing in CI.
 # Corrected keychain path construction based on observed filename suffix.
 # Added step to show resolved build settings.
-name: build-test-xcodebuild-show-settings
+# Corrected YAML syntax error.
+name: build-test-xcodebuild-show-settings-fix-yaml
 
 # Controls when the workflow will run
 on:
@@ -269,8 +270,7 @@ jobs:
             -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
             # Explicitly specify the temporary keychain using the CORRECTED environment variable
             -keychain "${{ env.KEYCHAIN_PATH }}" \
-            # Add verbose output to help debug signing issues
-            -verbose
+            -verbose # Add verbose output to help debug signing issues
           echo "xcodebuild archive command finished."
 
       # --- Use xcodebuild -exportArchive to create the IPA ---
@@ -338,8 +338,7 @@ jobs:
           # Delete the temporary keychain file using the CORRECTED environment variable
           security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true # Use || true in case it wasn't created or already deleted
           echo "Keychain cleanup attempted."
-          # Provisioning profiles in ~/Library/MobileDevice/Provisioning Profiles
-          # are often cleaned up by the runner or handled by the download action,
+          # Provisioning profiles in ~/Library/MobileDevice/Provisioning Profiles are often cleaned up by the runner or handled by the download action,
           # but you can explicitly remove them if needed. Use with caution.
           # echo "Cleaning up provisioning profiles..."
           # rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/* || true
