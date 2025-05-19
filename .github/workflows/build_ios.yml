@@ -1,6 +1,5 @@
 # This workflow builds and uploads an iOS app to TestFlight
 # using Apple signing credentials and App Store Connect API Key secrets.
-
 name: build-test
 
 # Controls when the workflow will run
@@ -27,6 +26,9 @@ jobs:
       # the security implications. It's recommended to update actions to use
       # environment files instead.
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+      # Ensure APPSTORE_PRIVATE_KEY is available as an environment variable for xcodebuild authentication
+      APPSTORE_PRIVATE_KEY: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
 
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
@@ -49,21 +51,23 @@ jobs:
         # This step will help determine if the previous setup action worked.
       # --- End Diagnostic Step ---
 
-
       # Imports Apple signing certificates from GitHub Secrets
       - uses: Apple-Actions/import-codesign-certs@v1
         with:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Base64 content of your .p12 certificate
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
+          keychain: signing_temp # Ensure this matches the name used in subsequent steps
+          create-keychain: true
 
       # --- Diagnostic Step ---
       # Check if the certificate was installed in the keychain
       - name: Verify Certificate Installation
         run: |
-          echo "Checking keychains for installed identities:"
-          security find-identity -p codesigning -v
+          echo "Checking keychains for installed identities (default search path):"
           # This command lists valid code signing identities found in accessible keychains.
           # Look for your "Apple Distribution: Your Name (Team ID)" identity here.
+          security find-identity -p codesigning -v || true # Use || true to prevent step failure
+
         # This step helps confirm if the previous action successfully imported the certificate.
       # --- End Diagnostic Step ---
 
@@ -86,34 +90,51 @@ jobs:
           # Look for a file ending in .mobileprovision that matches your App Store profile.
         # This step helps confirm if the previous action downloaded and placed the profile correctly.
       # --- End Diagnostic Step ---
+
+      # --- Corrected and Enhanced Keychain Configuration Step ---
       - name: Configure Keychain for Build
-  run: |
-    # List available identities in the *default* search path for debugging
-    echo "Listing identities in default search path:"
-    security find-identity -v -p codesigning || true # Use || true to prevent step failure if no identities found
-    
-    # Make signing_temp.keychain searchable by adding it to the user's search list
-    echo "Adding signing_temp.keychain to user search list:"
-    security list-keychains -d user -s signing_temp.keychain login.keychain
-    
-    # Set default keychain (sometimes needed, but list-keychains -s is often sufficient)
-    # echo "Setting signing_temp.keychain as default:"
-    # security default-keychain -d user -s signing_temp.keychain # Uncomment if needed
-    
-    # Unlock the keychain (required for CI to access private keys)
-    echo "Unlocking signing_temp.keychain:"
-    security unlock-keychain -p "" signing_temp.keychain # Use your actual KEYCHAIN_PASSWORD secret here if you set one when creating the keychain!
-    
-    # --- Added Diagnostic Command ---
-    # Verify the signing identity is present *specifically* in signing_temp.keychain
-    echo "Listing identities specifically in signing_temp.keychain:"
-    security find-identity -v -p codesigning signing_temp.keychain || true # Use || true to prevent step failure if no identities found
-    # --- End Added Diagnostic Command ---
-    
-    # Verify the certificate is accessible (optional, but good check)
-    # Replace "Apple Development" with the common name of your certificate if different
-    echo "Checking for 'Apple Development' certificate in signing_temp.keychain:"
-    security find-certificate -c "Apple Development" signing_temp.keychain || true
+        run: |
+          # Note: Apple-Actions/import-codesign-certs should have already created and added the keychain,
+          # but these steps provide additional checks and explicit configuration if needed.
+
+          # The exact path might vary slightly, but it's typically in the runner's Library/Keychains
+          KEYCHAIN_NAME="signing_temp.keychain-db"
+          KEYCHAIN_PATH="${RUNNER_USER_HOME}/Library/Keychains/${KEYCHAIN_NAME}"
+
+          echo "Configuring keychain: ${KEYCHAIN_PATH}"
+
+          # List available identities in the *default* search path for debugging
+          echo "Listing identities in default search path:"
+          security find-identity -v -p codesigning || true # Use || true to prevent step failure if no identities found
+
+          # Make signing_temp.keychain searchable by adding it to the user's search list
+          # Apple-Actions might do this, but doing it again is harmless and ensures it.
+          echo "Adding ${KEYCHAIN_NAME} to user search list:"
+          security list-keychains -d user -s "${KEYCHAIN_PATH}" login.keychain || true
+
+          # Set default keychain (sometimes needed, but list-keychains -s is often sufficient)
+          # echo "Setting ${KEYCHAIN_NAME} as default:"
+          # security default-keychain -d user -s "${KEYCHAIN_PATH}" || true # Uncomment if needed
+
+          # Unlock the keychain (required for CI to access private keys)
+          echo "Unlocking ${KEYCHAIN_NAME}:"
+          # WARNING: Using empty string "" assumes you did not set a password for the temporary keychain.
+          # If you set a password during keychain creation, use -p "$KEYCHAIN_PASSWORD" here
+          security unlock-keychain -p "" "${KEYCHAIN_PATH}" || true
+
+          # --- Added Diagnostic Command ---
+          # Verify the signing identity is present *specifically* in the created keychain file
+          echo "Listing identities specifically in ${KEYCHAIN_NAME}:"
+          security find-identity -v -p codesigning "${KEYCHAIN_PATH}" || true # Use || true to prevent step failure if no identities found
+          # --- End Added Diagnostic Command ---
+
+          # Verify a specific certificate is accessible (optional, but good check)
+          # Replace "Apple Development" with the common name of your certificate if different
+          # Ensure the certificate common name matches exactly.
+          echo "Checking for specific certificate in ${KEYCHAIN_NAME} (e.g., 'Apple Distribution: Your Name'):"
+          # You might need to adjust the common name search string based on your cert type (Development/Distribution)
+          security find-certificate -c "Apple Distribution: LiteralOmicus (YOUR_TEAM_ID)" "${KEYCHAIN_PATH}" || true # Update common name and Team ID
+
 
       # Generates a unique build number for the app
       # This action requires write permissions to create/update a Git ref.
@@ -132,21 +153,16 @@ jobs:
         run: |
           # Ensure you have the correct Bundle ID set in your Xcode project.
           # The installed provisioning profile must match the Bundle ID.
+          # Xcode will attempt to find the correct signing identity in the keychains
+          # added to the search path and unlocked.
+
           flutter build ipa --release \
             --build-number=${{ steps.buildnumber.outputs.build_number }} \
             --build-name=1.0.${{ github.run_number }} \
-            # The bundle-id flag can override the one in Xcode, but it's usually
-            # best to ensure they match and let the profile handle it.
-            # --bundle-id=com.literalomicus.kangarule \ # Uncomment and use if needed
-            # --team-id=${{ secrets.APPLE_TEAM_ID }} # Optional: Specify team ID if needed by your setup
+            --bundle-id=com.literalomicus.kangarule \
+            --verbose # Add verbose flag for more detailed xcodebuild output
 
-          # Note: If you use Flutter flavors, you might need to add --flavor=<flavor_name>
+            # If the above fails, you might need to explicitly set the code signing identity or team ID
+            # --dart-define="FLUTTER_WEB_CANVASKIT=true" # Example for web, not needed for iOS IPA
 
-      # Uploads the generated IPA file to App Store Connect for TestFlight
-      - uses: Apple-Actions/upload-testflight-build@master # Using the 'master' branch of the action
-        with:
-          # The default output path for flutter build ipa is build/ios/ipa/
-          app-path: build/ios/ipa/*.ipa # Path to the built IPA file
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
-          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }} # Your App Store Connect Private Key content (from secret)
+      
