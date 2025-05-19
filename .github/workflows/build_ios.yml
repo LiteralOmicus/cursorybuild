@@ -1,6 +1,7 @@
 # This workflow builds and uploads an iOS app to TestFlight
-# using direct xcodebuild commands. Removed authentication flags from archive step.
-name: build-test-xcodebuild-fix-auth-flags
+# Attempting build using Xcode's Automatic Signing with manually imported assets.
+# NOTE: This approach is less reliable than configuring the project for Manual Signing.
+name: build-test-xcodebuild-auto-signing-attempt
 
 # Controls when the workflow will run
 on:
@@ -147,6 +148,7 @@ jobs:
           ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/ || true
 
       # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
+      # This step is still needed for the ExportOptions.plist/export step
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -164,6 +166,8 @@ jobs:
 
           if [ -z "$IDENTITY_NAME" ]; then
             echo "Error: Code signing identity not found in ${{ env.KEYCHAIN_PATH }} (using grep 'Apple Distribution:'). Build cannot proceed. Exiting Get Code Signing Identity step."
+            # Note: This step will now cause the workflow to fail if the identity isn't found,
+            # which is still important even if archive relies on automatic.
             exit 1
           else
             echo "Found signing identity name: '$IDENTITY_NAME'"
@@ -174,6 +178,7 @@ jobs:
 
       # --- Diagnostic Step ---
       # Verify that the APPLE_TEAM_ID secret is available and not empty
+      # This step is still useful even if the archive step relies on automatic signing
       - name: Verify APPLE_TEAM_ID Secret
         run: |
           echo "Running Verify APPLE_TEAM_ID Secret step..."
@@ -192,57 +197,47 @@ jobs:
           token: ${{ secrets.github_token }}
 
       # --- Use xcodebuild archive instead of flutter build ipa ---
-      # Removed authentication flags from this step.
-      - name: Build and Archive iOS App
+      # Attempting build using Xcode's Automatic Signing configuration.
+      # Removed manual signing overrides.
+      - name: Build and Archive iOS App (Automatic Signing Attempt)
         run: |
-          echo "Running Build and Archive iOS App step..."
+          echo "Running Build and Archive iOS App step (Automatic Signing Attempt)..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace" # Or ./ios/Runner.xcodeproj
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
 
-          echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
-          echo "Signing Identity Name: ${{ env.CODE_SIGN_IDENTITY_NAME }}"
-          echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
-          echo "Profile Specifier: literalomicus"
+          echo "Keychain path: ${{ env.KEYCHAIN_PATH }}" # Still useful info
+          echo "Signing Identity Name (Manual Override - NOT USED IN THIS STEP): ${{ env.CODE_SIGN_IDENTITY_NAME }}" # Indicate not used
+          echo "Team ID (Manual Override - NOT USED IN THIS STEP): ${{ secrets.APPLE_TEAM_ID }}" # Indicate not used
+          echo "Profile Specifier (Manual Override - NOT USED IN THIS STEP): literalomicus" # Indicate not used
 
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
             exit 1
           fi
-           if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
-            echo "Error: CODE_SIGN_IDENTITY_NAME environment variable is empty. Cannot proceed with build."
-            exit 1
-          fi
-            if [ -z "${{ secrets.APPLE_TEAM_ID }}" ]; then
-            echo "Error: APPLE_TEAM_ID secret is empty. Cannot proceed with build."
-            exit 1
-          fi
+          # Removed checks for CODE_SIGN_IDENTITY_NAME and APPLE_TEAM_ID as they are not used by this command
 
-
-          echo "Building and archiving using xcodebuild command..."
+          echo "Building and archiving using xcodebuild command (relying on project's Automatic Signing)..."
           # Execute the xcodebuild archive command
-          # Explicitly specify the keychain, signing identity, and team ID.
-          # Removed -allowProvisioningUpdates and -authentication flags from here.
+          # Relying on the project's Automatic Signing settings to find the certificate and profile
+          # from the standard search path and downloaded location.
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
             -configuration Release \
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-            PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
-            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-            CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            -verbose
+            -verbose # Keep verbose output
           echo "xcodebuild archive command finished."
 
       # --- Use xcodebuild -exportArchive to create the IPA ---
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
+      # This step still needs explicit signing details via ExportOptions.plist and -keychain.
       - name: Export IPA from Archive
         run: |
           echo "Running Export IPA from Archive step..."
           ARCHIVE_INPUT_PATH="build/Runner.xcarchive"
           IPA_OUTPUT_DIR="build/ios/ipa"
-          EXPORT_OPTIONS_PLIST_PATH="./ios/ExportOptions.plist"
+          EXPORT_OPTIONS_PLIST_PATH="./ios/ExportOptions.plist" # This plist needs to be configured for Manual Signing details
 
           echo "Archive path: ${ARCHIVE_INPUT_PATH}"
           echo "Export path: ${IPA_OUTPUT_DIR}"
@@ -262,8 +257,6 @@ jobs:
           echo "Exporting IPA from archive using xcodebuild command..."
           mkdir -p "${IPA_OUTPUT_DIR}"
 
-          # Execute the xcodebuild -exportArchive command
-          # Include authentication details for interaction with App Store Connect.
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
             -exportPath "${IPA_OUTPUT_DIR}" \
