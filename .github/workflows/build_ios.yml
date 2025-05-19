@@ -159,7 +159,6 @@ jobs:
           flutter build ipa --release \
             --build-number=${{ steps.buildnumber.outputs.build_number }} \
             --build-name=1.0.${{ github.run_number }} \
-            --bundle-id=com.literalomicus.kangarule \
             --verbose # Add verbose flag for more detailed xcodebuild output
 
             # If the above fails, you might need to explicitly set the code signing identity or team ID
