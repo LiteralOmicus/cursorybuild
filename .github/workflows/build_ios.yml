@@ -103,7 +103,7 @@ jobs:
           create-keychain: true # Explicitly create the keychain
           # Set keychain default partition for headless environments (important!)
           keychain-password: "" # Use empty password if creating with no password
-          default-partition: apple-tool:,apple:
+          default-partition: "apple-tool:,apple:"
 
       # --- Enhanced Post-Import Verification ---
       # Verify the certificate import and keychain state immediately after the import action.
