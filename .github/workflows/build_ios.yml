@@ -1,7 +1,6 @@
 # This workflow builds and uploads an iOS app to TestFlight
-# using direct xcodebuild commands for reliable code signing in CI.
-# Added diagnostic step for APPLE_TEAM_ID secret.
-name: build-test-xcodebuild-verify-team-id
+# using direct xcodebuild commands. Removed authentication flags from archive step.
+name: build-test-xcodebuild-fix-auth-flags
 
 # Controls when the workflow will run
 on:
@@ -148,7 +147,6 @@ jobs:
           ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/ || true
 
       # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable set earlier.
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -162,9 +160,6 @@ jobs:
             exit 1
           fi
 
-          # Find the exact name of the Distribution identity in the keychain
-          # Adjust the grep pattern "Apple Distribution:" if your certificate type is different.
-          # This specifically searches the temporary keychain created earlier using the CORRECTED KEYCHAIN_PATH.
           IDENTITY_NAME=$(security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
 
           if [ -z "$IDENTITY_NAME" ]; then
@@ -182,14 +177,12 @@ jobs:
       - name: Verify APPLE_TEAM_ID Secret
         run: |
           echo "Running Verify APPLE_TEAM_ID Secret step..."
-          # Print the first few characters to avoid exposing the full secret in logs
           echo "Value of APPLE_TEAM_ID secret (first few chars): '${{ secrets.APPLE_TEAM_ID }}'..."
           if [ -z "${{ secrets.APPLE_TEAM_ID }}" ]; then
             echo "Error: APPLE_TEAM_ID secret is empty! Cannot proceed with build."
             exit 1
           fi
           echo "APPLE_TEAM_ID secret appears to be set."
-      # --- End Diagnostic Step ---
 
       # Generates a unique build number for the app
       - name: "#️⃣ Generate Build Number"
@@ -199,6 +192,7 @@ jobs:
           token: ${{ secrets.github_token }}
 
       # --- Use xcodebuild archive instead of flutter build ipa ---
+      # Removed authentication flags from this step.
       - name: Build and Archive iOS App
         run: |
           echo "Running Build and Archive iOS App step..."
@@ -226,6 +220,9 @@ jobs:
 
 
           echo "Building and archiving using xcodebuild command..."
+          # Execute the xcodebuild archive command
+          # Explicitly specify the keychain, signing identity, and team ID.
+          # Removed -allowProvisioningUpdates and -authentication flags from here.
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -235,15 +232,12 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            -allowProvisioningUpdates \
-            -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
-            -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
-            -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
             -keychain "${{ env.KEYCHAIN_PATH }}" \
             -verbose
           echo "xcodebuild archive command finished."
 
       # --- Use xcodebuild -exportArchive to create the IPA ---
+      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
       - name: Export IPA from Archive
         run: |
           echo "Running Export IPA from Archive step..."
@@ -269,6 +263,8 @@ jobs:
           echo "Exporting IPA from archive using xcodebuild command..."
           mkdir -p "${IPA_OUTPUT_DIR}"
 
+          # Execute the xcodebuild -exportArchive command
+          # Include authentication details for interaction with App Store Connect.
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
             -exportPath "${IPA_OUTPUT_DIR}" \
