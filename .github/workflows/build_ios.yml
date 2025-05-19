@@ -1,7 +1,7 @@
 # This workflow builds and uploads an iOS app to TestFlight
-# using direct xcodebuild commands for reliable manual signing in CI.
+# Attempting to force manual signing behavior with additional overrides.
 # Assumes project is configured for Manual Signing in Runner.xcodeproj.
-name: build-test-xcodebuild-manual-signing-final
+name: build-test-xcodebuild-force-manual-signing
 
 # Controls when the workflow will run
 on:
@@ -202,18 +202,21 @@ jobs:
           ref: refs/tags/build_number
 
       # --- Use xcodebuild archive instead of flutter build ipa ---
-      # Performing manual signing using overrides as project is assumed to be Manual.
-      - name: Build and Archive iOS App (Manual Signing)
+      # Attempting to force manual signing behavior with additional overrides.
+      - name: Build and Archive iOS App (Force Manual Signing)
         run: |
-          echo "Running Build and Archive iOS App step (Manual Signing)..."
+          echo "Running Build and Archive iOS App step (Force Manual Signing)..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace" # Or ./ios/Runner.xcodeproj
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
 
           echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
-          echo "Signing Identity Name (Manual Override): ${{ env.CODE_SIGN_IDENTITY_NAME }}" # Indicate used
-          echo "Team ID (Manual Override): ${{ secrets.APPLE_TEAM_ID }}" # Indicate used
-          echo "Profile Specifier (Manual Override): literalomicus" # Indicate used
+          echo "Signing Identity Name (Manual Override): ${{ env.CODE_SIGN_IDENTITY_NAME }}"
+          echo "Team ID (Manual Override): ${{ secrets.APPLE_TEAM_ID }}"
+          echo "Profile Specifier (Manual Override): literalomicus"
+          echo "CODE_SIGNING_REQUIRED Override: YES" # Indicate added override
+          echo "CODE_SIGNING_ALLOWED Override: YES" # Indicate added override
+
 
           # Add checks for required variables
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
@@ -231,8 +234,6 @@ jobs:
 
 
           echo "Building and archiving using xcodebuild command (applying manual signing overrides)..."
-          # Execute the xcodebuild archive command with manual signing overrides.
-          # Xcode will use the keychain search path and downloaded profiles.
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -242,6 +243,10 @@ jobs:
             PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
+            # --- Add these two overrides ---
+            CODE_SIGNING_REQUIRED=YES \
+            CODE_SIGNING_ALLOWED=YES \
+            # ------------------------------
             -verbose # Keep verbose output
           echo "xcodebuild archive command finished."
 
