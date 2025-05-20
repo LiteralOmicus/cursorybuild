@@ -1,23 +1,42 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '13.0' # <--- IMPORTANT: Change to '13.0' or '14.0' and UNCOMMENT this line!
+# The minimum deployment target for your iOS app.
+# Set this to '13.0' or '14.0' or higher based on your app's requirements and plugin compatibility.
+platform :ios, '13.0' # <--- IMPORTANT: UNCOMMENT this line and set the version!
 
-# A target is a group of one or more targets in Xcode.
-# This target corresponds to the "Runner" target in Xcode.
+# CocoaPods analytics.
+# To disable CocoaPods analytics, run `pod analytics-disable`.
+install! 'cocoapods',
+         :disable_input_output_check => true
+
+# This block defines the settings for your main application target.
 target 'Runner' do
-  # Comment the next line if you don't want to use dynamic frameworks
+  # This makes all pods installed as dynamic frameworks. This is generally
+  # required by Flutter and many modern iOS libraries.
   use_frameworks!
-  # Uncomment the next line if you want to enable Swift static libraries
-  # use_modular_headers!
+  # This helps with resolving module issues for static libraries.
+  # It's recommended for modern Flutter projects.
+  use_modular_headers!
 
-  # Pods for Runner
-  # This line automatically includes all necessary pods for your Flutter plugins.
-  # Do NOT manually add individual plugin pods here unless specifically instructed by the plugin.
+  # Flutter app's iOS plugins and other dependencies are handled by this method.
+  # This line must be present to ensure all Flutter plugin pods are correctly
+  # included in your Xcode project.
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
+  # You can add any other project-specific pods here that are NOT Flutter plugins.
+  # Example: pod 'AFNetworking', '~> 4.0'
 end
 
-# This target corresponds to the "RunnerTests" target in Xcode for unit tests.
+# This block defines settings for your unit test target.
+# It inherits settings from the main 'Runner' target.
 target 'RunnerTests' do
   inherit! :search_paths
-  # Pods for testing
+  # You can add any pods specifically for your tests here if needed.
+end
+
+# This `post_install` hook is crucial for Flutter's integration with CocoaPods.
+# It applies additional build settings to your project targets, ensuring Flutter
+# modules compile correctly.
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+  end
 end
