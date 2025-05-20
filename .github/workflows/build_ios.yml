@@ -7,6 +7,7 @@
 # Removed invalid authentication flags from xcodebuild archive/export commands.
 # Removed invalid -keychain flag from xcodebuild archive/export commands.
 # Removed PROVISIONING_PROFILE_SPECIFIER from xcodebuild archive command.
+# Fixed missing 'fi' in keychain path calculation.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -84,7 +85,7 @@ jobs:
           else
             echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
             exit 1 # Fail the step if neither is available
-          F_PATH
+          fi # <--- This 'fi' was missing
           # Check if KEYCHAIN_NAME is empty (keep this check)
           if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
             echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
