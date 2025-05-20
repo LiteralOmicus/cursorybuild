@@ -10,6 +10,8 @@
 # Fixed missing 'fi' in keychain path calculation.
 # Added pod deintegrate and pod install --repo-update.
 # Added ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES to xcodebuild archive.
+# Added more aggressive Pods cleanup (rm -rf Pods/ Podfile.lock)
+# Changed 'flutter pub get' to 'flutter pub upgrade' for latest compatible versions.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -57,12 +59,12 @@ jobs:
         run: |
           echo "Running flutter clean..."
           flutter clean
-          echo "Running flutter pub get..."
-          flutter pub get
+          echo "Running flutter pub upgrade..." # Changed from 'get' to 'upgrade'
+          flutter pub upgrade
           echo "Changing directory to ios..."
           cd ios
-          echo "Running pod deintegrate..."
-          pod deintegrate # Remove existing Pods integration
+          echo "Removing Pods directory and Podfile.lock..." # Added more aggressive cleanup
+          rm -rf Pods/ Podfile.lock
           echo "Running pod install --repo-update..."
           pod install --repo-update # Reinstall Pods and update their repositories
           echo "Changing directory back to project root..."
