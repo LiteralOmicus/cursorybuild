@@ -1,68 +1,44 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
-
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
-ENV['COCOAPODS_DISABLE_STATS'] = 'true'
-
-project 'Runner', {
-  'Debug' => :debug,
-  'Profile' => :release,
-  'Release' => :release,
-}
-
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
-  end
-
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
-    return matches[1].strip if matches
-  end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
-end
-
-require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
-
-flutter_ios_podfile_setup
-
-target 'Runner' do
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  # PDFTron Pods
-  use_frameworks!
-  pod 'PDFTron', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron/latest.podspec'
-  pod 'PDFTronTools', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron-tools/latest.podspec'
-end
-
-# This block runs after all pods have been installed.
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    # Apply Flutter's default build settings
-    flutter_additional_ios_build_settings(target)
-
-    # Disable ENABLE_BITCODE for all targets (as per your existing setting)
-    target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'NO'
-    end
-
-    # --- Aggressive fix: Skip installation/building of the webview_flutter_wkwebview_privacy target ---
-    # This target seems problematic due to missing support files.
-    # Setting SKIP_INSTALL to YES should prevent Xcode from trying to build and include it in the archive.
-    if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Applying aggressive fix: Skipping install for target: #{target.name} ---"
-      target.build_configurations.each do |config|
-        config.build_settings['SKIP_INSTALL'] = 'YES'
-        puts "  - Set SKIP_INSTALL to YES for #{config.name}"
-        # As a backup, ensure Swift embedding is still off, though skipping install should prevent the phase
-        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
-        puts "  - Ensured build settings are NO/bundle for #{config.name}"
-      end
-      puts "--- Finished applying aggressive fix for target: #{target.name} ---"
-    end
-    # --- End aggressive fix ---
-
-  end
-end
+   platform :ios, '13.0'
+   
+   # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+   ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+   
+   project 'Runner', {
+     'Debug' => :debug,
+     'Profile' => :release,
+     'Release' => :release,
+   }
+   
+   def flutter_root
+     generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+     unless File.exist?(generated_xcode_build_settings_path)
+       raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+     end
+   
+     File.foreach(generated_xcode_build_settings_path) do |line|
+       matches = line.match(/FLUTTER_ROOT\=(.*)/)
+       return matches[1].strip if matches
+     end
+     raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+   end
+   
+   require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+   
+   flutter_ios_podfile_setup
+   
+   target 'Runner' do
+     use_frameworks!
+     use_modular_headers!
+   
+     flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+     target 'RunnerTests' do
+       inherit! :search_paths
+     end
+   end
+   
+   post_install do |installer|
+     installer.pods_project.targets.each do |target|
+       flutter_additional_ios_build_settings(target)
+     end
+   end
