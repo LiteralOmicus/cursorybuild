@@ -8,6 +8,8 @@
 # Removed invalid -keychain flag from xcodebuild archive/export commands.
 # Removed PROVISIONING_PROFILE_SPECIFIER from xcodebuild archive command.
 # Fixed missing 'fi' in keychain path calculation.
+# Added pod deintegrate and pod install --repo-update.
+# Added ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES to xcodebuild archive.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -59,8 +61,10 @@ jobs:
           flutter pub get
           echo "Changing directory to ios..."
           cd ios
+          echo "Running pod deintegrate..."
+          pod deintegrate # Remove existing Pods integration
           echo "Running pod install --repo-update..."
-          pod install --repo-update
+          pod install --repo-update # Reinstall Pods and update their repositories
           echo "Changing directory back to project root..."
           cd ..
 
@@ -85,7 +89,7 @@ jobs:
           else
             echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
             exit 1 # Fail the step if neither is available
-          fi # <--- This 'fi' was missing
+          fi
           # Check if KEYCHAIN_NAME is empty (keep this check)
           if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
             echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
@@ -182,7 +186,7 @@ jobs:
 
       # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
       # This is needed for the CODE_SIGN_IDENTITY argument in xcodebuild archive
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable set earlier.
+      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -299,6 +303,7 @@ jobs:
             IPHONEOS_DEPLOYMENT_TARGET=13.0 \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
+            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
             -allowProvisioningUpdates \
             -verbose
           echo "xcodebuild archive command finished."
