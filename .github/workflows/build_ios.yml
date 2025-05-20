@@ -13,7 +13,7 @@ jobs:
       contents: write
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPLE_PRIVATE_KEY }}
+      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       KEYCHAIN_NAME: "signing_temp.keychain-db"
 
     steps:
@@ -42,7 +42,7 @@ jobs:
           echo "Flutter and iOS dependencies installed."
 
       # Diagnostic: Inspect Podfile.lock
-      - name:  Inspect Podfile.lock
+      - name: Inspect Podfile.lock
         run: |
           echo "--- Contents of Podfile.lock ---"
           cat ios/Podfile.lock || echo "Podfile.lock not found."
@@ -57,7 +57,6 @@ jobs:
           if [ -z "$PODSPEC_PATH" ]; then
              PODSPEC_PATH=$(find /Users/runner/.pub-cache/ -name "webview_flutter_wkwebview.podspec" -print -quit)
           fi
-
           if [ -n "$PODSPEC_PATH" ]; then
               echo "Podspec found at: $PODSPEC_PATH"
               echo "Contents of podspec:"
@@ -68,11 +67,10 @@ jobs:
           echo "--- End Podspec Diagnostic ---"
 
       # Diagnostic: Webview_flutter Privacy Bundle
-      - name:  webview_flutter_wkwebview_privacy Bundle Check
+      - name: webview_flutter_wkwebview_privacy Bundle Check
         run: |
           echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
           BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
-
           if [ -n "$BUNDLE_PATH" ]; then
               echo "Bundle found at: $BUNDLE_PATH"
               echo "Contents of bundle:"
@@ -87,7 +85,7 @@ jobs:
           echo "--- End Bundle Diagnostic ---"
 
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - will likely still show missing dir)
-      - name:  Pods Build Phase Script Analysis (Deep Dive)
+      - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
           echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
           cd ios
@@ -159,6 +157,7 @@ jobs:
           keychain: ${{ env.KEYCHAIN_NAME }}
           create-keychain: true
           keychain-password: ""
+          # Removed the problematic 'default-partition' line
 
       - name: Verify Certificate Import
         run: |
@@ -176,7 +175,7 @@ jobs:
           bundle-id: com.literalomicus.kangarule
           profile-type: 'IOS_APP_STORE'
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_KEY_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Keeping this as APPSTORE_KEY_ID as per your working YAML
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Get Code Signing Identity Name
@@ -198,7 +197,7 @@ jobs:
 
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
-      - name: Dump Suspected Build Script Before Archive
+      - name: Diagnostic: Dump Suspected Build Script Before Archive
         run: |
           echo "--- Dumping suspected build script content before archive ---"
           cd ios
@@ -311,7 +310,7 @@ jobs:
         with:
           app-path: build/ios/ipa/*.ipa
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPLE_KEY_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Keeping this as APPSTORE_KEY_ID as per your working YAML
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Clean up keychain
