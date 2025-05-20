@@ -61,8 +61,7 @@ jobs:
           cd ..
           echo "Flutter and iOS dependencies installed."
 
-      ---
-      ## Webview_flutter Diagnostic
+      # Webview_flutter Diagnostic
       - name: Diagnostic: webview_flutter_wkwebview_privacy Bundle Check
         run: |
           echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
@@ -99,8 +98,7 @@ jobs:
           cd ..
           echo "--- End Script Analysis Diagnostic ---"
 
-      ---
-      ## Code Signing Setup
+      # Code Signing Setup
       - name: Set Keychain Path Environment Variable
         run: |
           FULL_KEYCHAIN_PATH=""
@@ -165,8 +163,7 @@ jobs:
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
 
-      ---
-      ## Build & Archive
+      # Build & Archive
       - name: "#️⃣ Generate Build Number"
         id: buildnumber
         uses: einaregilsson/build-number@v2
@@ -253,8 +250,7 @@ jobs:
             -verbose
           echo "xcodebuild -exportArchive command finished."
 
-      ---
-      ## Upload to TestFlight & Cleanup
+      # Upload to TestFlight & Cleanup
       - name: Upload IPA to TestFlight
         uses: Apple-Actions/upload-testflight-build@v1
         with:
