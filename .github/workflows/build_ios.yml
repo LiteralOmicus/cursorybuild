@@ -263,6 +263,7 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
+             IPHONEOS_DEPLOYMENT_TARGET=13.0 \ # <--- ADD THIS LINE! Make sure it matches your Podfile!
             # Signing Arguments - Ensure these match your desired distribution setup
             PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
