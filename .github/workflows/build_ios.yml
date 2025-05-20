@@ -37,7 +37,7 @@ jobs:
           echo "Flutter and iOS dependencies installed."
 
       # Diagnostic: Webview_flutter Privacy Bundle
-      - name: webview_flutter_wkwebview_privacy Bundle Check
+      - name:  webview_flutter_wkwebview_privacy Bundle Check
         run: |
           echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
           BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
@@ -73,15 +73,22 @@ jobs:
           cd ..
           echo "--- End Script Analysis Diagnostic ---"
 
-      # Diagnostic: Inspect webview_flutter_wkwebview_privacy target build settings
-      - name: Debug webview_flutter_wkwebview_privacy Build Settings
+      # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
+      - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
         run: |
-          echo "--- Dumping build settings for webview_flutter_wkwebview_privacy target ---"
+          echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
           cd ios
-          # The target name is 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy' from your error.
-          xcodebuild -project Pods/Pods.xcodeproj -target "webview_flutter_wkwebview-webview_flutter_wkwebview_privacy" -sdk iphoneos -configuration Release -showBuildSettings || echo "Could not dump settings for webview_flutter_wkwebview_privacy target."
+          TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+          # Check if the target exists
+          if xcodebuild -project Pods/Pods.xcodeproj -list | grep -q "$TARGET_NAME"; then
+              echo "Target '$TARGET_NAME' found. Dumping its build settings for Release configuration:"
+              # Dump the relevant build settings for the problematic target
+              xcodebuild -project Pods/Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE" || echo "Could not find relevant settings or dump failed."
+          else
+              echo "Target '$TARGET_NAME' not found in Pods project list."
+          fi
           cd ..
-          echo "--- End webview_flutter_wkwebview_privacy Build Settings Diagnostic ---"
+          echo "--- End Build Settings Verification Diagnostic ---"
 
       # Code Signing Setup
       - name: Set Keychain Path Environment Variable
