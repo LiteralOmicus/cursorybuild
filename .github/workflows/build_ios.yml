@@ -85,7 +85,7 @@ jobs:
           echo "--- End Bundle Diagnostic ---"
 
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - will likely still show missing dir)
-      - name: Pods Build Phase Script Analysis deep dive
+      - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
           echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
           cd ios
@@ -116,7 +116,7 @@ jobs:
           echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
 
       # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
-      - name: Verify webview_flutter_wkwebview_privacy Build Settings PostInstall
+      - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
         run: |
           echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
           cd ios
@@ -129,6 +129,30 @@ jobs:
           fi
           cd ..
           echo "--- End Build Settings Verification Diagnostic ---"
+
+      # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
+      - name: Validate PrivacyInfo.xcprivacy Files
+        run: |
+          echo "--- Validating all PrivacyInfo.xcprivacy files ---"
+          # Search in Pods directory and pub cache
+          find_command="find ios/Pods /Users/runner/.pub-cache/ -name 'PrivacyInfo.xcprivacy'"
+          PRIVACY_FILES=$(eval $find_command)
+
+          if [ -z "$PRIVACY_FILES" ]; then
+              echo "No PrivacyInfo.xcprivacy files found."
+          else
+              echo "Found PrivacyInfo.xcprivacy files. Validating them:"
+              echo "$PRIVACY_FILES" | while IFS= read -r file; do
+                  echo "  - Validating: $file"
+                  plutil -lint "$file"
+                  if [ $? -eq 0 ]; then
+                      echo "    Result: OK"
+                  else
+                      echo "    Result: FAILED"
+                  fi
+              done
+          fi
+          echo "--- End PrivacyInfo.xcprivacy Validation ---"
 
       # Code Signing Setup
       - name: Set Keychain Path Environment Variable
@@ -197,7 +221,7 @@ jobs:
 
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
-      - name: Dump Suspected Build Script Before Archive
+      - name:  Dump Suspected Build Script Before Archive
         run: |
           echo "--- Dumping suspected build script content before archive ---"
           cd ios
