@@ -1,42 +1,45 @@
-# The minimum deployment target for your iOS app.
-# Set this to '13.0' or '14.0' or higher based on your app's requirements and plugin compatibility.
-platform :ios, '13.0' # <--- IMPORTANT: UNCOMMENT this line and set the version!
+# Uncomment this line to define a global platform for your project
+platform :ios, '13.0'
 
-# CocoaPods analytics.
-# To disable CocoaPods analytics, run `pod analytics-disable`.
-install! 'cocoapods',
-         :disable_input_output_check => true
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
-# This block defines the settings for your main application target.
+project 'Runner', {
+  'Debug' => :debug,
+  'Profile' => :release,
+  'Release' => :release,
+}
+
+def flutter_root
+  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
+  unless File.exist?(generated_xcode_build_settings_path)
+    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+  end
+
+  File.foreach(generated_xcode_build_settings_path) do |line|
+    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    return matches[1].strip if matches
+  end
+  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
+end
+
+require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+
+flutter_ios_podfile_setup
+
 target 'Runner' do
-  # This makes all pods installed as dynamic frameworks. This is generally
-  # required by Flutter and many modern iOS libraries.
-  use_frameworks!
-  # This helps with resolving module issues for static libraries.
-  # It's recommended for modern Flutter projects.
-  use_modular_headers!
-
-  # Flutter app's iOS plugins and other dependencies are handled by this method.
-  # This line must be present to ensure all Flutter plugin pods are correctly
-  # included in your Xcode project.
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-
-  # You can add any other project-specific pods here that are NOT Flutter plugins.
-  # Example: pod 'AFNetworking', '~> 4.0'
+  # PDFTron Pods
+  use_frameworks!
+  pod 'PDFTron', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron/latest.podspec'
+  pod 'PDFTronTools', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron-tools/latest.podspec'
 end
 
-# This block defines settings for your unit test target.
-# It inherits settings from the main 'Runner' target.
-target 'RunnerTests' do
-  inherit! :search_paths
-  # You can add any pods specifically for your tests here if needed.
-end
-
-# This `post_install` hook is crucial for Flutter's integration with CocoaPods.
-# It applies additional build settings to your project targets, ensuring Flutter
-# modules compile correctly.
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
   end
 end
