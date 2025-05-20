@@ -8,10 +8,9 @@
 # Removed invalid -keychain flag from xcodebuild archive/export commands.
 # Removed PROVISIONING_PROFILE_SPECIFIER from xcodebuild archive command.
 # Fixed missing 'fi' in keychain path calculation.
-# Added pod deintegrate and pod install --repo-update.
-# Added ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES to xcodebuild archive.
-# Added more aggressive Pods cleanup (rm -rf Pods/ Podfile.lock)
+# Added aggressive Pods cleanup (rm -rf Pods/ Podfile.lock)
 # Changed 'flutter pub get' to 'flutter pub upgrade' for latest compatible versions.
+# Added 'pod update' after 'pod install'.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -59,14 +58,16 @@ jobs:
         run: |
           echo "Running flutter clean..."
           flutter clean
-          echo "Running flutter pub upgrade..." # Changed from 'get' to 'upgrade'
+          echo "Running flutter pub upgrade..."
           flutter pub upgrade
           echo "Changing directory to ios..."
           cd ios
-          echo "Removing Pods directory and Podfile.lock..." # Added more aggressive cleanup
+          echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
           rm -rf Pods/ Podfile.lock
           echo "Running pod install --repo-update..."
-          pod install --repo-update # Reinstall Pods and update their repositories
+          pod install --repo-update
+          echo "Running pod update to ensure all pods are at latest compatible versions..."
+          pod update # Add this to ensure all pods are at latest compatible versions
           echo "Changing directory back to project root..."
           cd ..
 
