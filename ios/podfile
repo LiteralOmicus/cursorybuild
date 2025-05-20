@@ -46,53 +46,21 @@ post_install do |installer|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
 
-    # --- Aggressive fix: Modify generated build phase script for webview_flutter_wkwebview_privacy bundle ---
-    # This attempts to comment out the 'builtin-swiftStdLibTool' command in the generated script.
+    # --- Aggressive fix: Skip installation/building of the webview_flutter_wkwebview_privacy target ---
+    # This target seems problematic due to missing support files.
+    # Setting SKIP_INSTALL to YES should prevent Xcode from trying to build and include it in the archive.
     if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Attempting to modify generated build script for target: #{target.name} ---"
-      # Construct the expected path to the target's support files directory
-      target_support_dir = File.join(installer.pods_project.path, 'Target Support Files', target.name)
-
-      # Find the script file that likely contains the problematic command
-      # The exact filename might vary, but it's often related to resources or frameworks.
-      # We'll search all .sh files in the target support directory.
-      script_file_pattern = File.join(target_support_dir, '*.sh')
-      script_files = Dir.glob(script_file_pattern)
-
-      if script_files.empty?
-        puts "  - No .sh script files found in #{target_support_dir}. Cannot apply script modification fix."
-      else
-        modified_any_script = false
-        script_files.each do |script_file|
-          # Read the script file content
-          script_content = File.read(script_file)
-
-          # Check if the script contains the problematic command
-          if script_content.include?('builtin-swiftStdLibTool')
-            puts "  - Found 'builtin-swiftStdLibTool' in script: #{File.basename(script_file)}"
-            # Comment out lines containing 'builtin-swiftStdLibTool'
-            new_script_content = script_content.gsub(/^.*builtin-swiftStdLibTool.*$/, '# \0 # COMMENTED_OUT_BY_POST_INSTALL_FIX')
-
-            # Write the modified content back to the file
-            File.open(script_file, 'w') { |file| file.puts new_script_content }
-            puts "  - Commented out 'builtin-swiftStdLibTool' command in #{File.basename(script_file)}"
-            modified_any_script = true
-          end
-        end
-
-        if !modified_any_script
-           puts "  - 'builtin-swiftStdLibTool' command not found in any .sh scripts for #{target.name}. Script modification fix not applied."
-        end
-      end
-
-      # Keep the build setting overrides as a backup/defensive measure
+      puts "--- Applying aggressive fix: Skipping install for target: #{target.name} ---"
       target.build_configurations.each do |config|
+        config.build_settings['SKIP_INSTALL'] = 'YES'
+        puts "  - Set SKIP_INSTALL to YES for #{config.name}"
+        # As a backup, ensure Swift embedding is still off, though skipping install should prevent the phase
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
         config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
         puts "  - Ensured build settings are NO/bundle for #{config.name}"
       end
-      puts "--- Finished aggressive fix attempt for target: #{target.name} ---"
+      puts "--- Finished applying aggressive fix for target: #{target.name} ---"
     end
     # --- End aggressive fix ---
 
