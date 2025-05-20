@@ -3,6 +3,7 @@
 # Corrected keychain path construction based on observed filename suffix.
 # Added step to show resolved build settings.
 # Corrected YAML syntax error.
+# Now generates ExportOptions.plist dynamically.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -33,6 +34,7 @@ jobs:
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       # Define the temporary keychain name created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db" # Keep the base name here
+
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4 # Use v4 for newer features and security
@@ -44,7 +46,7 @@ jobs:
           channel: 'stable' # Specify the Flutter channel
           # flutter-version: 'X.Y.Z' # Uncomment if you need a specific version
 
-      # --- NEW/MODIFIED STEP: Install Flutter and iOS Dependencies ---
+      # Install Flutter and iOS Dependencies
       - name: Install Flutter and iOS Dependencies
         run: |
           echo "Running flutter clean..."
@@ -57,9 +59,8 @@ jobs:
           pod install --repo-update
           echo "Changing directory back to project root..."
           cd ..
-      # --- END NEW/MODIFIED STEP ---
 
-      # --- Corrected Step to Calculate and Export Keychain Path ---
+      # Calculate and Export Keychain Path
       # Calculate the full path to the temporary keychain and export it as an environment variable.
       # Use the standard $HOME environment variable, and add the double .keychain-db suffix observed.
       - name: Set Keychain Path Environment Variable
@@ -74,23 +75,23 @@ jobs:
             FULL_KEYCHAIN_PATH="$HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
             echo "Using \$HOME to construct path: '$FULL_KEYCHAIN_PATH'"
           elif [ -n "$RUNNER_USER_HOME" ]; then
-             # CORRECTED PATH: Add the extra .keychain-db suffix
-             FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
-             echo "Using \$RUNNER_USER_HOME to construct path: '$FULL_KEYCHAIN_PATH'"
+            # CORRECTED PATH: Add the extra .keychain-db suffix
+            FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
+            echo "Using \$RUNNER_USER_HOME to construct path: '$FULL_KEYCHAIN_PATH'"
           else
-             echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
-             exit 1 # Fail the step if neither is available
+            echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
+            exit 1 # Fail the step if neither is available
           fi
           # Check if KEYCHAIN_NAME is empty (keep this check)
-           if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
+          if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
             echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
             exit 1
           fi
           # Check if the calculated path seems reasonable
           if [[ "$FULL_KEYCHAIN_PATH" != *"/Library/Keychains/"* ]]; then
-             echo "Warning: Calculated path does not contain '/Library/Keychains/'. Path: '$FULL_KEYCHAIN_PATH'"
-             # Decide if this should be an error based on expected path format
-             # exit 1
+            echo "Warning: Calculated path does not contain '/Library/Keychains/'. Path: '$FULL_KEYCHAIN_PATH'"
+            # Decide if this should be an error based on expected path format
+            # exit 1
           fi
           # Export the full path as an environment variable using the GITHUB_ENV file
           # This makes the KEYCHAIN_PATH variable available to all subsequent steps in this job.
@@ -113,7 +114,7 @@ jobs:
           keychain-password: "" # Use empty password if creating with no password
           default-partition: "apple-tool:,apple:"
 
-      # --- Enhanced Post-Import Verification ---
+      # Enhanced Post-Import Verification
       # Verify the certificate import and keychain state immediately after the import action.
       # This step focuses on why 'security find-identity -p codesigning' might show 0 identities.
       # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
@@ -168,7 +169,7 @@ jobs:
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }} # Use the environment variable
 
-      # --- Diagnostic Step ---
+      # Diagnostic Step
       # Check if the provisioning profile was downloaded to the correct directory
       - name: Verify Provisioning Profile Download
         run: |
@@ -219,7 +220,7 @@ jobs:
           # The 'contents: write' permission is needed for this.
           token: ${{ secrets.github_token }}
 
-      # --- Add this step to show resolved build settings ---
+      # Add this step to show resolved build settings
       - name: Show Resolved Build Settings for Runner Release
         run: |
           echo "Dumping resolved build settings for Runner Release configuration..."
@@ -228,9 +229,39 @@ jobs:
           # Use || true to prevent the workflow from failing if this step has a minor issue
           xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release || true
           echo "Finished dumping resolved build settings."
-      # --------------------------------------------------- # End of Show Build Settings step block
 
-      # --- Use xcodebuild archive instead of flutter build ipa ---
+      # NEW STEP: Create ExportOptions.plist dynamically
+      - name: Create ExportOptions.plist
+        run: |
+          echo "Creating ExportOptions.plist..."
+          mkdir -p build/ios/ipa # Ensure the parent directory for IPA export exists
+          # Define the path where the plist will be created
+          EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
+          
+          # Write the content of the plist to the file
+          cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>method</key>
+              <string>app-store</string>
+              <key>teamID</key>
+              <string>${{ secrets.APPLE_TEAM_ID }}</string>
+              <key>uploadBitcode</key>
+              <true/>
+              <key>uploadSymbols</key>
+              <true/>
+          </dict>
+          </plist>
+          EOF
+          echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
+          echo "Contents of ExportOptions.plist:"
+          cat "${EXPORT_OPTIONS_PLIST_PATH}"
+          # Export the path of the created plist so it can be used in the next step
+          echo "EXPORT_OPTIONS_PLIST_PATH=${EXPORT_OPTIONS_PLIST_PATH}" >> $GITHUB_ENV
+
+      # Use xcodebuild archive instead of flutter build ipa
       # This step uses the imported certificate, downloaded profile, and resolved settings.
       - name: Build and Archive iOS App
         run: |
@@ -250,7 +281,7 @@ jobs:
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
             exit 1
           fi
-           if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
+          if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
             echo "Error: CODE_SIGN_IDENTITY_NAME environment variable is empty. Cannot proceed with build."
             exit 1
           fi
@@ -263,31 +294,28 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-             IPHONEOS_DEPLOYMENT_TARGET=13.0 \ # <--- ADD THIS LINE! Make sure it matches your Podfile!
-            # Signing Arguments - Ensure these match your desired distribution setup
+            IPHONEOS_DEPLOYMENT_TARGET=13.0 \
             PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            # App Store Connect API Authentication for provisioning updates
             -allowProvisioningUpdates \
             -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
             -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
             -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
-            # Explicitly specify the temporary keychain using the CORRECTED environment variable
             -keychain "${{ env.KEYCHAIN_PATH }}" \
-            -verbose # Add verbose output to help debug signing issues
+            -verbose
           echo "xcodebuild archive command finished."
 
-      # --- Use xcodebuild -exportArchive to create the IPA ---
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
+      # Use xcodebuild -exportArchive to create the IPA
+      # This step now uses the dynamically generated ExportOptions.plist
       - name: Export IPA from Archive
         run: |
           echo "Running Export IPA from Archive step..."
           # Define paths and settings
           ARCHIVE_INPUT_PATH="build/Runner.xcarchive" # Input from archive step
           IPA_OUTPUT_DIR="build/ios/ipa" # Desired output directory for the IPA
-          # The ExportOptions.plist file is required for export
-          EXPORT_OPTIONS_PLIST_PATH="./ios/ExportOptions.plist" # Adjust path if your plist is elsewhere
+          # The ExportOptions.plist path is now taken from the environment variable set by the previous step
+          EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
           # Explicitly print key variables just before the export command
           echo "Archive path: ${ARCHIVE_INPUT_PATH}"
           echo "Export path: ${IPA_OUTPUT_DIR}"
@@ -298,8 +326,13 @@ jobs:
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with export."
             exit 1
           fi
+          # Check if EXPORT_OPTIONS_PLIST_PATH is empty or file does not exist
+          if [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
+            echo "Error: ExportOptions.plist path is empty or file does not exist at '${EXPORT_OPTIONS_PLIST_PATH}'. Cannot proceed with export."
+            exit 1
+          fi
           echo "Exporting IPA from archive using xcodebuild command..."
-          # Create the output directory if it doesn't exist
+          # Create the output directory if it doesn't exist (already done in plist creation, but harmless to repeat)
           mkdir -p "${IPA_OUTPUT_DIR}"
           # Execute the xcodebuild -exportArchive command
           # Explicitly specify the keychain and authentication details using the CORRECTED environment variable.
@@ -341,7 +374,3 @@ jobs:
           echo "Keychain cleanup attempted."
           # Provisioning profiles in ~/Library/MobileDevice/Provisioning Profiles are often cleaned up by the runner or handled by the download action,
           # but you can explicitly remove them if needed. Use with caution.
-          # echo "Cleaning up provisioning profiles..."
-          # rm -rf ~/Library/MobileDevice/Provisioning\ Profiles/* || true
-          # echo "Provisioning profile cleanup attempted."
-          echo "Finished Clean up keychain step."
