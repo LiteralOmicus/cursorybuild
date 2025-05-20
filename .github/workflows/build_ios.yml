@@ -13,7 +13,7 @@ jobs:
       contents: write
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPLE_PRIVATE_KEY }}
       KEYCHAIN_NAME: "signing_temp.keychain-db"
 
     steps:
@@ -30,14 +30,46 @@ jobs:
           flutter clean
           flutter pub upgrade
           cd ios
-          rm -rf Pods/ Podfile.lock # Aggressive cleanup
+          echo "Cleaning CocoaPods cache..." # Added CocoaPods cache clean
+          pod cache clean --all || true # Use || true in case the cache is empty or command fails
+          echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
+          rm -rf Pods/ Podfile.lock
+          echo "Running pod install --repo-update..."
           pod install --repo-update
+          echo "Running pod update to ensure all pods are at latest compatible versions..."
           pod update # Ensure all pods are at latest compatible versions
           cd ..
           echo "Flutter and iOS dependencies installed."
 
+      # Diagnostic: Inspect Podfile.lock
+      - name: Diagnostic: Inspect Podfile.lock
+        run: |
+          echo "--- Contents of Podfile.lock ---"
+          cat ios/Podfile.lock || echo "Podfile.lock not found."
+          echo "--- End Podfile.lock Diagnostic ---"
+
+      # Diagnostic: Locate and Inspect webview_flutter_wkwebview.podspec
+      - name: Diagnostic: Inspect webview_flutter_wkwebview.podspec
+        run: |
+          echo "--- Locating and Inspecting webview_flutter_wkwebview.podspec ---"
+          # Try to find the podspec file within the Pods directory or pub cache
+          PODSPEC_PATH=$(find /Users/runner/work/cursorybuild/cursorybuild/ios/Pods -name "webview_flutter_wkwebview.podspec" -print -quit)
+          if [ -z "$PODSPEC_PATH" ]; then
+             PODSPEC_PATH=$(find /Users/runner/.pub-cache/ -name "webview_flutter_wkwebview.podspec" -print -quit)
+          fi
+
+          if [ -n "$PODSPEC_PATH" ]; then
+              echo "Podspec found at: $PODSPEC_PATH"
+              echo "Contents of podspec:"
+              cat "$PODSPEC_PATH" || echo "Could not read podspec file."
+          else
+              echo "webview_flutter_wkwebview.podspec not found on the runner."
+          fi
+          echo "--- End Podspec Diagnostic ---"
+
+
       # Diagnostic: Webview_flutter Privacy Bundle
-      - name:  webview_flutter_wkwebview_privacy Bundle Check
+      - name: Diagnostic: webview_flutter_wkwebview_privacy Bundle Check
         run: |
           echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
           BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
@@ -55,8 +87,8 @@ jobs:
           fi
           echo "--- End Bundle Diagnostic ---"
 
-      # Diagnostic: Pods Build Phase Script Analysis
-      - name: Pods Build Phase Script Analysis
+      # Diagnostic: Pods Build Phase Script Analysis (This will likely still show missing directory, confirming the issue)
+      - name: Diagnostic: Pods Build Phase Script Analysis
         run: |
           echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy ---"
           cd ios
@@ -64,7 +96,6 @@ jobs:
           if [ -d "$TARGET_SUPPORT_DIR" ]; then
               echo "Listing contents of $TARGET_SUPPORT_DIR:"
               ls -la "$TARGET_SUPPORT_DIR" || true
-
               echo "Searching for 'builtin-swiftStdLibTool' or 'CopySwiftLibs' in scripts:"
               grep -rE "builtin-swiftStdLibTool|CopySwiftLibs" "$TARGET_SUPPORT_DIR" || echo "Relevant Swift tool commands not found in scripts (which is good)."
           else
@@ -79,10 +110,8 @@ jobs:
           echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
           cd ios
           TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          # Check if the target exists
           if xcodebuild -project Pods/Pods.xcodeproj -list | grep -q "$TARGET_NAME"; then
               echo "Target '$TARGET_NAME' found. Dumping its build settings for Release configuration:"
-              # Dump the relevant build settings for the problematic target
               xcodebuild -project Pods/Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE" || echo "Could not find relevant settings or dump failed."
           else
               echo "Target '$TARGET_NAME' not found in Pods project list."
@@ -201,7 +230,7 @@ jobs:
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
-          
+
           if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
             echo "Error: Missing signing environment variables. Cannot proceed with build."
             exit 1
@@ -227,7 +256,7 @@ jobs:
           ARCHIVE_INPUT_PATH="build/Runner.xcarchive"
           IPA_OUTPUT_DIR="build/ios/ipa"
           EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-          
+
           if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
             echo "Error: Missing environment variables or ExportOptions.plist. Cannot proceed with export."
             exit 1
