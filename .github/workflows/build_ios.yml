@@ -85,7 +85,7 @@ jobs:
           echo "--- End Bundle Diagnostic ---"
 
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - will likely still show missing dir)
-      - name: Pods Build Phase Script Analysis (Deep Dive)
+      - name: Pods Build Phase Script Analysis deep dive
         run: |
           echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
           cd ios
@@ -116,7 +116,7 @@ jobs:
           echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
 
       # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
-      - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
+      - name: Verify webview_flutter_wkwebview_privacy Build Settings PostInstall
         run: |
           echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
           cd ios
@@ -197,7 +197,7 @@ jobs:
 
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
-      - name: Diagnostic: Dump Suspected Build Script Before Archive
+      - name: Dump Suspected Build Script Before Archive
         run: |
           echo "--- Dumping suspected build script content before archive ---"
           cd ios
