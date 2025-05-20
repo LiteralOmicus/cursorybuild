@@ -1,1 +1,6 @@
 #include "Generated.xcconfig"
+// Manual Code Signing Settings
+CODE_SIGN_STYLE = Manual;
+PROVISIONING_PROFILE_SPECIFIER = literalomicus; // Replace with your exact profile name
+// DEVELOPMENT_TEAM = 6ABV2967CN; // Only needed if you want to override the team set elsewhere
+// CODE_SIGN_IDENTITY = Apple Distribution; // Only needed if you want to override the identity set elsewhere
