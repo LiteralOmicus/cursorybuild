@@ -6,6 +6,7 @@
 # Now generates ExportOptions.plist dynamically.
 # Removed invalid authentication flags from xcodebuild archive/export commands.
 # Removed invalid -keychain flag from xcodebuild archive/export commands.
+# Removed PROVISIONING_PROFILE_SPECIFIER from xcodebuild archive command.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -83,7 +84,7 @@ jobs:
           else
             echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
             exit 1 # Fail the step if neither is available
-          fi
+          F_PATH
           # Check if KEYCHAIN_NAME is empty (keep this check)
           if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
             echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
@@ -277,7 +278,6 @@ jobs:
           echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
           echo "Signing Identity Name: ${{ env.CODE_SIGN_IDENTITY_NAME }}"
           echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
-          echo "Profile Specifier: literalomicus"
           # Check if KEYCHAIN_PATH or CODE_SIGN_IDENTITY_NAME are empty
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
@@ -289,7 +289,6 @@ jobs:
           fi
           echo "Building and archiving using xcodebuild command..."
           # Execute the xcodebuild archive command
-          # Removed the problematic -keychain flag
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -297,7 +296,6 @@ jobs:
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
             IPHONEOS_DEPLOYMENT_TARGET=13.0 \
-            PROVISIONING_PROFILE_SPECIFIER="literalomicus" \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             -allowProvisioningUpdates \
@@ -333,7 +331,6 @@ jobs:
           # Create the output directory if it doesn't exist (already done in plist creation, but harmless to repeat)
           mkdir -p "${IPA_OUTPUT_DIR}"
           # Execute the xcodebuild -exportArchive command
-          # Removed the problematic -keychain flag
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
             -exportPath "${IPA_OUTPUT_DIR}" \
