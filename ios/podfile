@@ -1,0 +1,23 @@
+# Uncomment this line to define a global platform for your project
+platform :ios, '13.0' # <--- IMPORTANT: Change to '13.0' or '14.0' and UNCOMMENT this line!
+
+# A target is a group of one or more targets in Xcode.
+# This target corresponds to the "Runner" target in Xcode.
+target 'Runner' do
+  # Comment the next line if you don't want to use dynamic frameworks
+  use_frameworks!
+  # Uncomment the next line if you want to enable Swift static libraries
+  # use_modular_headers!
+
+  # Pods for Runner
+  # This line automatically includes all necessary pods for your Flutter plugins.
+  # Do NOT manually add individual plugin pods here unless specifically instructed by the plugin.
+  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+
+end
+
+# This target corresponds to the "RunnerTests" target in Xcode for unit tests.
+target 'RunnerTests' do
+  inherit! :search_paths
+  # Pods for testing
+end
