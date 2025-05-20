@@ -13,7 +13,7 @@ jobs:
       contents: write
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
+      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPLE_PRIVATE_KEY }}
       KEYCHAIN_NAME: "signing_temp.keychain-db"
 
     steps:
@@ -87,22 +87,39 @@ jobs:
           fi
           echo "--- End Bundle Diagnostic ---"
 
-      # Diagnostic: Pods Build Phase Script Analysis (This will likely still show missing directory, confirming the issue)
-      - name: Pods Build Phase Script Analysis
+      # Diagnostic: Pods Build Phase Script Analysis (Refined)
+      - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
-          echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy ---"
+          echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
           cd ios
           TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          if [ -d "$TARGET_SUPPORT_DIR" ]; then
+          
+          echo "Attempting to change directory to: $TARGET_SUPPORT_DIR"
+          if cd "$TARGET_SUPPORT_DIR"; then
+              echo "Successfully changed directory to $TARGET_SUPPORT_DIR."
               echo "Listing contents of $TARGET_SUPPORT_DIR:"
-              ls -la "$TARGET_SUPPORT_DIR" || true
+              ls -la || true # List files in the current directory
+
               echo "Searching for 'builtin-swiftStdLibTool' or 'CopySwiftLibs' in scripts:"
-              grep -rE "builtin-swiftStdLibTool|CopySwiftLibs" "$TARGET_SUPPORT_DIR" || echo "Relevant Swift tool commands not found in scripts (which is good)."
+              # Search within .sh files in the current directory
+              grep -rE "builtin-swiftStdLibTool|CopySwiftLibs" *.sh || echo "Relevant Swift tool commands not found in .sh scripts (which is good)."
+
+              echo "Attempting to print contents of all .sh scripts:"
+              # Print the content of all .sh files found
+              for script in *.sh; do
+                  if [ -f "$script" ]; then
+                      echo "--- Content of $script ---"
+                      cat "$script" || echo "Could not read script file: $script"
+                      echo "--- End of $script ---"
+                  fi
+              done
+
+              cd ../../.. # Go back to the ios directory, then project root
           else
-              echo "Target support directory not found: $TARGET_SUPPORT_DIR"
+              echo "Target support directory not found or could not change directory: $TARGET_SUPPORT_DIR"
           fi
-          cd ..
-          echo "--- End Script Analysis Diagnostic ---"
+          echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
+
 
       # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
       - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
@@ -164,7 +181,7 @@ jobs:
           bundle-id: com.literalomicus.kangarule
           profile-type: 'IOS_APP_STORE'
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-key-id: ${{ secrets.APPLE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Get Code Signing Identity Name
@@ -277,7 +294,7 @@ jobs:
         with:
           app-path: build/ios/ipa/*.ipa
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-key-id: ${{ secrets.APPLE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Clean up keychain
