@@ -46,30 +46,53 @@ post_install do |installer|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
 
-    # --- Aggressive fix for webview_flutter_wkwebview_privacy bundle ---
-    # This target is a resource bundle and should NOT have a Copy Swift Standard Libraries phase.
+    # --- Aggressive fix: Modify generated build phase script for webview_flutter_wkwebview_privacy bundle ---
+    # This attempts to comment out the 'builtin-swiftStdLibTool' command in the generated script.
     if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Applying aggressive fix for target: #{target.name} ---"
-      # Iterate through build phases to find and remove the problematic one
-      target.build_phases.each do |build_phase|
-        # Check if it's a shell script phase and its name or command indicates Swift library copying
-        # The exact name might vary, but 'Copy Swift Standard Libraries' is common.
-        # We can also look for the 'builtin-swiftStdLibTool' command within the script.
-        if build_phase.isa == 'PBXShellScriptBuildPhase' &&
-           (build_phase.name == 'Copy Swift Standard Libraries' || build_phase.shell_script.include?('builtin-swiftStdLibTool'))
-          puts "  - Found and removing problematic build phase: #{build_phase.name || 'Unnamed Script'} from #{target.name}"
-          target.build_phases.delete(build_phase)
+      puts "--- Attempting to modify generated build script for target: #{target.name} ---"
+      # Construct the expected path to the target's support files directory
+      target_support_dir = File.join(installer.pods_project.path, 'Target Support Files', target.name)
+
+      # Find the script file that likely contains the problematic command
+      # The exact filename might vary, but it's often related to resources or frameworks.
+      # We'll search all .sh files in the target support directory.
+      script_file_pattern = File.join(target_support_dir, '*.sh')
+      script_files = Dir.glob(script_file_pattern)
+
+      if script_files.empty?
+        puts "  - No .sh script files found in #{target_support_dir}. Cannot apply script modification fix."
+      else
+        modified_any_script = false
+        script_files.each do |script_file|
+          # Read the script file content
+          script_content = File.read(script_file)
+
+          # Check if the script contains the problematic command
+          if script_content.include?('builtin-swiftStdLibTool')
+            puts "  - Found 'builtin-swiftStdLibTool' in script: #{File.basename(script_file)}"
+            # Comment out lines containing 'builtin-swiftStdLibTool'
+            new_script_content = script_content.gsub(/^.*builtin-swiftStdLibTool.*$/, '# \0 # COMMENTED_OUT_BY_POST_INSTALL_FIX')
+
+            # Write the modified content back to the file
+            File.open(script_file, 'w') { |file| file.puts new_script_content }
+            puts "  - Commented out 'builtin-swiftStdLibTool' command in #{File.basename(script_file)}"
+            modified_any_script = true
+          end
+        end
+
+        if !modified_any_script
+           puts "  - 'builtin-swiftStdLibTool' command not found in any .sh scripts for #{target.name}. Script modification fix not applied."
         end
       end
 
-      # Re-apply/confirm build settings as a backup, although phase removal is more direct
+      # Keep the build setting overrides as a backup/defensive measure
       target.build_configurations.each do |config|
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
         config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
         puts "  - Ensured build settings are NO/bundle for #{config.name}"
       end
-      puts "--- Finished applying aggressive fix for target: #{target.name} ---"
+      puts "--- Finished aggressive fix attempt for target: #{target.name} ---"
     end
     # --- End aggressive fix ---
 
