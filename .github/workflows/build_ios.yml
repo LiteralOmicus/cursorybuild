@@ -19,11 +19,9 @@ jobs:
     # Specify the operating system for the runner
     runs-on: macos-latest
     # timeout-minutes: 60 # Uncomment and adjust if needed
-
     # Grant permissions for the github_token for this job
     permissions:
       contents: write # This grants write access to repository contents, including refs
-
     # Set environment variables that can be defined directly
     env:
       # WARNING: This allows the use of deprecated and potentially insecure commands
@@ -35,7 +33,6 @@ jobs:
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       # Define the temporary keychain name created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db" # Keep the base name here
-
     steps:
       # Checks out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4 # Use v4 for newer features and security
@@ -47,9 +44,20 @@ jobs:
           channel: 'stable' # Specify the Flutter channel
           # flutter-version: 'X.Y.Z' # Uncomment if you need a specific version
 
-      # Run flutter pub get to fetch dependencies
-      - name: Flutter Pub Get
-        run: flutter pub get
+      # --- NEW/MODIFIED STEP: Install Flutter and iOS Dependencies ---
+      - name: Install Flutter and iOS Dependencies
+        run: |
+          echo "Running flutter clean..."
+          flutter clean
+          echo "Running flutter pub get..."
+          flutter pub get
+          echo "Changing directory to ios..."
+          cd ios
+          echo "Running pod install --repo-update..."
+          pod install --repo-update
+          echo "Changing directory back to project root..."
+          cd ..
+      # --- END NEW/MODIFIED STEP ---
 
       # --- Corrected Step to Calculate and Export Keychain Path ---
       # Calculate the full path to the temporary keychain and export it as an environment variable.
@@ -195,7 +203,7 @@ jobs:
             # Export the identity name as an environment variable for subsequent steps
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
             # Use GITHUB_OUTPUT for setting step outputs (recommended over ::set-output)
-            echo "identity_name=$IDENTITY_NAME" >> $GITHUB_OUTPUT
+            echo "identity_name=$IDENTITY_OUTPUT" >> $GITHUB_OUTPUT
           fi
           echo "Finished Get Code Signing Identity Name step."
 
@@ -219,7 +227,6 @@ jobs:
           # Dump the build settings for the Runner target, Release configuration, iphoneos SDK
           # Use || true to prevent the workflow from failing if this step has a minor issue
           xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release || true
-
           echo "Finished dumping resolved build settings."
       # --------------------------------------------------- # End of Show Build Settings step block
 
@@ -233,13 +240,11 @@ jobs:
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace" # Or ./ios/Runner.xcodeproj
           SCHEME_NAME="Runner" # Adjust if your scheme is named differently
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive" # Standard output location
-
           # Explicitly print key variables just before the build command
           echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
           echo "Signing Identity Name: ${{ env.CODE_SIGN_IDENTITY_NAME }}"
           echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
           echo "Profile Specifier: literalomicus" # Assuming 'literalomicus' is the name of your App Store profile
-
           # Check if KEYCHAIN_PATH or CODE_SIGN_IDENTITY_NAME are empty
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
@@ -249,7 +254,6 @@ jobs:
             echo "Error: CODE_SIGN_IDENTITY_NAME environment variable is empty. Cannot proceed with build."
             exit 1
           fi
-
           echo "Building and archiving using xcodebuild command..."
           # Execute the xcodebuild archive command
           # Explicitly specify the keychain, signing identity, and team ID using environment variables.
@@ -283,23 +287,19 @@ jobs:
           IPA_OUTPUT_DIR="build/ios/ipa" # Desired output directory for the IPA
           # The ExportOptions.plist file is required for export
           EXPORT_OPTIONS_PLIST_PATH="./ios/ExportOptions.plist" # Adjust path if your plist is elsewhere
-
           # Explicitly print key variables just before the export command
           echo "Archive path: ${ARCHIVE_INPUT_PATH}"
           echo "Export path: ${IPA_OUTPUT_DIR}"
           echo "ExportOptions.plist path: ${EXPORT_OPTIONS_PLIST_PATH}"
           echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
-
           # Check if KEYCHAIN_PATH is empty
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with export."
             exit 1
           fi
-
           echo "Exporting IPA from archive using xcodebuild command..."
           # Create the output directory if it doesn't exist
           mkdir -p "${IPA_OUTPUT_DIR}"
-
           # Execute the xcodebuild -exportArchive command
           # Explicitly specify the keychain and authentication details using the CORRECTED environment variable.
           xcodebuild -exportArchive \
