@@ -52,24 +52,16 @@ jobs:
       - name: Inspect webview_flutter_wkwebview.podspec
         run: |
           echo "--- Locating and Inspecting webview_flutter_wkwebview.podspec ---"
-          # Try to find the podspec file within the Pods directory or pub cache
-          PODSPEC_PATH=$(find /Users/runner/work/cursorybuild/cursorybuild/ios/Pods -name "webview_flutter_wkwebview.podspec" -print -quit)
-          if [ -z "$PODSPEC_PATH" ]; then
-             PODSPEC_PATH=$(find /Users/runner/.pub-cache/ -name "webview_flutter_wkwebview.podspec" -print -quit)
-          fi
-          if [ -n "$PODSPEC_PATH" ]; then
-              echo "Podspec found at: $PODSPEC_PATH"
-              echo "Contents of podspec:"
-              cat "$PODSPEC_PATH" || echo "Could not read podspec file."
-          else
-              echo "webview_flutter_wkwebview.podspec not found on the runner."
-          fi
+          # This command directly finds the podspec and prints its content.
+          # It searches in the pub cache, which is where Flutter plugins' podspecs are located.
+          find /Users/runner/.pub-cache/ -name "webview_flutter_wkwebview.podspec" -print -quit -exec cat {} \; || echo "webview_flutter_wkwebview.podspec not found or could not be read."
           echo "--- End Podspec Diagnostic ---"
 
-      # Diagnostic: Webview_flutter Privacy Bundle
-      - name: webview_flutter_wkwebview_privacy Bundle Check
+      # Diagnostic: Webview_flutter Privacy Bundle (Pre-build check)
+      - name: webview_flutter_wkwebview_privacy Bundle Check (Pre-build)
         run: |
-          echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
+          echo "--- Checking webview_flutter_wkwebview_privacy.bundle (Pre-build) ---"
+          # This checks if the bundle is already in DerivedData before the main build command
           BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
           if [ -n "$BUNDLE_PATH" ]; then
               echo "Bundle found at: $BUNDLE_PATH"
@@ -80,9 +72,9 @@ jobs:
               echo "Checking for privacy manifest file:"
               find "$BUNDLE_PATH" -name "*.xcprivacy" || echo "Privacy manifest (.xcprivacy) not found."
           else
-              echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData."
+              echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData (Pre-build)."
           fi
-          echo "--- End Bundle Diagnostic ---"
+          echo "--- End Bundle Diagnostic (Pre-build) ---"
 
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - will likely still show missing dir)
       - name: Pods Build Phase Script Analysis (Deep Dive)
@@ -129,6 +121,37 @@ jobs:
           fi
           cd ..
           echo "--- End Build Settings Verification Diagnostic ---"
+
+      # New Diagnostic: Dump Pods.xcodeproj/project.pbxproj
+      - name: Dump Pods.xcodeproj/project.pbxproj
+        run: |
+          echo "--- Dumping Pods.xcodeproj/project.pbxproj content ---"
+          cd ios
+          if [ -f "Pods/Pods.xcodeproj/project.pbxproj" ]; then
+              cat "Pods/Pods.xcodeproj/project.pbxproj" || echo "Could not read project.pbxproj."
+          else
+              echo "Pods/Pods.xcodeproj/project.pbxproj not found."
+          fi
+          cd ..
+          echo "--- End project.pbxproj Dump Diagnostic ---"
+
+      # New Diagnostic: List contents of the problematic bundle in DerivedData
+      # This runs before the main archive command, but after initial build setup.
+      - name: List Problematic Bundle Contents in DerivedData
+        run: |
+          echo "--- Listing contents of webview_flutter_wkwebview_privacy.bundle in DerivedData ---"
+          # The path includes 'IntermediateBuildFilesPath/UninstalledProducts/iphoneos/'
+          # We need to find the specific derived data path for this run.
+          DERIVED_DATA_ROOT=$(find /Users/runner/Library/Developer/Xcode/DerivedData/Runner-*/Build/Intermediates.noindex/ArchiveIntermediates/Runner/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ -maxdepth 1 -type d -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
+
+          if [ -n "$DERIVED_DATA_ROOT" ]; then
+              echo "Found bundle in DerivedData at: $DERIVED_DATA_ROOT"
+              echo "Contents:"
+              ls -laR "$DERIVED_DATA_ROOT" || true
+          else
+              echo "webview_flutter_wkwebview_privacy.bundle not found in expected DerivedData path."
+          fi
+          echo "--- End Problematic Bundle Contents Diagnostic ---"
 
       # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
       - name: Validate PrivacyInfo.xcprivacy Files
@@ -181,7 +204,6 @@ jobs:
           keychain: ${{ env.KEYCHAIN_NAME }}
           create-keychain: true
           keychain-password: ""
-          # Removed the problematic 'default-partition' line
 
       - name: Verify Certificate Import
         run: |
@@ -199,7 +221,7 @@ jobs:
           bundle-id: com.literalomicus.kangarule
           profile-type: 'IOS_APP_STORE'
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Keeping this as APPSTORE_KEY_ID as per your working YAML
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Get Code Signing Identity Name
@@ -221,7 +243,7 @@ jobs:
 
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
-      - name:  Dump Suspected Build Script Before Archive
+      - name: Dump Suspected Build Script Before Archive
         run: |
           echo "--- Dumping suspected build script content before archive ---"
           cd ios
@@ -283,7 +305,7 @@ jobs:
 
       - name: Build and Archive iOS App
         run: |
-          echo "Starting archive process..."
+          echo "Starting archive process with increased verbosity..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
@@ -293,6 +315,7 @@ jobs:
             exit 1
           fi
 
+          # Increased verbosity with -showBuildTimingSummary and redirecting stderr to stdout
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -304,8 +327,13 @@ jobs:
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
             -allowProvisioningUpdates \
-            -verbose
-          echo "xcodebuild archive command finished."
+            -verbose \
+            -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
+          echo "xcodebuild archive command finished. Full log saved to xcodebuild_archive_log.txt"
+          echo "--- Content of xcodebuild_archive_log.txt ---"
+          cat xcodebuild_archive_log.txt
+          echo "--- End of xcodebuild_archive_log.txt ---"
+
 
       - name: Export IPA from Archive
         run: |
@@ -334,7 +362,7 @@ jobs:
         with:
           app-path: build/ios/ipa/*.ipa
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Keeping this as APPSTORE_KEY_ID as per your working YAML
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
       - name: Clean up keychain
