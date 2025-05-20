@@ -12,6 +12,7 @@
 # Changed 'flutter pub get' to 'flutter pub upgrade' for latest compatible versions.
 # Added 'pod update' after 'pod install'.
 # Added diagnostic step for webview_flutter Pods.
+# Trimmed diagnostics for better clarity.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -33,14 +34,8 @@ jobs:
       contents: write # This grants write access to repository contents, including refs
     # Set environment variables that can be defined directly
     env:
-      # WARNING: This allows the use of deprecated and potentially insecure commands
-      # like ::set-env and ::add-path. Only use this if necessary and understand
-      # the security implications. It's recommended to update actions to use
-      # environment files instead.
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
-      # Make the private key available as an environment variable for xcodebuild authentication
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
-      # Define the temporary keychain name created by Apple-Actions
       KEYCHAIN_NAME: "signing_temp.keychain-db" # Keep the base name here
 
     steps:
@@ -52,231 +47,144 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable' # Specify the Flutter channel
-          # flutter-version: 'X.Y.Z' # Uncomment if you need a specific version
 
       # Install Flutter and iOS Dependencies
       - name: Install Flutter and iOS Dependencies
         run: |
-          echo "Running flutter clean..."
+          echo "Running flutter clean, upgrade, and pod setup..."
           flutter clean
-          echo "Running flutter pub upgrade..."
           flutter pub upgrade
-          echo "Changing directory to ios..."
           cd ios
-          echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
-          rm -rf Pods/ Podfile.lock
-          echo "Running pod install --repo-update..."
+          rm -rf Pods/ Podfile.lock # Aggressive cleanup
           pod install --repo-update
-          echo "Running pod update to ensure all pods are at latest compatible versions..."
-          pod update # Add this to ensure all pods are at latest compatible versions
-          echo "Changing directory back to project root..."
+          pod update # Ensure all pods are at latest compatible versions
           cd ..
+          echo "Flutter and iOS dependencies installed."
 
-      # Diagnostic Step: Inspect webview_flutter Pods - Add this to help diagnose if the above doesn't work
-      - name: Debug webview_flutter Pods Configuration
+      ---
+      ## Webview_flutter Diagnostic
+      - name: Diagnostic: webview_flutter_wkwebview_privacy Bundle Check
         run: |
-          echo "--- Diagnostic: webview_flutter Pods ---"
-          echo "Contents of Podfile.lock:"
-          cat ios/Podfile.lock || echo "Podfile.lock not found."
-          echo "-----------------------------------------------------"
-          echo "Listing contents of webview_flutter_wkwebview Pods directory:"
-          # Adjust this path if 'webview_flutter_wkwebview' is not the direct folder name
-          ls -laR ios/Pods/webview_flutter_wkwebview || echo "Pods/webview_flutter_wkwebview not found."
-          echo "-----------------------------------------------------"
-          echo "Attempting to locate webview_flutter_wkwebview_privacy.bundle in build products:"
-          # The exact DerivedData path can vary, using find might be more robust
-          find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" || echo "Bundle not found in DerivedData where expected."
-          echo "-----------------------------------------------------"
-          echo "Attempting to locate problematic file within bundle structure (should NOT be an executable):"
-          # This command looks for the file that was reported as missing.
-          # If it prints nothing, it confirms the file doesn't exist as an executable.
-          find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -exec find {} -name "webview_flutter_wkwebview_privacy" \; || echo "Executable 'webview_flutter_wkwebview_privacy' not found within any found bundle."
-          echo "-----------------------------------------------------"
-          echo "Checking the privacy manifest file within the bundle (expected structure):"
-          # This checks for the actual .xcprivacy file, which is what should be there.
-          find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -exec find {} -name "*.xcprivacy" \; || echo "No .xcprivacy file found in bundle."
-          echo "--- End Diagnostic ---"
+          echo "--- Checking webview_flutter_wkwebview_privacy.bundle ---"
+          # Try to locate the bundle in DerivedData
+          BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
 
-      # Calculate and Export Keychain Path
-      # Calculate the full path to the temporary keychain and export it as an environment variable.
-      # Use the standard $HOME environment variable, and add the double .keychain-db suffix observed.
+          if [ -n "$BUNDLE_PATH" ]; then
+              echo "Bundle found at: $BUNDLE_PATH"
+              echo "Contents of bundle:"
+              ls -laR "$BUNDLE_PATH" || true
+              echo "Checking for executable within bundle:"
+              find "$BUNDLE_PATH" -name "webview_flutter_wkwebview_privacy" || echo "Executable not found (as expected for a privacy bundle)."
+              echo "Checking for privacy manifest file:"
+              find "$BUNDLE_PATH" -name "*.xcprivacy" || echo "Privacy manifest (.xcprivacy) not found."
+          else
+              echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData."
+          fi
+          echo "--- End Bundle Diagnostic ---"
+
+      - name: Diagnostic: Pods Build Phase Script Analysis
+        run: |
+          echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy ---"
+          cd ios
+          TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+          if [ -d "$TARGET_SUPPORT_DIR" ]; then
+              echo "Listing contents of $TARGET_SUPPORT_DIR:"
+              ls -la "$TARGET_SUPPORT_DIR" || true
+
+              echo "Searching for 'builtin-swiftStdLibTool' or 'CopySwiftLibs' in scripts:"
+              grep -rE "builtin-swiftStdLibTool|CopySwiftLibs" "$TARGET_SUPPORT_DIR" || echo "Relevant Swift tool commands not found in scripts (which is good)."
+          else
+              echo "Target support directory not found: $TARGET_SUPPORT_DIR"
+          fi
+          cd ..
+          echo "--- End Script Analysis Diagnostic ---"
+
+      ---
+      ## Code Signing Setup
       - name: Set Keychain Path Environment Variable
         run: |
-          echo "Running Set Keychain Path Environment Variable step..."
-          echo "HOME is: '$HOME'" # Print the HOME variable
-          echo "RUNNER_USER_HOME is: '$RUNNER_USER_HOME'" # Print RUNNER_USER_HOME for comparison
           FULL_KEYCHAIN_PATH=""
-          # Prioritize $HOME, fallback to $RUNNER_USER_HOME
           if [ -n "$HOME" ]; then
-            # CORRECTED PATH: Add the extra .keychain-db suffix
             FULL_KEYCHAIN_PATH="$HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
-            echo "Using \$HOME to construct path: '$FULL_KEYCHAIN_PATH'"
           elif [ -n "$RUNNER_USER_HOME" ]; then
-            # CORRECTED PATH: Add the extra .keychain-db suffix
             FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
-            echo "Using \$RUNNER_USER_HOME to construct path: '$FULL_KEYCHAIN_PATH'"
           else
             echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
-            exit 1 # Fail the step if neither is available
+            exit 1
           fi
-          # Check if KEYCHAIN_NAME is empty (keep this check)
           if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
             echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
             exit 1
           fi
-          # Check if the calculated path seems reasonable
-          if [[ "$FULL_KEYCHAIN_PATH" != *"/Library/Keychains/"* ]]; then
-            echo "Warning: Calculated path does not contain '/Library/Keychains/'. Path: '$FULL_KEYCHAIN_PATH'"
-            # Decide if this should be an error based on expected path format
-            # exit 1
-          fi
-          # Export the full path as an environment variable using the GITHUB_ENV file
-          # This makes the KEYCHAIN_PATH variable available to all subsequent steps in this job.
-          echo "Setting KEYCHAIN_PATH environment variable to: '$FULL_KEYCHAIN_PATH'"
           echo "KEYCHAIN_PATH=$FULL_KEYCHAIN_PATH" >> $GITHUB_ENV
-          echo "Contents of GITHUB_ENV after adding KEYCHAIN_PATH:"
-          cat $GITHUB_ENV || echo "GITHUB_ENV file not found or empty." # Show what was written to the file
-          echo "Finished setting KEYCHAIN_PATH environment variable."
-          echo "Environment variables available to the next step will include KEYCHAIN_PATH."
+          echo "Set KEYCHAIN_PATH to: '$FULL_KEYCHAIN_PATH'"
 
-      # Imports Apple signing certificates from GitHub Secrets
       - name: Import Code Signing Certificate
-        uses: Apple-Actions/import-codesign-certs@v2 # Use v2
+        uses: Apple-Actions/import-codesign-certs@v2
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Base64 content of your .p12 certificate
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # Password for your .p12 file
-          keychain: ${{ env.KEYCHAIN_NAME }} # Use the defined keychain name (base name)
-          create-keychain: true # Explicitly create the keychain
-          # Set keychain default partition for headless environments (important!)
-          keychain-password: "" # Use empty password if creating with no password
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+          keychain: ${{ env.KEYCHAIN_NAME }}
+          create-keychain: true
+          keychain-password: ""
           default-partition: "apple-tool:,apple:"
 
-      # Enhanced Post-Import Verification
-      # Verify the certificate import and keychain state immediately after the import action.
-      # This step focuses on why 'security find-identity -p codesigning' might show 0 identities.
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
-      - name: Post-Import Certificate Verification
+      - name: Verify Certificate Import
         run: |
-          echo "Running Post-Import Certificate Verification step..."
-          # Explicitly print the KEYCHAIN_PATH just before using it
-          echo "Value of KEYCHAIN_PATH in this step is: '${{ env.KEYCHAIN_PATH }}'"
-          # Check if KEYCHAIN_PATH is empty before attempting to use it
+          echo "Verifying certificate import in '${{ env.KEYCHAIN_PATH }}'..."
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot verify keychain content."
+            echo "Error: KEYCHAIN_PATH is empty. Skipping certificate verification."
             exit 1
           fi
-          echo "Current keychains in search list:"
-          security list-keychains # Show the current search list (should include the .keychain-db.keychain-db name)
-          echo "Attempting to unlock keychain explicitly (redundant but defensive):"
-          # Attempt to unlock the keychain using the CORRECTED KEYCHAIN_PATH.
-          # Assumes no password was set by Apple-Actions for the temp keychain.
-          security unlock-keychain -p "" "${{ env.KEYCHAIN_PATH }}" || echo "Keychain unlock failed (might be already unlocked or have a password)." # Use || echo instead of || true to show error output
-          echo "Attempting to set keychain in user search list explicitly (redundant but defensive):"
-          # Ensure the target keychain is in the user's search path using the CORRECTED KEYCHAIN_PATH.
-          security list-keychains -d user -s "${{ env.KEYCHAIN_PATH }}" login.keychain || echo "Failed to set keychain search path."
-          echo "-----------------------------------------------------"
-          echo "Finding *ALL* identities in the specific keychain file:"
-          echo "Command: security find-identity -v '${{ env.KEYCHAIN_PATH }}'"
-          # Run 'security find-identity -v' targeting the specific keychain file path using the CORRECTED KEYCHAIN_PATH.
-          # This lists ALL identities. If your certificate is not listed here, the import failed.
-          security find-identity -v "${{ env.KEYCHAIN_PATH }}" || true # Use || true to prevent step failure
-          echo "-----------------------------------------------------"
-          echo "Finding *CODESIGNING* identities in the specific keychain file:"
-          echo "Command: security find-identity -p codesigning -v '${{ env.KEYCHAIN_PATH }}'"
-          # Run 'security find-identity -p codesigning -v' targeting the specific keychain file path using the CORRECTED KEYCHAIN_PATH.
-          # This is the critical check. If the previous command found your certificate, but this one doesn't,
-          # it indicates the certificate/identity isn't considered valid for codesigning.
-          set -x # Enable shell debugging to see the exact command executed
-          security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" || true # Use || true to prevent step failure
-          set +x # Disable shell debugging
-          echo "-----------------------------------------------------"
-          # Optional: Attempt to dump keychain contents to see attributes (can be very verbose)
-          # echo "Dumping keychain contents (may be very verbose):"
-          # security dump-keychain -d "${{ env.KEYCHAIN_PATH }}" || true
-          # echo "Finished dumping keychain contents."
-          echo "Finished Post-Import Certificate Verification step."
+          security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" || true
+          echo "Certificate verification complete."
 
-      # Downloads provisioning profiles from Apple using App Store Connect API Key
       - name: Download Provisioning Profiles
-        uses: Apple-Actions/download-provisioning-profiles@v2 # Use v2
+        uses: Apple-Actions/download-provisioning-profiles@v2
         with:
-          bundle-id: com.literalomicus.kangarule # Your app's Bundle ID
-          profile-type: 'IOS_APP_STORE' # Specify the profile type (IOS_APP_STORE, IOS_APP_DEVELOPMENT, etc.)
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
-          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }} # Use the environment variable
+          bundle-id: com.literalomicus.kangarule
+          profile-type: 'IOS_APP_STORE'
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
-      # Diagnostic Step
-      # Check if the provisioning profile was downloaded to the correct directory
-      - name: Verify Provisioning Profile Download
-        run: |
-          echo "Checking provisioning profile directory: ~/Library/MobileDevice/Provisioning Profiles/"
-          ls -laR ~/Library/MobileDevice/Provisioning\ Profiles/ || true # Use || true if directory is empty
-
-      # Find the exact Code Signing Identity name from the keychain and store it in an environment variable
-      # This is needed for the CODE_SIGN_IDENTITY argument in xcodebuild archive
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
-          echo "Running Get Code Signing Identity Name step..."
-          # Explicitly print the KEYCHAIN_PATH just before using it
-          echo "Value of KEYCHAIN_PATH in this step is: '${{ env.KEYCHAIN_PATH }}'"
-          echo "Searching for signing identity name in ${{ env.KEYCHAIN_PATH }}"
-          # Check if KEYCHAIN_PATH is empty before attempting to use it
+          echo "Finding code signing identity name..."
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot search for identity. Exiting Get Code Signing Identity step."
+            echo "Error: KEYCHAIN_PATH is empty. Cannot find identity."
             exit 1
           fi
-          # Find the exact name of the Distribution identity in the keychain
-          # Adjust the grep pattern "Apple Distribution:" if your certificate type is different (e.g., "Apple Development:")
-          # This specifically searches the temporary keychain created earlier using the CORRECTED KEYCHAIN_PATH.
           IDENTITY_NAME=$(security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
           if [ -z "$IDENTITY_NAME" ]; then
-            echo "Error: Code signing identity not found in ${{ env.KEYCHAIN_PATH }} (using grep 'Apple Distribution:'). Build cannot proceed. Exiting Get Code Signing Identity step."
-            # Exit the step with a failure code if identity is not found
+            echo "Error: Code signing identity 'Apple Distribution:' not found in keychain. Build cannot proceed."
             exit 1
           else
-            echo "Found signing identity name: '$IDENTITY_NAME'"
-            # Export the identity name as an environment variable for subsequent steps
+            echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
-            # Use GITHUB_OUTPUT for setting step outputs (recommended over ::set-output)
-            echo "identity_name=$IDENTITY_OUTPUT" >> $GITHUB_OUTPUT
           fi
-          echo "Finished Get Code Signing Identity Name step."
 
-      # Generates a unique build number for the app
-      # This action requires write permissions to create/update a Git ref.
+      ---
+      ## Build & Archive
       - name: "#️⃣ Generate Build Number"
-        id: buildnumber # Assigns an ID to this step
-        uses: einaregilsson/build-number@v2 # Consider updating if deprecated warning persists
+        id: buildnumber
+        uses: einaregilsson/build-number@v2
         with:
-          # The github_token is automatically provided by GitHub Actions
-          # and is used by this action to interact with the GitHub API
-          # to get information needed to generate the build number.
-          # The 'contents: write' permission is needed for this.
           token: ${{ secrets.github_token }}
 
-      # Add this step to show resolved build settings
       - name: Show Resolved Build Settings for Runner Release
         run: |
           echo "Dumping resolved build settings for Runner Release configuration..."
-          cd ios # Navigate to the ios directory
-          # Dump the build settings for the Runner target, Release configuration, iphoneos SDK
-          # Use || true to prevent the workflow from failing if this step has a minor issue
+          cd ios
           xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release || true
           echo "Finished dumping resolved build settings."
 
-      # NEW STEP: Create ExportOptions.plist dynamically
       - name: Create ExportOptions.plist
         run: |
           echo "Creating ExportOptions.plist..."
-          # Ensure the parent directory for IPA export exists. This is also where the plist will be placed.
           mkdir -p build/ios
-          # Define the path where the plist will be created
           EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
-          
-          # Write the content of the plist to the file using a heredoc
           cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -296,33 +204,20 @@ jobs:
           echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
           echo "Contents of ExportOptions.plist:"
           cat "${EXPORT_OPTIONS_PLIST_PATH}"
-          # Export the path of the created plist so it can be used in the next step
           echo "EXPORT_OPTIONS_PLIST_PATH=${EXPORT_OPTIONS_PLIST_PATH}" >> $GITHUB_ENV
 
-      # Use xcodebuild archive instead of flutter build ipa
-      # This step uses the imported certificate, downloaded profile, and resolved settings.
       - name: Build and Archive iOS App
         run: |
-          echo "Running Build and Archive iOS App step..."
-          # Define paths and settings
+          echo "Starting archive process..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
-          # Explicitly print key variables just before the build command
-          echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
-          echo "Signing Identity Name: ${{ env.CODE_SIGN_IDENTITY_NAME }}"
-          echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
-          # Check if KEYCHAIN_PATH or CODE_SIGN_IDENTITY_NAME are empty
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
+          
+          if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
+            echo "Error: Missing signing environment variables. Cannot proceed with build."
             exit 1
           fi
-          if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
-            echo "Error: CODE_SIGN_IDENTITY_NAME environment variable is empty. Cannot proceed with build."
-            exit 1
-          fi
-          echo "Building and archiving using xcodebuild command..."
-          # Execute the xcodebuild archive command
+
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -337,35 +232,19 @@ jobs:
             -verbose
           echo "xcodebuild archive command finished."
 
-      # Use xcodebuild -exportArchive to create the IPA
-      # This step now uses the dynamically generated ExportOptions.plist
       - name: Export IPA from Archive
         run: |
-          echo "Running Export IPA from Archive step..."
-          # Define paths and settings
-          ARCHIVE_INPUT_PATH="build/Runner.xcarchive" # Input from archive step
-          IPA_OUTPUT_DIR="build/ios/ipa" # Desired output directory for the IPA
-          # The ExportOptions.plist path is now taken from the environment variable set by the previous step
+          echo "Starting IPA export process..."
+          ARCHIVE_INPUT_PATH="build/Runner.xcarchive"
+          IPA_OUTPUT_DIR="build/ios/ipa"
           EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-          # Explicitly print key variables just before the export command
-          echo "Archive path: ${ARCHIVE_INPUT_PATH}"
-          echo "Export path: ${IPA_OUTPUT_DIR}"
-          echo "ExportOptions.plist path: ${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
-          # Check if KEYCHAIN_PATH is empty
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with export."
+          
+          if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
+            echo "Error: Missing environment variables or ExportOptions.plist. Cannot proceed with export."
             exit 1
           fi
-          # Check if EXPORT_OPTIONS_PLIST_PATH is empty or file does not exist
-          if [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
-            echo "Error: ExportOptions.plist path is empty or file does not exist at '${EXPORT_OPTIONS_PLIST_PATH}'. Cannot proceed with export."
-            exit 1
-          fi
-          echo "Exporting IPA from archive using xcodebuild command..."
-          # Create the output directory if it doesn't exist (already done in plist creation, but harmless to repeat)
+
           mkdir -p "${IPA_OUTPUT_DIR}"
-          # Execute the xcodebuild -exportArchive command
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
             -exportPath "${IPA_OUTPUT_DIR}" \
@@ -374,26 +253,19 @@ jobs:
             -verbose
           echo "xcodebuild -exportArchive command finished."
 
-      # Uploads the generated IPA file to App Store Connect for TestFlight
+      ---
+      ## Upload to TestFlight & Cleanup
       - name: Upload IPA to TestFlight
-        uses: Apple-Actions/upload-testflight-build@v1 # Use v1 or master
+        uses: Apple-Actions/upload-testflight-build@v1
         with:
-          # The output path for the exported IPA
-          app-path: build/ios/ipa/*.ipa # Path to the built IPA file (glob for the .ipa)
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }} # Your App Store Connect Issuer ID (from secret)
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }} # Your App Store Connect Key ID (from secret)
-          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }} # Use the environment variable
+          app-path: build/ios/ipa/*.ipa
+          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
+          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
 
-      # Important! Cleanup: remove the certificate and provisioning profile from the runner!
-      # Use 'always()' to ensure this runs even if previous steps fails.
-      # This step now uses the CORRECTED KEYCHAIN_PATH environment variable.
       - name: Clean up keychain
         if: ${{ always() }}
         run: |
-          echo "Running Clean up keychain step..."
           echo "Cleaning up keychain: ${{ env.KEYCHAIN_PATH }}"
-          # Delete the temporary keychain file using the CORRECTED environment variable
-          security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true # Use || true in case it wasn't created or already deleted
+          security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true
           echo "Keychain cleanup attempted."
-          # Provisioning profiles in ~/Library/MobileDevice/Provisioning Profiles are often cleaned up by the runner or handled by the download action,
-          # but you can explicitly remove them if needed. Use with caution.
