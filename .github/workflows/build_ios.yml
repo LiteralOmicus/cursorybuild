@@ -4,6 +4,7 @@
 # Added step to show resolved build settings.
 # Corrected YAML syntax error.
 # Now generates ExportOptions.plist dynamically.
+# Removed invalid authentication flags from xcodebuild archive/export commands.
 name: build-test-xcodebuild-show-settings-fix-yaml-2
 
 # Controls when the workflow will run
@@ -234,11 +235,12 @@ jobs:
       - name: Create ExportOptions.plist
         run: |
           echo "Creating ExportOptions.plist..."
-          mkdir -p build/ios/ipa # Ensure the parent directory for IPA export exists
+          # Ensure the parent directory for IPA export exists. This is also where the plist will be placed.
+          mkdir -p build/ios
           # Define the path where the plist will be created
           EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
           
-          # Write the content of the plist to the file
+          # Write the content of the plist to the file using a heredoc
           cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -267,15 +269,14 @@ jobs:
         run: |
           echo "Running Build and Archive iOS App step..."
           # Define paths and settings
-          # Adjust to .xcodeproj if you don't have a workspace, or if your workspace name is different
-          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace" # Or ./ios/Runner.xcodeproj
-          SCHEME_NAME="Runner" # Adjust if your scheme is named differently
-          ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive" # Standard output location
+          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
+          SCHEME_NAME="Runner"
+          ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
           # Explicitly print key variables just before the build command
           echo "Keychain path: ${{ env.KEYCHAIN_PATH }}"
           echo "Signing Identity Name: ${{ env.CODE_SIGN_IDENTITY_NAME }}"
           echo "Team ID: ${{ secrets.APPLE_TEAM_ID }}"
-          echo "Profile Specifier: literalomicus" # Assuming 'literalomicus' is the name of your App Store profile
+          echo "Profile Specifier: literalomicus"
           # Check if KEYCHAIN_PATH or CODE_SIGN_IDENTITY_NAME are empty
           if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
             echo "Error: KEYCHAIN_PATH environment variable is empty. Cannot proceed with build."
@@ -287,7 +288,6 @@ jobs:
           fi
           echo "Building and archiving using xcodebuild command..."
           # Execute the xcodebuild archive command
-          # Explicitly specify the keychain, signing identity, and team ID using environment variables.
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -299,9 +299,6 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             -allowProvisioningUpdates \
-            -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
-            -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
-            -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
             -keychain "${{ env.KEYCHAIN_PATH }}" \
             -verbose
           echo "xcodebuild archive command finished."
@@ -335,19 +332,12 @@ jobs:
           # Create the output directory if it doesn't exist (already done in plist creation, but harmless to repeat)
           mkdir -p "${IPA_OUTPUT_DIR}"
           # Execute the xcodebuild -exportArchive command
-          # Explicitly specify the keychain and authentication details using the CORRECTED environment variable.
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
             -exportPath "${IPA_OUTPUT_DIR}" \
             -exportOptionsPlist "${EXPORT_OPTIONS_PLIST_PATH}" \
-            # App Store Connect API Authentication for provisioning updates during export (often needed)
             -allowProvisioningUpdates \
-            -authenticationKeyID ${{ secrets.APPSTORE_KEY_ID }} \
-            -authenticationIssuerID ${{ secrets.APPSTORE_ISSUER_ID }} \
-            -authenticationPrivateKey "${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}" \
-            # Explicitly specify the temporary keychain again using the CORRECTED environment variable
             -keychain "${{ env.KEYCHAIN_PATH }}" \
-            # Add verbose output
             -verbose
           echo "xcodebuild -exportArchive command finished."
 
