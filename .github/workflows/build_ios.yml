@@ -123,7 +123,7 @@ jobs:
           echo "--- End Build Settings Verification Diagnostic ---"
 
       # New Diagnostic: Dump Pods.xcodeproj/project.pbxproj
-      - name: Diagnostic: Dump Pods.xcodeproj/project.pbxproj
+      - name: Dump Pods.xcodeproj/project.pbxproj
         run: |
           echo "--- Dumping Pods.xcodeproj/project.pbxproj content ---"
           cd ios
@@ -137,7 +137,7 @@ jobs:
 
       # New Diagnostic: List contents of the problematic bundle in DerivedData
       # This runs before the main archive command, but after initial build setup.
-      - name: Diagnostic: List Problematic Bundle Contents in DerivedData
+      - name:  List Problematic Bundle Contents in DerivedData
         run: |
           echo "--- Listing contents of webview_flutter_wkwebview_privacy.bundle in DerivedData ---"
           # The path includes 'IntermediateBuildFilesPath/UninstalledProducts/iphoneos/'
@@ -243,7 +243,7 @@ jobs:
 
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
-      - name: Diagnostic: Dump Suspected Build Script Before Archive
+      - name: Dump Suspected Build Script Before Archive
         run: |
           echo "--- Dumping suspected build script content before archive ---"
           cd ios
