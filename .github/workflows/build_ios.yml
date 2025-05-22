@@ -53,6 +53,75 @@ jobs:
           
           cd ..
           echo "Flutter and iOS dependencies installed."
+
+      ---
+      - name: Workaround: Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target
+        run: |
+          echo "--- Applying CopySwiftLibs Workaround ---"
+          echo "Attempting to remove CopySwiftLibs build phase from webview_flutter_wkwebview_privacy target..."
+          
+          # Navigate to the iOS Pods directory where Pods.xcodeproj resides
+          cd ios/Pods
+          PODS_PROJECT="Pods.xcodeproj"
+          PBXPROJ_PATH="${PODS_PROJECT}/project.pbxproj"
+
+          if [ ! -f "$PBXPROJ_PATH" ]; then
+              echo "Error: project.pbxproj not found at $PBXPROJ_PATH. Cannot apply workaround."
+              exit 1
+          fi
+
+          echo "Original project.pbxproj content (first few lines) before modification:"
+          head -n 20 "$PBXPROJ_PATH"
+
+          # Target name to look for in the build phase definition
+          TARGET_TO_MODIFY="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+
+          # Use perl for in-place editing. This regex attempts to find the specific build phase for the target
+          # that calls CopySwiftLibs and remove it. It's designed to be as specific as possible.
+          # This pattern looks for:
+          #   - a line defining a build phase UUID (e.g., C309B1A7000B9B27008736B0 /* CopySwiftLibs */)
+          #   - then captures lines until it finds 'isa = PBXCopyFilesBuildPhase;'
+          #   - AND within that block, it checks if 'name = CopySwiftLibs;' exists
+          #   - AND if the 'target = ' line points to our specific target UUID.
+          # This is highly dependent on the exact pbxproj format.
+
+          # First, find the UUID of the target 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
+          TARGET_UUID=$(grep -E "name = $TARGET_TO_MODIFY" "${PBXPROJ_PATH}" -B 2 -A 5 | grep "^\s*[0-9A-F]\{24\} \/\*" | head -n 1 | awk '{print $1}' | sed 's/\([0-9A-F]*\).*/\1/')
+
+          if [ -z "$TARGET_UUID" ]; then
+              echo "WARNING: Could not find UUID for target '$TARGET_TO_MODIFY'. Workaround may fail."
+              # Fallback to a less precise match if target UUID is not found
+              # This will remove any PBXCopyFilesBuildPhase named CopySwiftLibs. DANGEROUS!
+              perl -i -0pe 's/\n\s*[0-9A-F]{24} \/\* CopySwiftLibs \*\/ = \{\n\s*isa = PBXCopyFilesBuildPhase;[^}]*name = CopySwiftLibs;[^}]*\};\n//gs' "${PBXPROJ_PATH}"
+          else
+              echo "Found UUID for target '$TARGET_TO_MODIFY': $TARGET_UUID"
+              echo "Attempting to remove the specific CopySwiftLibs build phase for this target..."
+
+              # This pattern tries to remove the PBXCopyFilesBuildPhase block itself and its reference in the target's buildPhases array.
+              # This is very advanced pbxproj manipulation and may require fine-tuning.
+              # It attempts to remove the phase definition AND its reference within the targets buildPhases array.
+              
+              # First, remove the phase definition block
+              perl -i -0pe "s/\n\s*([0-9A-F]{24} \/\* CopySwiftLibs \*\/) = \{\n\s*isa = PBXCopyFilesBuildPhase;[^}]*name = CopySwiftLibs;[^}]*buildActionMask = [0-9]+;[^}]*dstPath = \"\";[^}]*dstSubfolderSpec = 10;[^}]*\};//gs" "${PBXPROJ_PATH}"
+
+              # Then, remove the reference to this phase from the target's buildPhases array
+              perl -i -pe "s/\bbuildPhases = \(\n((?:(?!$TARGET_UUID)[\s\S])*?)($TARGET_UUID \/\* CopySwiftLibs \*\/,\n)(([\s\S])*?\);)/\bbuildPhases = (\n\$1\$4/g" "${PBXPROJ_PATH}"
+              
+              # A simpler, but less precise, way to comment out:
+              # perl -i -pe "s/^(.*)(name = CopySwiftLibs;)(.*target = ${TARGET_UUID} .*)$/#$1$2$3/" "${PBXPROJ_PATH}"
+          fi
+
+          echo "Project.pbxproj content (first few lines) after modification:"
+          head -n 20 "$PBXPROJ_PATH"
+
+          # After modification, re-clean derived data to ensure Xcode rebuilds with the modified project
+          echo "Re-cleaning DerivedData after pbxproj modification..."
+          rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
+
+          cd ../.. # Go back to root
+        continue-on-error: true # Keep this as true for now, as the workaround is experimental
+
+      ---
       # Diagnostic: Inspect Podfile.lock
       - name: Inspect Podfile.lock
         run: |
@@ -103,6 +172,22 @@ jobs:
               echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData (Pre-build). This is expected if it's created during the main build."
           fi
           echo "--- End Bundle Diagnostic (Pre-build) ---"
+
+      # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
+      - name: Pre-Archive Check: List Webview Privacy Bundle Build Dir
+        run: |
+          echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
+          TARGET_DIR="/Users/runner/work/cursorybuild/cursorybuild/ios/build/Release-iphoneos/webview_flutter_wkwebview"
+          if [ -d "$TARGET_DIR" ]; then
+              echo "Listing contents of $TARGET_DIR:"
+              ls -la "$TARGET_DIR" || true
+              echo "Searching for webview_flutter_wkwebview_privacy.bundle:"
+              find "$TARGET_DIR" -name "webview_flutter_wkwebview_privacy.bundle" || echo "Bundle not found in target build dir (Pre-archive)."
+          else
+              echo "Target build directory does not exist yet (Pre-archive): $TARGET_DIR"
+          fi
+          echo "--- End Pre-Archive Check ---"
+
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - crucial for bundle issues)
       - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
