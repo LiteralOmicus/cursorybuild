@@ -38,74 +38,129 @@ end
 # This block runs after all pods have been installed.
 post_install do |installer|
   installer.pods_project.targets.each do |target|
-    # Apply Flutter's default build settings
+    # Always apply Flutter's default build settings first for all targets
     flutter_additional_ios_build_settings(target)
 
-    # Disable ENABLE_BITCODE for all targets (as per your existing setting)
+    # Disable ENABLE_BITCODE for all targets
     target.build_configurations.each do |config|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
 
-    # --- Aggressive fix: Address CopySwiftLibs and bundle type issues for webview_flutter_wkwebview_privacy ---
+    # --- AGGRESSIVE FIX: webview_flutter_wkwebview_privacy.bundle ---
     if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Applying aggressive fix for target: #{target.name} ---"
+      puts "--- Applying AGGRESSIVE fix for target: #{target.name} ---"
       
-      # It's crucial to ensure this target is treated purely as a resource bundle
-      # and not as something that needs Swift linking or embedding.
-
-      target.build_phases.dup.each do |phase|
-        # Remove any Swift-related build phases if they exist
-        if phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.name == 'CopySwiftLibs'
-          puts "  - Removing CopySwiftLibs build phase from #{target.name}"
-          target.build_phases.delete(phase)
-        elsif phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase)
-          puts "  - Removing Frameworks build phase from #{target.name} (not needed for resource bundle)"
-          target.build_phases.delete(phase)
-        elsif phase.is_a?(Xcodeproj::Project::Object::PBXSourcesBuildPhase)
-          puts "  - Removing Sources build phase from #{target.name} (not needed for resource bundle)"
-          target.build_phases.delete(phase)
-        end
+      # Diagnostic: Print build phases before attempting removal
+      puts "  - Build phases BEFORE removal for #{target.name}:"
+      target.build_phases.each do |phase|
+        puts "    - #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
       end
 
+      # 1. Forceful removal of specific build phases
+      phases_to_remove = []
+      target.build_phases.each do |phase|
+        # Identify by name (or specific type if known)
+        if phase.name == 'CopySwiftLibs' || phase.name == 'Sources' || phase.name == 'Frameworks'
+          puts "  - IDENTIFIED for removal: #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
+          phases_to_remove << phase
+        end
+        # Also target any PBXCopyFilesBuildPhase that *might* be for SwiftLibs, even if not named 'CopySwiftLibs'
+        if phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.dst_subfolder_spec == 11 # 11 is for Frameworks
+          puts "  - IDENTIFIED for removal (CopyFiles Frameworks): #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
+          phases_to_remove << phase unless phases_to_remove.include?(phase)
+        end
+      end
+      
+      phases_to_remove.each do |phase|
+        target.build_phases.delete(phase)
+        puts "  - REMOVED: #{phase.display_name} - UUID: #{phase.uuid}"
+      end
+
+      # Diagnostic: Print build phases after attempting removal
+      puts "  - Build phases AFTER removal for #{target.name}:"
+      target.build_phases.each do |phase|
+        puts "    - #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
+      end
+
+
+      # 2. Force essential build settings for a resource bundle
       target.build_configurations.each do |config|
         puts "  - Applying specific build settings for #{config.name} in #{target.name}"
+        
+        # Fundamental settings for a resource bundle
         config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
         config.build_settings['SKIP_INSTALL'] = 'YES'
+        config.build_settings['WRAPPER_EXTENSION'] = 'bundle'
+
+        # Explicitly tell Xcode this is NOT Swift code or an executable
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        
-        # Explicitly disable code signing for this bundle, as it's not an executable
+        config.build_settings['DEFINES_MODULE'] = 'NO'
+        config.build_settings['CURRENT_PROJECT_VERSION'] = '1'
+        config.build_settings['MARKETING_VERSION'] = '1.0'
+
+        # Crucially, ensure no executable name is expected or generated
+        config.build_settings['EXECUTABLE_NAME'] = ''
+        config.build_settings['MACH_O_TYPE'] = 'none'
+
+        # Remove any code signing requirements for this bundle
         config.build_settings['CODE_SIGN_IDENTITY'] = ''
         config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
         config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
 
-        # Ensure no executable name is set for this bundle
-        config.build_settings['EXECUTABLE_NAME'] = ''
-        config.build_settings['MACH_O_TYPE'] = 'none' # Explicitly state no Mach-O executable
-        config.build_settings['WRAPPER_EXTENSION'] = 'bundle' # Ensure correct extension
-
-        # Explicitly clear any Swift-related settings that might trigger CopySwiftLibs
-        # These are crucial for preventing implicit Swift linking/embedding
-        config.build_settings['SWIFT_VERSION'] = '' # Clear Swift version if set
-        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = ''
-        config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = ''
-        config.build_settings['SWIFT_INCLUDE_PATHS'] = ''
-        config.build_settings['DEFINES_MODULE'] = 'NO' # Not a module to define
-        
-        # Completely remove these keys if they exist, rather than setting to empty string
-        # This is more forceful and prevents Xcode from trying to infer paths
+        # Clear out any paths related to linking or searching for dynamic libraries
+        # Using `delete` is stronger than setting to empty string if the key exists
         config.build_settings.delete('LD_RUNPATH_SEARCH_PATHS')
         config.build_settings.delete('DYLIB_INSTALL_NAME_BASE')
-        config.build_settings.delete('LIBRARY_SEARCH_PATHS') # Also remove library search paths
+        config.build_settings.delete('LIBRARY_SEARCH_PATHS')
+        config.build_settings.delete('OTHER_LDFLAGS')
 
-        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO' # Suppress warnings
-        config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2' # Ensure iOS device family
-        config.build_settings['SUPPORTS_MACCATALYST'] = 'NO' # Explicitly disable Mac Catalyst support
+        # Clear any Swift-specific compilation settings
+        config.build_settings['SWIFT_VERSION'] = ''
+        config.build_settings['SWIFT_COMPILATION_MODE'] = ''
+        config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = ''
+        config.build_settings['SWIFT_INCLUDE_PATHS'] = ''
+        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+
+        # Set device targets explicitly for iOS
+        config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2'
+        config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
       end
       puts "--- Finished aggressive fix for target: #{target.name} ---"
     end
-    # --- End aggressive fix ---
   end
-  # Crucial: Save the modified project
+  # CRITICAL: Save the modified project
   installer.pods_project.save
+
+  # --- ULTIMATE LAST RESORT HACK: Direct file modification (only if xcodeproj gem fails) ---
+  # This part should ONLY be used if the above Xcodeproj modifications fail consistently.
+  # It's highly fragile and can break your project file.
+  # Comment this out first, and only uncomment if the problem persists after the above changes.
+  #
+  # pods_pbxproj_path = File.join(File.dirname(__FILE__), 'Pods', 'Pods.xcodeproj', 'project.pbxproj')
+  # if File.exist?(pods_pbxproj_path)
+  #   content = File.read(pods_pbxproj_path)
+  #   puts "--- Attempting direct pbxproj modification for webview_flutter_wkwebview_privacy ---"
+  #   # Regex to find the webview_flutter_wkwebview_privacy target and remove Sources/Frameworks build phases
+  #   # This regex is highly specific and might need adjustment.
+  #   # It aims to find the target block and replace its buildPhases list.
+  #   # This is incredibly dangerous and should only be a last resort.
+  #   content.gsub!(/(\/\* webview_flutter_wkwebview-webview_flutter_wkwebview_privacy \*\/ = \{\n\s+isa = PBXNativeTarget;\n\s+buildConfigurationList = [^\n]+;\n\s+buildPhases = \(\n(?:[^\n]+\n)*?\s+\);\n)/m) do |match|
+  #     if match.include?("webview_flutter_wkwebview-webview_flutter_wkwebview_privacy")
+  #       # Keep only the Resources phase, assuming its UUID is consistent or find it dynamically.
+  #       # This is hardcoded and dangerous. You'd need to find the actual UUID of the Resources phase.
+  #       # A safer approach might be to find the target and then within that section,
+  #       # remove lines containing "Sources" or "Frameworks" from the 'buildPhases' array.
+  #       #
+  #       # Example of a very specific, dangerous replacement:
+  #       match.sub(/buildPhases = \(\n(?:[^\n]+\n)*?\s+\);/, "buildPhases = (\n\t\t\t\tB30A3A3F3AF7C695A2CD6F8452F60474 /* Resources */,\n\t\t\t);")
+  #     else
+  #       match # No change
+  #     end
+  #   end
+  #   File.write(pods_pbxproj_path, content)
+  #   puts "--- Finished direct pbxproj modification (if applied) ---"
+  # else
+  #   puts "Error: Pods.xcodeproj/project.pbxproj not found for direct modification."
+  # end
 end
