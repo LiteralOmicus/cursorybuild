@@ -1,4 +1,4 @@
-name: build-test-xcodebuild-ultimate-fix-v2
+name: build-test-xcodebuild-ultimate-fix-v3
 
 on:
   push:
@@ -139,7 +139,7 @@ jobs:
           echo "--- End Bundle Diagnostic (Pre-build) ---"
 
       # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
-      - name: List Webview Privacy Bundle Build Dir
+      - name: Pre-Archive Check: List Webview Privacy Bundle Build Dir
         run: |
           echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
           # This path is based on common Xcode build structures for pods
@@ -244,7 +244,7 @@ jobs:
       - name: Import Code Signing Certificate
         uses: Apple-Actions/import-codesign-certs@v2
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # CORRECTED THIS LINE
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           keychain: ${{ env.KEYCHAIN_NAME }}
           create-keychain: true
@@ -284,7 +284,31 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
-
+      # Diagnostic: Dump suspected build script content right before archive
+      # This step runs just before the archive command, which is where the failure occurs.
+      - name: Dump Suspected Build Script Before Archive
+        run: |
+          echo "--- Dumping suspected build script content before archive ---"
+          cd ios
+          TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+          # Common script name for resource bundles, sometimes just `script.sh` or `RunScript.sh`
+          SCRIPT_NAME_CANDIDATES=("webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-resources.sh" "webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-embed.sh" "script.sh" "RunScript.sh")
+          FOUND_SCRIPT=false
+          for SCRIPT_FILE in "${SCRIPT_NAME_CANDIDATES[@]}"; do
+              if [ -f "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" ]; then
+                  echo "Found script file: $TARGET_SUPPORT_DIR/$SCRIPT_FILE. Contents:"
+                  cat "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" || echo "Could not read script file."
+                  FOUND_SCRIPT=true
+                  break
+              fi
+          done
+          if [ "$FOUND_SCRIPT" = false ]; then
+              echo "Suspected script file not found among candidates in $TARGET_SUPPORT_DIR."
+              echo "Listing all .sh files in $TARGET_SUPPORT_DIR for inspection:"
+              ls -la "$TARGET_SUPPORT_DIR"/*.sh || echo "No .sh files found in target support directory."
+          fi
+          cd .. 
+          echo "--- End Script Dump Diagnostic ---"
       # Build & Archive
       - name: "#️⃣ Generate Build Number"
         id: buildnumber
@@ -343,8 +367,7 @@ jobs:
             IPHONEOS_DEPLOYMENT_TARGET=13.0 \
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            # Reverting specific global Swift flags as they are handled by Podfile for the problematic bundle
-            # Let Xcode's default behavior apply for the main app and other pods
+            # Reverting specific global Swift flags to allow Xcode's defaults for Swift linking
             SUPPORTS_MACCATALYST=NO \
             SUPPORTS_MACCATALYST_IOS=NO \
             TARGETED_DEVICE_FAMILY="1,2" \
