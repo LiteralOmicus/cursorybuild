@@ -63,52 +63,79 @@ target 'Runner' do
   # Pods for Flutter - this installs pods based on your pubspec.yaml
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
-  # Add your other specific pods here if any, e.g.:
-  # pod 'Firebase/Analytics'
-  # pod 'AnotherPod', '~> 1.0'
+  # PDFTron Pods
+  pod 'PDFTron', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron/latest.podspec'
+  pod 'PDFTronTools', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron-tools/latest.podspec'
+end
 
-  post_install do |installer|
-    # This call applies some standard Flutter settings to pod targets.
-    # It's defined in the podhelper.rb
-    flutter_additional_ios_build_settings(installer.pods_project) # Apply to all pod targets
+# This block runs after all pods have been installed.
+post_install do |installer|
+  # This call applies some standard Flutter settings to pod targets.
+  # It's defined in the podhelper.rb
+  # flutter_additional_ios_build_settings(installer.pods_project) # Apply to all pod targets - this function is usually called by flutter_post_install
 
-    installer.pods_project.targets.each do |target|
-      # --- Specific Modification for webview_flutter_wkwebview-webview_flutter_wkwebview_privacy ---
-      if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-        puts "Attempting to modify build phases for target: #{target.name}"
+  installer.pods_project.targets.each do |target|
+    # Disable ENABLE_BITCODE for all targets (as per your existing setting)
+    target.build_configurations.each do |config|
+      config.build_settings['ENABLE_BITCODE'] = 'NO'
+    end
 
-        original_phase_count = target.build_phases.count
-        puts "Original build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
+    # --- Specific Modification for webview_flutter_wkwebview-webview_flutter_wkwebview_privacy ---
+    if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
+      puts "--- Applying aggressive fix: Removing Sources/Frameworks phases and applying Swift settings for target: #{target.name} ---"
 
-        # Remove Sources and Frameworks build phases from this specific bundle target
-        target.build_phases.reject! do |phase|
-          phase.is_a?(Xcodeproj::Project::Object::PBXSourcesBuildPhase) || \
-          phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase)
-        end
+      original_phase_count = target.build_phases.count
+      puts "Original build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
 
-        # Log the outcome
-        if target.build_phases.count < original_phase_count
-          puts "Successfully removed Sources and/or Frameworks build phases from #{target.name}."
-          puts "New build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
-        else
-          puts "No Sources or Frameworks build phases were removed from #{target.name} (they might not have existed or the condition failed)."
+      # Remove Sources and Frameworks build phases from this specific bundle target
+      # We iterate over a copy of the array to safely remove elements
+      target.build_phases.dup.each do |phase|
+        if phase.is_a?(Xcodeproj::Project::Object::PBXSourcesBuildPhase) || \
+           phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase)
+          puts "  - Removing #{phase.display_name} (#{phase.isa}) from #{target.name}"
+          target.build_phases.delete(phase)
         end
       end
 
-      # Fix for PDFTron if you still have issues, often related to module stability
-      # (Uncomment and use if needed)
-      # if target.name == 'PDFTron' || target.name == 'PDFTronTools'
-      #   target.build_configurations.each do |config|
-      #     config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
-      #   end
-      #   puts "Set BUILD_LIBRARY_FOR_DISTRIBUTION=YES for #{target.name}"
-      # end
+      # Log the outcome
+      if target.build_phases.count < original_phase_count
+        puts "Successfully removed Sources and/or Frameworks build phases from #{target.name}."
+        puts "New build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
+      else
+        puts "No Sources or Frameworks build phases were removed from #{target.name} (they might not have existed or the condition failed)."
+      end
 
-    end # End of iterating through targets
+      # Re-apply the specific build settings for this privacy bundle target
+      target.build_configurations.each do |config|
+        puts "  - Applying extensive NO/empty settings for #{config.name} in #{target.name}"
+        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle' # Ensure it's explicitly a bundle
+        config.build_settings['SKIP_INSTALL'] = 'YES' # Important for bundles to prevent installation in main app
+        
+        # Explicitly clear Swift-related search paths and run paths
+        config.build_settings['LIBRARY_SEARCH_PATHS'] = ''
+        config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = ''
+        config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '' # Clear any conditions that might imply Swift
+        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '' # Clear Swift optimization levels
+        config.build_settings['SWIFT_INCLUDE_PATHS'] = '' # Clear Swift include paths
+        config.build_settings['SWIFT_WHOLE_MODULE_OPTIMIZATION'] = 'NO' # Explicitly disable
 
-    # This is a general Flutter post_install hook, usually handles things like
-    # setting the Swift version for Flutter plugin pods and disabling bitcode.
-    # Make sure it's called after your custom modifications if they could conflict.
-    flutter_post_install(installer) if defined?(flutter_post_install)
-  end # End of post_install
-end # End of target 'Runner'
+        # Ensure correct device family settings, preventing macOS/Catalyst interpretations
+        config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
+        config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2' # iPhone, iPad
+      end
+      puts "--- Finished applying aggressive fix for target: #{target.name} ---"
+    end
+    # --- End aggressive fix ---
+
+  end # End of iterating through targets
+
+  # This is a general Flutter post_install hook, usually handles things like
+  # setting the Swift version for Flutter plugin pods and disabling bitcode.
+  # Make sure it's called after your custom modifications if they could conflict.
+  flutter_post_install(installer) if defined?(flutter_post_install)
+  
+  # Crucial: Save the modified project
+  installer.pods_project.save
+end
