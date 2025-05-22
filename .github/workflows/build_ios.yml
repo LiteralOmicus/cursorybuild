@@ -122,37 +122,6 @@ jobs:
           cd ..
           echo "--- End Build Settings Verification Diagnostic ---"
 
-      # New Diagnostic: Dump Pods.xcodeproj/project.pbxproj
-      - name: Dump Pods.xcodeproj/project.pbxproj
-        run: |
-          echo "--- Dumping Pods.xcodeproj/project.pbxproj content ---"
-          cd ios
-          if [ -f "Pods/Pods.xcodeproj/project.pbxproj" ]; then
-              cat "Pods/Pods.xcodeproj/project.pbxproj" || echo "Could not read project.pbxproj."
-          else
-              echo "Pods/Pods.xcodeproj/project.pbxproj not found."
-          fi
-          cd ..
-          echo "--- End project.pbxproj Dump Diagnostic ---"
-
-      # New Diagnostic: List contents of the problematic bundle in DerivedData
-      # This runs before the main archive command, but after initial build setup.
-      - name:  List Problematic Bundle Contents in DerivedData
-        run: |
-          echo "--- Listing contents of webview_flutter_wkwebview_privacy.bundle in DerivedData ---"
-          # The path includes 'IntermediateBuildFilesPath/UninstalledProducts/iphoneos/'
-          # We need to find the specific derived data path for this run.
-          DERIVED_DATA_ROOT=$(find /Users/runner/Library/Developer/Xcode/DerivedData/Runner-*/Build/Intermediates.noindex/ArchiveIntermediates/Runner/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/ -maxdepth 1 -type d -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
-
-          if [ -n "$DERIVED_DATA_ROOT" ]; then
-              echo "Found bundle in DerivedData at: $DERIVED_DATA_ROOT"
-              echo "Contents:"
-              ls -laR "$DERIVED_DATA_ROOT" || true
-          else
-              echo "webview_flutter_wkwebview_privacy.bundle not found in expected DerivedData path."
-          fi
-          echo "--- End Problematic Bundle Contents Diagnostic ---"
-
       # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
       - name: Validate PrivacyInfo.xcprivacy Files
         run: |
