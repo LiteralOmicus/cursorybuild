@@ -34,13 +34,11 @@ jobs:
           echo "Running flutter clean, upgrade, and pod setup..."
           flutter clean
           flutter pub upgrade
-
           cd ios
           
           # Aggressive cleaning of Xcode DerivedData
           echo "Cleaning Xcode DerivedData..."
           rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
-
           echo "Cleaning CocoaPods cache..." # Added CocoaPods cache clean
           pod cache clean --all || true # Use || true in case the cache is empty or command fails
           echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
@@ -55,14 +53,12 @@ jobs:
           
           cd ..
           echo "Flutter and iOS dependencies installed."
-
       # Diagnostic: Inspect Podfile.lock
       - name: Inspect Podfile.lock
         run: |
           echo "--- Contents of Podfile.lock ---"
           cat ios/Podfile.lock || echo "Podfile.lock not found."
           echo "--- End Podfile.lock Diagnostic ---"
-
       # Diagnostic: Locate and Inspect webview_flutter_wkwebview related Podspecs
       - name: Inspect webview_flutter_wkwebview Podspecs
         run: |
@@ -70,7 +66,6 @@ jobs:
           # Find all podspecs with 'webview_flutter_wkwebview' in their name
           find /Users/runner/.pub-cache/ -name "*webview_flutter_wkwebview*.podspec" -print -exec cat {} \; || echo "No webview_flutter_wkwebview related podspecs found or could not be read."
           echo "--- End Podspec Diagnostic ---"
-
       # Diagnostic: Inspect webview_flutter_wkwebview plugin source directory for resources
       - name: Inspect webview_flutter_wkwebview Plugin Resources
         run: |
@@ -89,7 +84,6 @@ jobs:
               echo "Could not locate webview_flutter_wkwebview plugin source directory in pub-cache."
           fi
           echo "--- End Plugin Resources Diagnostic ---"
-
       # Diagnostic: Webview_flutter Privacy Bundle (Pre-build check)
       - name: webview_flutter_wkwebview_privacy Bundle Check (Pre-build)
         run: |
@@ -109,24 +103,20 @@ jobs:
               echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData (Pre-build). This is expected if it's created during the main build."
           fi
           echo "--- End Bundle Diagnostic (Pre-build) ---"
-
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - crucial for bundle issues)
       - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
           echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
           cd ios
           TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-
           echo "Attempting to change directory to: $TARGET_SUPPORT_DIR"
           if [ -d "$TARGET_SUPPORT_DIR" ]; then # Check if directory exists
               echo "Successfully changed directory to $TARGET_SUPPORT_DIR."
               cd "$TARGET_SUPPORT_DIR"
               echo "Listing contents of $TARGET_SUPPORT_DIR:"
               ls -la || true # List files in the current directory
-
               echo "Searching for 'builtin-infoPlistUtility', 'copy-bundle-resources', 'builtin-copy', or 'builtin-tool' in scripts:"
               grep -rE "builtin-infoPlistUtility|copy-bundle-resources|builtin-copy|builtin-tool" *.sh || echo "Relevant bundle/resource copy commands not found in .sh scripts. This is unusual for a resource bundle."
-
               echo "Attempting to print contents of all .sh scripts:"
               for script in *.sh; do
                   if [ -f "$script" ]; then
@@ -146,7 +136,6 @@ jobs:
               # you'd need to re-run pod install --verbose here or in the setup step
           fi
           echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
-
       # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
       - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
         run: |
@@ -161,7 +150,6 @@ jobs:
           fi
           cd ..
           echo "--- End Build Settings Verification Diagnostic ---"
-
       # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
       - name: Validate PrivacyInfo.xcprivacy Files
         run: |
@@ -169,7 +157,6 @@ jobs:
           # Search in Pods directory and pub cache
           find_command="find ios/Pods /Users/runner/.pub-cache/ -name 'PrivacyInfo.xcprivacy'"
           PRIVACY_FILES=$(eval $find_command)
-
           if [ -z "$PRIVACY_FILES" ]; then
               echo "No PrivacyInfo.xcprivacy files found."
           else
@@ -185,7 +172,6 @@ jobs:
               done
           fi
           echo "--- End PrivacyInfo.xcprivacy Validation ---"
-
       # Code Signing Setup
       - name: Set Keychain Path Environment Variable
         run: |
@@ -204,7 +190,6 @@ jobs:
           fi
           echo "KEYCHAIN_PATH=$FULL_KEYCHAIN_PATH" >> $GITHUB_ENV
           echo "Set KEYCHAIN_PATH to: '$FULL_KEYCHAIN_PATH'"
-
       - name: Import Code Signing Certificate
         uses: Apple-Actions/import-codesign-certs@v2
         with:
@@ -223,7 +208,6 @@ jobs:
           fi
           security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" || true
           echo "Certificate verification complete."
-
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
@@ -249,7 +233,6 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
-
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
       - name: Dump Suspected Build Script Before Archive
@@ -259,7 +242,6 @@ jobs:
           TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
           # Common script name for resource bundles, sometimes just `script.sh` or `RunScript.sh`
           SCRIPT_NAME_CANDIDATES=("webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-resources.sh" "webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-embed.sh" "script.sh" "RunScript.sh")
-
           FOUND_SCRIPT=false
           for SCRIPT_FILE in "${SCRIPT_NAME_CANDIDATES[@]}"; do
               if [ -f "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" ]; then
@@ -269,7 +251,6 @@ jobs:
                   break
               fi
           done
-
           if [ "$FOUND_SCRIPT" = false ]; then
               echo "Suspected script file not found among candidates in $TARGET_SUPPORT_DIR."
               echo "Listing all .sh files in $TARGET_SUPPORT_DIR for inspection:"
@@ -277,8 +258,6 @@ jobs:
           fi
           cd ..
           echo "--- End Script Dump Diagnostic ---"
-
-
       # Build & Archive
       - name: "#️⃣ Generate Build Number"
         id: buildnumber
@@ -293,7 +272,6 @@ jobs:
           # Adding stderr to stdout redirection for more comprehensive output
           xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release 2>&1 || true
           echo "Finished dumping resolved build settings."
-
       - name: Create ExportOptions.plist
         run: |
           echo "Creating ExportOptions.plist..."
@@ -319,19 +297,16 @@ jobs:
           echo "Contents of ExportOptions.plist:"
           cat "${EXPORT_OPTIONS_PLIST_PATH}"
           echo "EXPORT_OPTIONS_PLIST_PATH=${EXPORT_OPTIONS_PLIST_PATH}" >> $GITHUB_ENV
-
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process with increased verbosity..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
-
           if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
             echo "Error: Missing signing environment variables. Cannot proceed with build."
             exit 1
           fi
-
           # Clean and then Archive with maximum verbosity
           # -showBuildTimingSummary helps diagnose where time is spent, and thus where bottlenecks are.
           # 2>&1 | tee redirects stderr to stdout and saves to a file
@@ -352,7 +327,6 @@ jobs:
           echo "--- Content of xcodebuild_archive_log.txt ---"
           cat xcodebuild_archive_log.txt
           echo "--- End of xcodebuild_archive_log.txt ---"
-
       # Diagnostic: Webview_flutter Privacy Bundle (Post-archive check)
       - name: webview_flutter_wkwebview_privacy Bundle Check (Post-archive)
         if: ${{ always() }} # Run this even if the archive step fails
@@ -381,7 +355,6 @@ jobs:
               else
                   echo "Problematic directory does not exist: $FAILED_PATH_DIR"
               fi
-
               echo "Searching DerivedData for any instance of the bundle:"
               FULL_DERIVED_DATA_SEARCH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print)
               if [ -n "$FULL_DERIVED_DATA_SEARCH" ]; then
@@ -394,19 +367,16 @@ jobs:
               fi
           fi
           echo "--- End Bundle Diagnostic (Post-archive) ---"
-
       - name: Export IPA from Archive
         run: |
           echo "Starting IPA export process..."
           ARCHIVE_INPUT_PATH="build/Runner.xcarchive"
           IPA_OUTPUT_DIR="build/ios/ipa"
           EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-
           if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
             echo "Error: Missing environment variables or ExportOptions.plist. Cannot proceed with export."
             exit 1
           fi
-
           mkdir -p "${IPA_OUTPUT_DIR}"
           xcodebuild -exportArchive \
             -archivePath "${ARCHIVE_INPUT_PATH}" \
@@ -418,7 +388,6 @@ jobs:
           echo "--- Content of xcodebuild_export_log.txt ---"
           cat xcodebuild_export_log.txt
           echo "--- End of xcodebuild_export_log.txt ---"
-
       - name: Upload xcodebuild Export Log
         if: ${{ always() }} # Upload even on failure
         uses: actions/upload-artifact@v4
