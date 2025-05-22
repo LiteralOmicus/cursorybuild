@@ -46,10 +46,10 @@ post_install do |installer|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
 
-    # --- AGGRESSIVE FIX: For webview_flutter_wkwebview_privacy.bundle and shared_preferences_foundation_privacy.bundle ---
-    if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy' || \
-       target.name == 'shared_preferences_foundation-shared_preferences_foundation_privacy'
-      puts "--- Applying AGGRESSIVE fix for target: #{target.name} ---"
+    # --- AGGRESSIVE FIX: For ALL privacy bundles that incorrectly trigger SwiftLibs copying ---
+    # Using a regex to match targets ending with '_privacy' (case-insensitive)
+    if target.name.match?(/_privacy$/i)
+      puts "--- Applying AGGRESSIVE fix for privacy bundle target: #{target.name} ---"
       
       # Diagnostic: Print build phases before attempting removal
       puts "  - Build phases BEFORE removal for #{target.name}:"
