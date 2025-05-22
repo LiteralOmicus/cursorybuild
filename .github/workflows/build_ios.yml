@@ -284,31 +284,7 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
-      # Diagnostic: Dump suspected build script content right before archive
-      # This step runs just before the archive command, which is where the failure occurs.
-      - name: Dump Suspected Build Script Before Archive
-        run: |
-          echo "--- Dumping suspected build script content before archive ---"
-          cd ios
-          TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          # Common script name for resource bundles, sometimes just `script.sh` or `RunScript.sh`
-          SCRIPT_NAME_CANDIDATES=("webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-resources.sh" "webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-embed.sh" "script.sh" "RunScript.sh")
-          FOUND_SCRIPT=false
-          for SCRIPT_FILE in "${SCRIPT_NAME_CANDIDATES[@]}"; do
-              if [ -f "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" ]; then
-                  echo "Found script file: $TARGET_SUPPORT_DIR/$SCRIPT_FILE. Contents:"
-                  cat "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" || echo "Could not read script file."
-                  FOUND_SCRIPT=true
-                  break
-              fi
-          done
-          if [ "$FOUND_SCRIPT" = false ]; then
-              echo "Suspected script file not found among candidates in $TARGET_SUPPORT_DIR."
-              echo "Listing all .sh files in $TARGET_SUPPORT_DIR for inspection:"
-              ls -la "$TARGET_SUPPORT_DIR"/*.sh || echo "No .sh files found in target support directory."
-          fi
-          cd "..
-          echo "--- End Script Dump Diagnostic ---"
+
       # Build & Archive
       - name: "#️⃣ Generate Build Number"
         id: buildnumber
