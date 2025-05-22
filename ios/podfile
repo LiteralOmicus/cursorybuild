@@ -46,9 +46,24 @@ post_install do |installer|
       config.build_settings['ENABLE_BITCODE'] = 'NO'
     end
 
-    # --- Aggressive fix: Attempt to disable Swift embedding for the privacy bundle target ---
+    # --- Aggressive fix: Remove problematic build phases and apply Swift embedding settings for privacy bundle ---
     if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Applying aggressive fix: Disabling Swift embedding & clearing related paths for target: #{target.name} ---"
+      puts "--- Applying aggressive fix: Removing Sources/Frameworks phases and applying Swift settings for target: #{target.name} ---"
+
+      # Collect phases to remove first to avoid modifying array while iterating
+      phases_to_remove = []
+      target.buildPhases.each do |build_phase|
+        if build_phase.isa == 'PBXSourcesBuildPhase' || build_phase.isa == 'PBXFrameworksBuildPhase'
+          phases_to_remove << build_phase
+        end
+      end
+
+      # Now remove them
+      phases_to_remove.each do |phase|
+        puts "  - Removing #{phase.isa} from #{target.name}"
+        target.buildPhases.delete(phase)
+      end
+
       target.build_configurations.each do |config|
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
@@ -74,4 +89,6 @@ post_install do |installer|
     # --- End aggressive fix ---
 
   end
+  # Ensure the Pods project is saved after modifications
+  installer.pods_project.save
 end
