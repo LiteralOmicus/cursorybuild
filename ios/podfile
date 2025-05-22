@@ -1,7 +1,10 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '13.0'
+# It's highly recommended to set your project's iOS deployment target.
+# For modern Flutter and plugins, '13.0' or '14.0' is a common choice.
+platform :ios, '13.0' # Or your desired minimum iOS version
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
+ENV['FLUTTER_ROOT'] ||= File.expand_path(File.join(File.dirname(File.realpath(__FILE__)), '..'))
+
+# CocoaPods Analytics are disabled by default for Flutter projects.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -10,85 +13,102 @@ project 'Runner', {
   'Release' => :release,
 }
 
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
+# This function is standard in Flutter-generated Podfiles.
+# It can be used for global settings if needed, but flutter_additional_ios_build_settings
+# within the post_install hook is often used for per-target settings.
+def flutter_fix_xcode_project_settings(installer)
+  installer.pods_project.targets.each do |target|
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        ## dart: PermissionGroup.calendar
+        # 'PERMISSION_EVENTS=1',
+        ## dart: PermissionGroup.reminders
+        # 'PERMISSION_REMINDERS=1',
+        ## dart: PermissionGroup.contacts
+        # 'PERMISSION_CONTACTS=1',
+        ## dart: PermissionGroup.camera
+        # 'PERMISSION_CAMERA=1',
+        ## dart: PermissionGroup.microphone
+        # 'PERMISSION_MICROPHONE=1',
+        ## dart: PermissionGroup.speech
+        # 'PERMISSION_SPEECH_RECOGNIZER=1',
+        ## dart: PermissionGroup.photos
+        # 'PERMISSION_PHOTOS=1',
+        ## dart: PermissionGroup.notification
+        # 'PERMISSION_NOTIFICATIONS=1',
+        ## dart: PermissionGroup.location
+        # 'PERMISSION_LOCATION=1',
+        ## dart: PermissionGroup.sensors
+        # 'PERMISSION_SENSORS=1',
+        ## dart: PermissionGroup.bluetooth
+        # 'PERMISSION_BLUETOOTH=1',
+        ## dart: PermissionGroup.appTrackingTransparency
+        # 'PERMISSION_APP_TRACKING_TRANSPARENCY=1',
+        ## dart: PermissionGroup.criticalAlerts
+        # 'PERMISSION_CRITICAL_ALERTS=1'
+      ]
+      # You can add other global build settings here if necessary.
+    end
   end
-
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
-    return matches[1].strip if matches
-  end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
 end
 
-require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
-
-flutter_ios_podfile_setup
+# Flutter Pods - this line loads Flutter's podhelper.rb
+require_relative File.join(ENV['FLUTTER_ROOT'], '.ios', 'Flutter', 'podhelper')
 
 target 'Runner' do
+  use_frameworks! # Recommended for Swift and dynamic frameworks
+  use_modular_headers! # Improves build times and handles modular dependencies better
+
+  # Pods for Flutter - this installs pods based on your pubspec.yaml
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
-  # PDFTron Pods
-  use_frameworks!
-  pod 'PDFTron', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron/latest.podspec'
-  pod 'PDFTronTools', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron-tools/latest.podspec'
-end
 
-# This block runs after all pods have been installed.
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    # Apply Flutter's default build settings
-    flutter_additional_ios_build_settings(target)
+  # Add your other specific pods here if any, e.g.:
+  # pod 'Firebase/Analytics'
+  # pod 'AnotherPod', '~> 1.0'
 
-    # Disable ENABLE_BITCODE for all targets (as per your existing setting)
-    target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'NO'
-    end
+  post_install do |installer|
+    # This call applies some standard Flutter settings to pod targets.
+    # It's defined in the podhelper.rb
+    flutter_additional_ios_build_settings(installer.pods_project) # Apply to all pod targets
 
-    # --- Aggressive fix: Remove problematic build phases and apply Swift embedding settings for privacy bundle ---
-    if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      puts "--- Applying aggressive fix: Removing Sources/Frameworks phases and applying Swift settings for target: #{target.name} ---"
+    installer.pods_project.targets.each do |target|
+      # --- Specific Modification for webview_flutter_wkwebview-webview_flutter_wkwebview_privacy ---
+      if target.name == 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
+        puts "Attempting to modify build phases for target: #{target.name}"
 
-      # Collect phases to remove first to avoid modifying array while iterating
-      phases_to_remove = []
-      target.buildPhases.each do |build_phase|
-        if build_phase.isa == 'PBXSourcesBuildPhase' || build_phase.isa == 'PBXFrameworksBuildPhase'
-          phases_to_remove << build_phase
+        original_phase_count = target.build_phases.count
+        puts "Original build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
+
+        # Remove Sources and Frameworks build phases from this specific bundle target
+        target.build_phases.reject! do |phase|
+          phase.is_a?(Xcodeproj::Project::Object::PBXSourcesBuildPhase) || \
+          phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase)
+        end
+
+        # Log the outcome
+        if target.build_phases.count < original_phase_count
+          puts "Successfully removed Sources and/or Frameworks build phases from #{target.name}."
+          puts "New build phases for #{target.name}: #{target.build_phases.map(&:display_name).join(', ')}"
+        else
+          puts "No Sources or Frameworks build phases were removed from #{target.name} (they might not have existed or the condition failed)."
         end
       end
 
-      # Now remove them
-      phases_to_remove.each do |phase|
-        puts "  - Removing #{phase.isa} from #{target.name}"
-        target.buildPhases.delete(phase)
-      end
+      # Fix for PDFTron if you still have issues, often related to module stability
+      # (Uncomment and use if needed)
+      # if target.name == 'PDFTron' || target.name == 'PDFTronTools'
+      #   target.build_configurations.each do |config|
+      #     config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+      #   end
+      #   puts "Set BUILD_LIBRARY_FOR_DISTRIBUTION=YES for #{target.name}"
+      # end
 
-      target.build_configurations.each do |config|
-        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle' # Ensure it's explicitly a bundle
-        config.build_settings['SKIP_INSTALL'] = 'YES' # Re-add, as it might interact with other flags
+    end # End of iterating through targets
 
-        # Explicitly clear Swift-related search paths and run paths
-        config.build_settings['LIBRARY_SEARCH_PATHS'] = ''
-        config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = ''
-        config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = '' # Clear any conditions that might imply Swift
-        config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = '' # Clear Swift optimization levels
-        config.build_settings['SWIFT_INCLUDE_PATHS'] = '' # Clear Swift include paths
-        config.build_settings['SWIFT_WHOLE_MODULE_OPTIMIZATION'] = 'NO' # Explicitly disable
-
-        # Ensure correct device family settings, preventing macOS/Catalyst interpretations
-        config.build_settings['SUPPORTS_MACCATALYST'] = 'NO'
-        config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2' # iPhone, iPad
-
-        puts "  - Applied extensive NO/empty settings for #{config.name}"
-      end
-      puts "--- Finished applying aggressive fix for target: #{target.name} ---"
-    end
-    # --- End aggressive fix ---
-
-  end
-  # Ensure the Pods project is saved after modifications
-  installer.pods_project.save
-end
+    # This is a general Flutter post_install hook, usually handles things like
+    # setting the Swift version for Flutter plugin pods and disabling bitcode.
+    # Make sure it's called after your custom modifications if they could conflict.
+    flutter_post_install(installer) if defined?(flutter_post_install)
+  end # End of post_install
+end # End of target 'Runner'
