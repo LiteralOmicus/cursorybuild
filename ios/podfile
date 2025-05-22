@@ -73,13 +73,31 @@ post_install do |installer|
         config.build_settings['SKIP_INSTALL'] = 'YES'
         config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+        
+        # Explicitly disable code signing for this bundle, as it's not an executable
+        config.build_settings['CODE_SIGN_IDENTITY'] = ''
+        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+
+        # Ensure no executable name is set for this bundle
+        config.build_settings['EXECUTABLE_NAME'] = ''
+        config.build_settings['MACH_O_TYPE'] = 'none' # Explicitly state no Mach-O executable
+        config.build_settings['WRAPPER_EXTENSION'] = 'bundle' # Ensure correct extension
 
         # Explicitly clear any Swift-related settings that might trigger CopySwiftLibs
+        # These are crucial for preventing implicit Swift linking/embedding
         config.build_settings['SWIFT_VERSION'] = '' # Clear Swift version if set
         config.build_settings['SWIFT_OPTIMIZATION_LEVEL'] = ''
         config.build_settings['SWIFT_ACTIVE_COMPILATION_CONDITIONS'] = ''
         config.build_settings['SWIFT_INCLUDE_PATHS'] = ''
-        config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = '' # This is crucial, clear runpath search paths
+        config.build_settings['DEFINES_MODULE'] = 'NO' # Not a module to define
+        
+        # Completely remove these keys if they exist, rather than setting to empty string
+        # This is more forceful and prevents Xcode from trying to infer paths
+        config.build_settings.delete('LD_RUNPATH_SEARCH_PATHS')
+        config.build_settings.delete('DYLIB_INSTALL_NAME_BASE')
+        config.build_settings.delete('LIBRARY_SEARCH_PATHS') # Also remove library search paths
+
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO' # Suppress warnings
         config.build_settings['TARGETED_DEVICE_FAMILY'] = '1,2' # Ensure iOS device family
         config.build_settings['SUPPORTS_MACCATALYST'] = 'NO' # Explicitly disable Mac Catalyst support
