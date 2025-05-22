@@ -139,7 +139,7 @@ jobs:
           echo "--- End Bundle Diagnostic (Pre-build) ---"
 
       # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
-      - name: Pre-Archive Check: List Webview Privacy Bundle Build Dir
+      - name: List Webview Privacy Bundle Build Dir
         run: |
           echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
           # This path is based on common Xcode build structures for pods
