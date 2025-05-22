@@ -54,8 +54,8 @@ jobs:
           cd ..
           echo "Flutter and iOS dependencies installed."
 
-      ---
-      - name: Workaround: Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target
+
+      - name: Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target
         run: |
           echo "--- Applying CopySwiftLibs Workaround ---"
           echo "Attempting to remove CopySwiftLibs build phase from webview_flutter_wkwebview_privacy target..."
@@ -121,7 +121,7 @@ jobs:
           cd ../.. # Go back to root
         continue-on-error: true # Keep this as true for now, as the workaround is experimental
 
-      ---
+      
       # Diagnostic: Inspect Podfile.lock
       - name: Inspect Podfile.lock
         run: |
@@ -174,7 +174,7 @@ jobs:
           echo "--- End Bundle Diagnostic (Pre-build) ---"
 
       # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
-      - name: Pre-Archive Check: List Webview Privacy Bundle Build Dir
+      - name: List Webview Privacy Bundle Build Dir
         run: |
           echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
           TARGET_DIR="/Users/runner/work/cursorybuild/cursorybuild/ios/build/Release-iphoneos/webview_flutter_wkwebview"
