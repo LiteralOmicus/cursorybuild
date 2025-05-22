@@ -59,21 +59,27 @@ post_install do |installer|
       # 1. Forceful removal of specific build phases
       phases_to_remove = []
       target.build_phases.each do |phase|
-        # Identify by name (or specific type if known)
-        if phase.name == 'CopySwiftLibs' || phase.name == 'Sources' || phase.name == 'Frameworks'
-          puts "  - IDENTIFIED for removal: #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
+        # Identify Sources, Frameworks, and specific CopySwiftLibs phase
+        if phase.is_a?(Xcodeproj::Project::Object::PBXSourcesBuildPhase)
+          puts "  - IDENTIFIED for removal: Sources Build Phase (UUID: #{phase.uuid})"
           phases_to_remove << phase
-        end
-        # Also target any PBXCopyFilesBuildPhase that *might* be for SwiftLibs, even if not named 'CopySwiftLibs'
-        if phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.dst_subfolder_spec == 11 # 11 is for Frameworks
-          puts "  - IDENTIFIED for removal (CopyFiles Frameworks): #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
+        elsif phase.is_a?(Xcodeproj::Project::Object::PBXFrameworksBuildPhase)
+          puts "  - IDENTIFIED for removal: Frameworks Build Phase (UUID: #{phase.uuid})"
+          phases_to_remove << phase
+        elsif phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.name == 'CopySwiftLibs'
+          # This correctly identifies a PBXCopyFilesBuildPhase named 'CopySwiftLibs'
+          puts "  - IDENTIFIED for removal: CopySwiftLibs Build Phase (UUID: #{phase.uuid})"
+          phases_to_remove << phase
+        elsif phase.is_a?(Xcodeproj::Project::Object::PBXCopyFilesBuildPhase) && phase.dst_subfolder_spec == 11 # 11 is for Frameworks
+          # This catches generic CopyFiles phases that might copy frameworks
+          puts "  - IDENTIFIED for removal (CopyFiles to Frameworks): #{phase.display_name} (#{phase.class.name}) - UUID: #{phase.uuid}"
           phases_to_remove << phase unless phases_to_remove.include?(phase)
         end
       end
       
       phases_to_remove.each do |phase|
         target.build_phases.delete(phase)
-        puts "  - REMOVED: #{phase.display_name} - UUID: #{phase.uuid}"
+        puts "  - REMOVED: #{phase.display_name || phase.class.name} - UUID: #{phase.uuid}" # Use display_name or class name for output
       end
 
       # Diagnostic: Print build phases after attempting removal
@@ -109,7 +115,6 @@ post_install do |installer|
         config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
 
         # Clear out any paths related to linking or searching for dynamic libraries
-        # Using `delete` is stronger than setting to empty string if the key exists
         config.build_settings.delete('LD_RUNPATH_SEARCH_PATHS')
         config.build_settings.delete('DYLIB_INSTALL_NAME_BASE')
         config.build_settings.delete('LIBRARY_SEARCH_PATHS')
