@@ -1,5 +1,4 @@
 name: build-test-xcodebuild-show-settings-fix-yaml-3
-
 on:
   push:
     branches:
@@ -8,99 +7,53 @@ on:
 
 jobs:
   build:
-    # --- CHANGED: Use macos-13 for Xcode 14.3.1 compatibility ---
-    runs-on: macos-13 
-    # If macos-13 still gives Xcode 15.x by default or doesn't have 14.3.1,
-    # you might need to try 'macos-12' (which is older and less likely to have Xcode 15 installed by default).
-    
+    runs-on: macos-latest
     permissions:
       contents: write # Needed for build-number action
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' # Used by some older actions/tools, generally prefer not to use if possible
       APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
       KEYCHAIN_NAME: "signing_temp.keychain-db"
-
     steps:
       - uses: actions/checkout@v4
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20' # Recommended to explicitly set Node.js version
-
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable' # Or 'beta', 'master' if you use them
 
-      # --- NEW: Select Xcode 14.3.1 ---
-      - name: Select Xcode 14.3.1
-        # This action simplifies selecting Xcode versions.
-        # Check https://github.com/maxim-filimonov/setup-xcode for available versions on runners.
-        uses: maxim-filimonov/setup-xcode@v2
-        with:
-          xcode-version: 14.3.1
-
-      - name: Verify Xcode Version
-        run: |
-          echo "Verifying active Xcode version..."
-          xcodebuild -version
-          echo "Current Xcode path: $(xcode-select -p)"
-
-      # --- NEW: Install specific CocoaPods (1.12.1) ---
-      - name: Install specific CocoaPods (1.12.1)
-        run: |
-          echo "Uninstalling existing CocoaPods versions..."
-          sudo gem uninstall cocoapods -a -x || true # Uninstall all versions safely
-          echo "Installing CocoaPods 1.12.1..."
-          sudo gem install cocoapods -v 1.12.1
-          echo "Verifying CocoaPods version..."
-          pod --version # Verify version
-
-      # --- NEW STEP: Run Flutter Doctor ---
-      - name: Run Flutter Doctor
+      # --- New Step: Run flutter doctor -v ---
+      - name: Run Flutter Doctor -v
         run: flutter doctor -v
+      # --- End New Step ---
 
-      - name: Clean Flutter build (important for Xcode/CocoaPods changes)
+      - name: Install Flutter and iOS Dependencies
         run: |
-          echo "Running flutter clean..."
+          echo "Running flutter clean, upgrade, and pod setup..."
           flutter clean
+          flutter pub upgrade
+          cd ios
+          # Aggressive cleaning of Xcode DerivedData
           echo "Cleaning Xcode DerivedData..."
           rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
-
-      - name: Get Flutter dependencies
-        run: |
-          echo "Running flutter pub get..."
-          flutter pub get
-
-      - name: Aggressive CocoaPods Clean & Install
-        run: |
-          cd ios
           echo "Cleaning CocoaPods cache..." # Added CocoaPods cache clean
           pod cache clean --all || true # Use || true in case the cache is empty or command fails
-          echo "Deintegrating existing Pods..."
-          pod deintegrate || true # Deintegrate only if pods exist
-          echo "Removing Pods directory and Podfile.lock..." # Aggressive cleanup
+          echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
           rm -rf Pods/ Podfile.lock
-          
-          echo "Running pod install --repo-update --verbose..."
+          echo "Running pod install --repo-update..."
           # Adding --verbose to pod install for more detailed logs if issues arise here
           pod install --repo-update --verbose || { echo "Pod install failed, checking for common issues."; ls -la Pods/ ; cat Podfile.lock; exit 1; }
-          
-          # Pod update is generally not needed after pod install, especially with a specific version,
-          # and can sometimes cause issues if it pulls in incompatible versions.
-          # Removing for now to isolate the core problem.
-          # echo "Running pod update to ensure all pods are at latest compatible versions..."
-          # pod update || { echo "Pod update failed."; exit 1; }
-          
+          echo "Running pod update to ensure all pods are at latest compatible versions..."
+          pod update || { echo "Pod update failed."; exit 1; }
           cd ..
           echo "Flutter and iOS dependencies installed."
-
       - name: Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target
         run: |
           echo "--- Applying CopySwiftLibs Workaround ---"
           echo "Attempting to remove CopySwiftLibs build phase from webview_flutter_wkwebview_privacy target..."
-          
           # Navigate to the iOS Pods directory where Pods.xcodeproj resides
           cd ios/Pods
           PODS_PROJECT="Pods.xcodeproj"
@@ -134,12 +87,10 @@ jobs:
               # This pattern tries to remove the PBXCopyFilesBuildPhase block itself and its reference in the target's buildPhases array.
               # This is very advanced pbxproj manipulation and may require fine-tuning.
               # It attempts to remove the phase definition AND its reference within the targets buildPhases array.
-              
               # First, remove the phase definition block
               perl -i -0pe "s/\n\s*([0-9A-F]{24} \/\* CopySwiftLibs \*\/) = \{\n\s*isa = PBXCopyFilesBuildPhase;[^}]*name = CopySwiftLibs;[^}]*buildActionMask = [0-9]+;[^}]*dstPath = \"\";[^}]*dstSubfolderSpec = 10;[^}]*\};//gs" "${PBXPROJ_PATH}"
               # Then, remove the reference to this phase from the target's buildPhases array
               perl -i -pe "s/\bbuildPhases = \(\n((?:(?!$TARGET_UUID)[\s\S])*?)($TARGET_UUID \/\* CopySwiftLibs \*\/,\n)(([\s\S])*?\);)/\bbuildPhases = (\n\$1\$4/g" "${PBXPROJ_PATH}"
-              
               # A simpler, but less precise, way to comment out:
               # perl -i -pe "s/^(.*)(name = CopySwiftLibs;)(.*target = ${TARGET_UUID} .*)$/#$1$2$3/" "${PBXPROJ_PATH}"
           fi
@@ -150,7 +101,6 @@ jobs:
           rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
           cd ../.. # Go back to root
         continue-on-error: true # Keep this as true for now, as the workaround is experimental
-
       # Diagnostic: Inspect Podfile.lock
       - name: Inspect Podfile.lock
         run: |
@@ -205,8 +155,7 @@ jobs:
       - name: List Webview Privacy Bundle Build Dir
         run: |
           echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
-          # Adjust this path if the actual build directory varies in your CI environment
-          TARGET_DIR="/Users/runner/work/cursorybuild/cursorybuild/ios/build/Release-iphoneos/webview_flutter_wkwebview" 
+          TARGET_DIR="/Users/runner/work/cursorybuild/cursorybuild/ios/build/Release-iphoneos/webview_flutter_wkwebview"
           if [ -d "$TARGET_DIR" ]; then
               echo "Listing contents of $TARGET_DIR:"
               ls -la "$TARGET_DIR" || true
@@ -257,7 +206,7 @@ jobs:
           TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
           if xcodebuild -project Pods/Pods.xcodeproj -list | grep -q "$TARGET_NAME"; then
               echo "Target '$TARGET_NAME' found. Dumping its build settings for Release configuration:"
-              xcodebuild -project Pods/Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE|TARGET_BUILD_DIR|FULL_PRODUCT_NAME" || echo "Could not find relevant settings or dump failed."
+              xcodebuild -project Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE|TARGET_BUILD_DIR|FULL_PRODUCT_NAME" || echo "Could not find relevant settings or dump failed."
           else
               echo "Target '$TARGET_NAME' not found in Pods project list."
           fi
@@ -311,7 +260,6 @@ jobs:
           keychain: ${{ env.KEYCHAIN_NAME }}
           create-keychain: true
           keychain-password: "" # Empty password for temporary keychain
-
       - name: Verify Certificate Import
         run: |
           echo "Verifying certificate import in '${{ env.KEYCHAIN_PATH }}'..."
@@ -329,7 +277,6 @@ jobs:
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
-
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -377,7 +324,6 @@ jobs:
         uses: einaregilsson/build-number@v2
         with:
           token: ${{ secrets.github_token }}
-
       - name: Show Resolved Build Settings for Runner Release
         run: |
           echo "Dumping resolved build settings for Runner Release configuration..."
@@ -433,7 +379,6 @@ jobs:
             DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
-            # --- Potentially ADD: ENABLE_BITCODE=NO here if needed for older Xcode/plugins ---
             -allowProvisioningUpdates \
             -verbose \
             -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
@@ -447,11 +392,9 @@ jobs:
         run: |
           echo "--- Checking webview_flutter_wkwebview_privacy.bundle (Post-archive) ---"
           ARCHIVE_PATH="build/Runner.xcarchive"
-          
           # The bundle might be within the Products directory inside the archive, or in Intermediates
           # Let's search inside the archive first
           BUNDLE_IN_ARCHIVE=$(find "${ARCHIVE_PATH}/Products" -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
-          
           if [ -n "$BUNDLE_IN_ARCHIVE" ]; then
               echo "Bundle found within archive products at: $BUNDLE_IN_ARCHIVE"
               echo "Contents of bundle:"
@@ -508,7 +451,6 @@ jobs:
         with:
           name: xcodebuild-export-log
           path: xcodebuild_export_log.txt
-
       # Upload to TestFlight & Cleanup
       - name: Upload IPA to TestFlight
         if: ${{ success() }} # Only upload if build/export was successful
@@ -518,7 +460,6 @@ jobs:
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
-
       - name: Clean up keychain
         if: ${{ always() }} # Ensure keychain is cleaned even if earlier steps fail
         run: |
