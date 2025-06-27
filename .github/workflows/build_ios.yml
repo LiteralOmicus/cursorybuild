@@ -40,78 +40,50 @@ jobs:
           echo "Running flutter clean, upgrade, and pod setup..."
           flutter clean
           flutter pub upgrade
-          cd ios
-          # Aggressive cleaning of Xcode DerivedData
+          
+          # Aggressive cleaning of Xcode DerivedData and CocoaPods cache
           echo "Cleaning Xcode DerivedData..."
           rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
-          echo "Cleaning CocoaPods cache..." # Added CocoaPods cache clean
+          echo "Cleaning CocoaPods cache..."
           pod cache clean --all || true # Use || true in case the cache is empty or command fails
+          
+          # Navigate to ios directory for pod commands
+          cd ios
           echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
           rm -rf Pods/ Podfile.lock
-          echo "Running pod install --repo-update..."
-          # Adding --verbose to pod install for more detailed logs if issues arise here
-          pod install --repo-update --verbose || { echo "Pod install failed, checking for common issues."; ls -la Pods/ ; cat Podfile.lock; exit 1; }
+          
+          echo "Running pod install --repo-update --verbose..."
+          # Adding --verbose to pod install for more detailed logs
+          pod install --repo-update --verbose || { echo "Pod install failed!"; exit 1; }
+          
+          # --- New Diagnostic: Verify Pods.xcodeproj exists after pod install ---
+          if [ ! -f "Pods/Pods.xcodeproj" ]; then
+            echo "Error: Pods/Pods.xcodeproj was not created by pod install. This is a critical failure."
+            ls -la Pods/ || true # List contents of Pods dir to help debug
+            exit 1
+          else
+            echo "Success: Pods/Pods.xcodeproj exists."
+          fi
+          # --- End New Diagnostic ---
+          
           echo "Running pod update to ensure all pods are at latest compatible versions..."
           pod update || { echo "Pod update failed."; exit 1; }
-          cd ..
+          cd .. # Go back to project root
           echo "Flutter and iOS dependencies installed."
-      - name: Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target
-        run: |
-          echo "--- Applying CopySwiftLibs Workaround ---"
-          echo "Attempting to remove CopySwiftLibs build phase from webview_flutter_wkwebview_privacy target..."
-          # Navigate to the iOS Pods directory where Pods.xcodeproj resides
-          cd ios/Pods
-          PODS_PROJECT="Pods.xcodeproj"
-          PBXPROJ_PATH="${PODS_PROJECT}/project.pbxproj"
-          if [ ! -f "$PBXPROJ_PATH" ]; then
-              echo "Error: project.pbxproj not found at $PBXPROJ_PATH. Cannot apply workaround."
-              exit 1
-          fi
-          echo "Original project.pbxproj content (first few lines) before modification:"
-          head -n 20 "$PBXPROJ_PATH"
-          # Target name to look for in the build phase definition
-          TARGET_TO_MODIFY="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          # Use perl for in-place editing. This regex attempts to find the specific build phase for the target
-          # that calls CopySwiftLibs and remove it. It's designed to be as specific as possible.
-          # This pattern looks for:
-          #   - a line defining a build phase UUID (e.g., C309B1A7000B9B27008736B0 /* CopySwiftLibs */)
-          #   - then captures lines until it finds 'isa = PBXCopyFilesBuildPhase;'
-          #   - AND within that block, it checks if 'name = CopySwiftLibs;' exists
-          #   - AND if the 'target = ' line points to our specific target UUID.
-          # This is highly dependent on the exact pbxproj format.
-          # First, find the UUID of the target 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-          TARGET_UUID=$(grep -E "name = $TARGET_TO_MODIFY" "${PBXPROJ_PATH}" -B 2 -A 5 | grep "^\s*[0-9A-F]\{24\} \/\*" | head -n 1 | awk '{print $1}' | sed 's/\([0-9A-F]*\).*/\1/')
-          if [ -z "$TARGET_UUID" ]; then
-              echo "WARNING: Could not find UUID for target '$TARGET_TO_MODIFY'. Workaround may fail."
-              # Fallback to a less precise match if target UUID is not found
-              # This will remove any PBXCopyFilesBuildPhase named CopySwiftLibs. DANGEROUS!
-              perl -i -0pe 's/\n\s*[0-9A-F]{24} \/\* CopySwiftLibs \*\/ = \{\n\s*isa = PBXCopyFilesBuildPhase;[^}]*name = CopySwiftLibs;[^}]*\};\n//gs' "${PBXPROJ_PATH}"
-          else
-              echo "Found UUID for target '$TARGET_TO_MODIFY': $TARGET_UUID"
-              echo "Attempting to remove the specific CopySwiftLibs build phase for this target..."
-              # This pattern tries to remove the PBXCopyFilesBuildPhase block itself and its reference in the target's buildPhases array.
-              # This is very advanced pbxproj manipulation and may require fine-tuning.
-              # It attempts to remove the phase definition AND its reference within the targets buildPhases array.
-              # First, remove the phase definition block
-              perl -i -0pe "s/\n\s*([0-9A-F]{24} \/\* CopySwiftLibs \*\/) = \{\n\s*isa = PBXCopyFilesBuildPhase;[^}]*name = CopySwiftLibs;[^}]*buildActionMask = [0-9]+;[^}]*dstPath = \"\";[^}]*dstSubfolderSpec = 10;[^}]*\};//gs" "${PBXPROJ_PATH}"
-              # Then, remove the reference to this phase from the target's buildPhases array
-              perl -i -pe "s/\bbuildPhases = \(\n((?:(?!$TARGET_UUID)[\s\S])*?)($TARGET_UUID \/\* CopySwiftLibs \*\/,\n)(([\s\S])*?\);)/\bbuildPhases = (\n\$1\$4/g" "${PBXPROJ_PATH}"
-              # A simpler, but less precise, way to comment out:
-              # perl -i -pe "s/^(.*)(name = CopySwiftLibs;)(.*target = ${TARGET_UUID} .*)$/#$1$2$3/" "${PBXPROJ_PATH}"
-          fi
-          echo "Project.pbxproj content (first few lines) after modification:"
-          head -n 20 "$PBXPROJ_PATH"
-          # After modification, re-clean derived data to ensure Xcode rebuilds with the modified project
-          echo "Re-cleaning DerivedData after pbxproj modification..."
-          rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
-          cd ../.. # Go back to root
-        continue-on-error: true # Keep this as true for now, as the workaround is experimental
+
+      # --- REMOVED: Direct pbxproj modification ---
+      # The step 'Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target'
+      # has been removed. This logic is now handled by the `post_install` hook
+      # in your `ios/Podfile` (see instructions above).
+      # Direct manipulation of project.pbxproj in CI is fragile.
+
       # Diagnostic: Inspect Podfile.lock
       - name: Inspect Podfile.lock
         run: |
           echo "--- Contents of Podfile.lock ---"
           cat ios/Podfile.lock || echo "Podfile.lock not found."
           echo "--- End Podfile.lock Diagnostic ---"
+
       # Diagnostic: Locate and Inspect webview_flutter_wkwebview related Podspecs
       - name: Inspect webview_flutter_wkwebview Podspecs
         run: |
@@ -119,6 +91,7 @@ jobs:
           # Find all podspecs with 'webview_flutter_wkwebview' in their name
           find /Users/runner/.pub-cache/ -name "*webview_flutter_wkwebview*.podspec" -print -exec cat {} \; || echo "No webview_flutter_wkwebview related podspecs found or could not be read."
           echo "--- End Podspec Diagnostic ---"
+
       # Diagnostic: Inspect webview_flutter_wkwebview plugin source directory for resources
       - name: Inspect webview_flutter_wkwebview Plugin Resources
         run: |
@@ -137,6 +110,7 @@ jobs:
               echo "Could not locate webview_flutter_wkwebview plugin source directory in pub-cache."
           fi
           echo "--- End Plugin Resources Diagnostic ---"
+
       # Diagnostic: Webview_flutter Privacy Bundle (Pre-build check)
       - name: webview_flutter_wkwebview_privacy Bundle Check (Pre-build)
         run: |
@@ -156,20 +130,26 @@ jobs:
               echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData (Pre-build). This is expected if it's created during the main build."
           fi
           echo "--- End Bundle Diagnostic (Pre-build) ---"
+
       # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
       - name: List Webview Privacy Bundle Build Dir
         run: |
           echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
-          TARGET_DIR="/Users/runner/work/cursorybuild/cursorybuild/ios/build/Release-iphoneos/webview_flutter_wkwebview"
-          if [ -d "$TARGET_DIR" ]; then
-              echo "Listing contents of $TARGET_DIR:"
-              ls -la "$TARGET_DIR" || true
-              echo "Searching for webview_flutter_wkwebview_privacy.bundle:"
-              find "$TARGET_DIR" -name "webview_flutter_wkwebview_privacy.bundle" || echo "Bundle not found in target build dir (Pre-archive)."
+          # This path is an example, it might vary. The actual path is usually in DerivedData.
+          # We'll try to find it more robustly.
+          TARGET_DIR_PATTERN="webview_flutter_wkwebview_privacy.bundle"
+          FOUND_TARGET_DIR=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -type d -name "$TARGET_DIR_PATTERN" -maxdepth 5 -print -quit)
+          
+          if [ -d "$FOUND_TARGET_DIR" ]; then
+              echo "Listing contents of $FOUND_TARGET_DIR:"
+              ls -la "$FOUND_TARGET_DIR" || true
+              echo "Searching for PrivacyInfo.xcprivacy within the found bundle:"
+              find "$FOUND_TARGET_DIR" -name "PrivacyInfo.xcprivacy" || echo "PrivacyInfo.xcprivacy not found in the bundle's build directory."
           else
-              echo "Target build directory does not exist yet (Pre-archive): $TARGET_DIR"
+              echo "Target build directory for '$TARGET_DIR_PATTERN' not found yet (Pre-archive). This is expected if it's created during the main build."
           fi
           echo "--- End Pre-Archive Check ---"
+
       # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - crucial for bundle issues)
       - name: Pods Build Phase Script Analysis (Deep Dive)
         run: |
@@ -183,7 +163,7 @@ jobs:
               echo "Listing contents of $TARGET_SUPPORT_DIR:"
               ls -la || true # List files in the current directory
               echo "Searching for 'builtin-infoPlistUtility', 'copy-bundle-resources', 'builtin-copy', or 'builtin-tool' in scripts:"
-              grep -rE "builtin-infoPlistUtility|copy-bundle-resources|builtin-copy|builtin-tool" *.sh || echo "Relevant bundle/resource copy commands not found in .sh scripts. This is unusual for a resource bundle."
+              grep -rE "builtin-infoPlistUtility|copy-bundle-resources|builtin-copy|builtin-tool|CopySwiftLibs" *.sh || echo "Relevant bundle/resource copy commands or CopySwiftLibs not found in .sh scripts. This is unusual for a resource bundle."
               echo "Attempting to print contents of all .sh scripts:"
               for script in *.sh; do
                   if [ -f "$script" ]; then
@@ -195,28 +175,28 @@ jobs:
               cd ../../.. # Go back to the ios directory, then project root
           else
               echo "Target support directory not found: $TARGET_SUPPORT_DIR. This is a critical indicator that the pod install might not be generating the expected target support files for this bundle."
-              # Add more diagnostic here if the directory is missing:
               echo "Listing contents of Pods/Target Support Files/ for inspection: "
               ls -la Pods/Target\ Support\ Files/ || true
               echo "Dumping the full pod install log (if available from previous steps, otherwise re-run pod install verbosely to get it):"
-              # If you didn't capture the pod install log specifically,
-              # you'd need to re-run pod install --verbose here or in the setup step
           fi
           echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
+
       # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
       - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
         run: |
           echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
           cd ios
           TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+          # Use -list to check if target exists, then dump settings
           if xcodebuild -project Pods/Pods.xcodeproj -list | grep -q "$TARGET_NAME"; then
               echo "Target '$TARGET_NAME' found. Dumping its build settings for Release configuration:"
-              xcodebuild -project Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE|TARGET_BUILD_DIR|FULL_PRODUCT_NAME" || echo "Could not find relevant settings or dump failed."
+              xcodebuild -project Pods/Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE|TARGET_BUILD_DIR|FULL_PRODUCT_NAME" || echo "Could not find relevant settings or dump failed."
           else
-              echo "Target '$TARGET_NAME' not found in Pods project list."
+              echo "Target '$TARGET_NAME' not found in Pods project list. This might indicate the podspec didn't create it as expected."
           fi
           cd ..
           echo "--- End Build Settings Verification Diagnostic ---"
+
       # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
       - name: Validate PrivacyInfo.xcprivacy Files
         run: |
@@ -239,6 +219,7 @@ jobs:
               done
           fi
           echo "--- End PrivacyInfo.xcprivacy Validation ---"
+
       # Code Signing Setup
       - name: Set Keychain Path Environment Variable
         run: |
@@ -298,6 +279,7 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
+
       # Diagnostic: Dump suspected build script content right before archive
       # This step runs just before the archive command, which is where the failure occurs.
       - name: Dump Suspected Build Script Before Archive
@@ -323,6 +305,7 @@ jobs:
           fi
           cd ..
           echo "--- End Script Dump Diagnostic ---"
+
       # Build & Archive
       - name: "#️⃣ Generate Build Number"
         id: buildnumber
@@ -391,6 +374,7 @@ jobs:
           echo "--- Content of xcodebuild_archive_log.txt ---"
           cat xcodebuild_archive_log.txt
           echo "--- End of xcodebuild_archive_log.txt ---"
+
       # Diagnostic: Webview_flutter Privacy Bundle (Post-archive check)
       - name: webview_flutter_wkwebview_privacy Bundle Check (Post-archive)
         if: ${{ always() }} # Run this even if the archive step fails
@@ -410,12 +394,13 @@ jobs:
               echo "webview_flutter_wkwebview_privacy.bundle NOT found within archive products."
               echo "Searching the exact problematic directory from the original error:"
               # This path corresponds to the original error's expected location in DerivedData intermediates
+              # Note: This DerivedData path is specific to a runner and build, so it might not exist if the build fails early
               FAILED_PATH_DIR="/Users/runner/Library/Developer/Xcode/DerivedData/Runner-exzqpjximnxpjphgkeaijblunmrm/Build/Intermediates.noindex/ArchiveIntermediates/Runner/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/"
               if [ -d "$FAILED_PATH_DIR" ]; then
                   echo "Listing contents of the problematic directory: $FAILED_PATH_DIR"
                   ls -la "$FAILED_PATH_DIR" || true
               else
-                  echo "Problematic directory does not exist: $FAILED_PATH_DIR"
+                  echo "Problematic directory does not exist: $FAILED_PATH_DIR (This is expected if DerivedData was cleaned or path changed)."
               fi
               echo "Searching DerivedData for any instance of the bundle:"
               FULL_DERIVED_DATA_SEARCH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print)
@@ -429,6 +414,7 @@ jobs:
               fi
           fi
           echo "--- End Bundle Diagnostic (Post-archive) ---"
+
       - name: Export IPA from Archive
         run: |
           echo "Starting IPA export process..."
@@ -450,12 +436,14 @@ jobs:
           echo "--- Content of xcodebuild_export_log.txt ---"
           cat xcodebuild_export_log.txt
           echo "--- End of xcodebuild_export_log.txt ---"
+
       - name: Upload xcodebuild Export Log
         if: ${{ always() }} # Upload even on failure
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-export-log
           path: xcodebuild_export_log.txt
+
       # Upload to TestFlight & Cleanup
       - name: Upload IPA to TestFlight
         if: ${{ success() }} # Only upload if build/export was successful
@@ -465,6 +453,7 @@ jobs:
           issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
           api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
           api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
+
       - name: Clean up keychain
         if: ${{ always() }} # Ensure keychain is cleaned even if earlier steps fail
         run: |
