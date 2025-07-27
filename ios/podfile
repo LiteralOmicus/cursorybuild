@@ -1,88 +1,96 @@
-# Uncomment this line to define a global platform for your project
-platform :ios, '13.0' # Flutter often defaults to 13.0 or higher, keep as is.
+name: Deploy Flutter iOS to TestFlight (No Mac Local)
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
-ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+on:
+  push:
+    branches:
+      - main # Or the branch you push to for releases
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
-project 'Runner', {
-  'Debug' => :debug,
-  'Profile' => :release,
-  'Release' => :release,
-}
+jobs:
+  build_and_deploy_ios:
+    runs-on: macos-latest # This IS your virtual Mac!
+    env:
+      # WARNING: Setting ACTIONS_ALLOW_UNSECURE_COMMANDS to 'true' is generally
+      # not recommended for production workflows due to security implications.
+      # Use with caution and only if absolutely necessary for specific actions.
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' 
 
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "#{generated_xcode_build_settings_path} must exist. If you're running pod install manually, make sure flutter pub get is executed first"
-  end
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
-    return matches[1].strip if matches
-  end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
-end
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.x' # Use your specific Flutter version
+          channel: 'stable'
+          cache: true # Caches Flutter dependencies
 
-# This line is essential for Flutter's build system integration with CocoaPods.
-require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
+      - name: Install dependencies
+        run: flutter pub get
 
-# Sets up Flutter's default Podfile configurations before your target definitions.
-flutter_ios_podfile_setup
+      - name: Install CocoaPods
+        run: |
+          gem install cocoapods
+          cd ios && pod install --repo-update --no-repo-update
 
-target 'Runner' do
-  # This installs all Flutter plugin pods. Do not remove this line.
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+      - name: Create Temporary Keychain for Signing
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
+        run: |
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "${HOME}/Library/Keychains/build.keychain"
+          security default-keychain -s "${HOME}/Library/Keychains/build.keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "${HOME}/Library/Keychains/build.keychain"
+          security set-keychain-settings -t 3600 -l "${HOME}/Library/Keychains/build.keychain"
+          echo "Temporary keychain created and unlocked."
 
-  # PDFTron Pods - Keep these as they are explicitly added by you.
-  use_frameworks! # Required for PDFTron
-  pod 'PDFTron', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron/latest.podspec'
-  pod 'PDFTronTools', podspec: 'https://pdftron.com/downloads/ios/flutter/pdftron-tools/latest.podspec'
+      - name: Configure App Store Connect API Key for Xcode CLI
+        env:
+          ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          mkdir -p ~/private_keys
+          echo "$ASC_PRIVATE_KEY_CONTENT" | base64 --decode > ~/private_keys/AuthKey_$ASC_KEY_ID.p8
+          echo "App Store Connect API key saved to ~/private_keys/AuthKey_$ASC_KEY_ID.p8"
 
-  # Add any other specific pods your project needs here, for example:
-  # pod 'AnotherPod', '~> 1.0.0'
-end
+      - name: Build and Archive iOS App
+        run: |
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --build-number=$(git rev-list --count HEAD) \
+            --build-name=1.0.0.$(git rev-list --count HEAD)
+          
+          ls -l build/ios/ipa/
 
-# This block runs after all pods have been installed.
-post_install do |installer|
-  installer.pods_project.targets.each do |target|
-    # Always apply Flutter's default build settings first for all targets.
-    # This ensures Flutter's internal requirements are met for all pods.
-    flutter_additional_ios_build_settings(target)
+      - name: Upload IPA to TestFlight
+        run: |
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa")
+          echo "Found IPA: $IPA_PATH"
 
-    # Disable ENABLE_BITCODE for all targets.
-    # This is a common practice in Flutter/iOS development, especially with third-party libraries,
-    # as Bitcode can sometimes cause issues or is not required for app store submission anymore.
-    target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'NO'
-    end
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" \
+            --verbose
 
-    # --- START: Targeted fix for resource bundles with PrivacyInfo.xcprivacy ---
-    # This section specifically targets resource bundle targets (which often end with '_privacy'
-    # or similar suffixes for PrivacyInfo.xcprivacy files) that are incorrectly
-    # having Swift linking phases applied.
-    # These bundles are *not* intended to contain executable Swift code.
-    # The fix removes the 'Copy Swift Standard Libraries' build phase and
-    # ensures Xcode doesn't try to embed Swift for these targets.
-    if target.name.end_with?('_privacy') || target.name.include?('webview_flutter_wkwebview_privacy') || target.name.include?('shared_preferences_foundation_privacy') || target.name.include?('path_provider_foundation_privacy') || target.name.include?('flutter_native_splash_privacy') || target.name.include?('image_picker_ios_privacy') || target.name.include?('GoogleUtilities_Privacy') || target.name.include?('GTMSessionFetcher_Core_Privacy') || target.name.include?('FirebaseCoreInternal_Privacy') || target.name.include?('FirebaseCoreExtension_Privacy') || target.name.include?('FirebaseCore_Privacy') || target.name.include?('FirebaseAuth_Privacy') || target.name.include?('leveldb_Privacy')
-      puts "Applying resource bundle fix for target: #{target.name}"
-      target.build_phases.each do |build_phase|
-        # Check if the build phase is a shell script phase and its name indicates Swift library copying
-        if build_phase.isa == 'PBXShellScriptBuildPhase' && build_phase.name == 'Copy Swift Standard Libraries'
-          puts "  - Removing 'Copy Swift Standard Libraries' build phase from #{target.name}."
-          build_phase.remove_from_project
-        end
-      end
-      # Also ensure that Xcode doesn't try to embed Swift for these resource bundles
-      target.build_configurations.each do |config|
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        # Ensure runpath search paths are standard, not trying to find Swift dylibs for this bundle
-        config.build_settings['LD_RUNPATH_SEARCH_PATHS'] = '$(inherited) @executable_path/Frameworks'
-      end
-    end
-    # --- END: Targeted fix for resource bundles with PrivacyInfo.xcprivacy ---
-  end
+          echo "Upload command executed. Check App Store Connect for processing status."
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
 
-  # CRITICAL: Save the modified project.
-  # This line ensures that any changes made in the post_install block are written back to the .xcodeproj file.
-  installer.pods_project.save
-end
+      - name: Delete Temporary Keychain
+        if: always()
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
+        run: |
+          security delete-keychain "${HOME}/Library/Keychains/build.keychain"
+          echo "Temporary keychain deleted."
+
+      - name: Upload IPA artifact (Optional)
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-app
+          path: build/ios/ipa/*.ipa
+          retention-days: 7
