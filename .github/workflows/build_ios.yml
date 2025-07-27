@@ -1,462 +1,135 @@
-name: build-test-xcodebuild-show-settings-fix-yaml-3
+name: Deploy Flutter iOS to TestFlight (No Mac Local)
+
 on:
   push:
     branches:
       - main
-  workflow_dispatch: # Allows manual triggering from the GitHub UI
+  workflow_dispatch:
 
 jobs:
-  build:
+  build_and_deploy_ios:
     runs-on: macos-latest
-    permissions:
-      contents: write # Needed for build-number action
     env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' # Used by some older actions/tools, generally prefer not to use if possible
-      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }}
-      KEYCHAIN_NAME: "signing_temp.keychain-db"
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Xcode version
-        uses: maxim-lobanov/setup-xcode@v1
-        with:
-          xcode-version: 'latest-stable' # Or 'latest', or a specific version like '15.3'
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20' # Recommended to explicitly set Node.js version
-      - name: Set up Flutter SDK
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' # Or 'beta', 'master' if you use them
+          flutter-version: '3.22.x'
+          channel: 'stable'
+          cache: true
 
-      # --- New Step: Run flutter doctor -v ---
-      - name: Run Flutter Doctor -v
-        run: flutter doctor -v
-      # --- End New Step ---
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name: Install Flutter and iOS Dependencies
+      - name: Clean CocoaPods Environment and Install
+        # This is the crucial step to make more robust
         run: |
-          echo "Running flutter clean, upgrade, and pod setup..."
-          flutter clean
-          flutter pub upgrade
+          echo "--- Starting CocoaPods setup ---"
           
-          # Aggressive cleaning of Xcode DerivedData and CocoaPods cache
-          echo "Cleaning Xcode DerivedData..."
-          rm -rf ~/Library/Developer/Xcode/DerivedData/* || true
-          echo "Cleaning CocoaPods cache..."
-          pod cache clean --all || true # Use || true in case the cache is empty or command fails
+          # 1. Ensure correct Ruby environment for CocoaPods
+          # Use Homebrew-installed Ruby if available, often more reliable than system Ruby.
+          # The `chruby-release` action or manual setup ensures a consistent Ruby.
+          # GitHub's `macos-latest` usually has Homebrew Ruby, but explicit paths can help.
           
-          # Navigate to ios directory for pod commands
-          cd ios
-          echo "Removing Pods directory, Podfile.lock..." # Aggressive cleanup
-          rm -rf Pods/ Podfile.lock
+          # Forcing a specific Ruby version (if needed, e.g., 3.1.x, 3.2.x, 3.3.x)
+          # if the default one causes issues. The `gems/3.3.0` in your error implies Ruby 3.3.0 is used.
           
-          echo "Running pod install --repo-update --verbose..."
-          # Adding --verbose to pod install for more detailed logs
-          pod install --repo-update --verbose || { echo "Pod install failed!"; exit 1; }
+          # Clean up any potential old/conflicting CocoaPods installations
+          sudo gem uninstall cocoapods -ax --force || true # -ax: uninstall all versions, --force: no confirmation
+          sudo gem uninstall cocoapods-core -ax --force || true
           
-          # --- New Diagnostic: Verify Pods.xcodeproj exists after pod install ---
-          if [ ! -f "Pods/Pods.xcodeproj" ]; then
-            echo "Error: Pods/Pods.xcodeproj was not created by pod install. This is a critical failure."
-            ls -la Pods/ || true # List contents of Pods dir to help debug
-            exit 1
-          else
-            echo "Success: Pods/Pods.xcodeproj exists."
-          fi
-          # --- End New Diagnostic ---
+          # Update RubyGems itself
+          sudo gem update --system
           
-          echo "Running pod update to ensure all pods are at latest compatible versions..."
-          pod update || { echo "Pod update failed."; exit 1; }
-          cd .. # Go back to project root
-          echo "Flutter and iOS dependencies installed."
-
-      # --- REMOVED: Direct pbxproj modification ---
-      # The step 'Remove CopySwiftLibs from webview_flutter_wkwebview_privacy bundle target'
-      # has been removed. This logic is now handled by the `post_install` hook
-      # in your `ios/Podfile` (see instructions above).
-      # Direct manipulation of project.pbxproj in CI is fragile.
-
-      # Diagnostic: Inspect Podfile.lock
-      - name: Inspect Podfile.lock
-        run: |
-          echo "--- Contents of Podfile.lock ---"
-          cat ios/Podfile.lock || echo "Podfile.lock not found."
-          echo "--- End Podfile.lock Diagnostic ---"
-
-      # Diagnostic: Locate and Inspect webview_flutter_wkwebview related Podspecs
-      - name: Inspect webview_flutter_wkwebview Podspecs
-        run: |
-          echo "--- Locating and Inspecting webview_flutter_wkwebview related podspecs ---"
-          # Find all podspecs with 'webview_flutter_wkwebview' in their name
-          find /Users/runner/.pub-cache/ -name "*webview_flutter_wkwebview*.podspec" -print -exec cat {} \; || echo "No webview_flutter_wkwebview related podspecs found or could not be read."
-          echo "--- End Podspec Diagnostic ---"
-
-      # Diagnostic: Inspect webview_flutter_wkwebview plugin source directory for resources
-      - name: Inspect webview_flutter_wkwebview Plugin Resources
-        run: |
-          echo "--- Inspecting webview_flutter_wkwebview plugin source for resources ---"
-          # Find the main plugin directory in pub-cache. Adjust if the pattern is slightly different.
-          PLUGIN_SOURCE_DIR=$(find /Users/runner/.pub-cache/ -type d -name "webview_flutter_wkwebview-*" -maxdepth 1 -print -quit)
-          if [ -d "$PLUGIN_SOURCE_DIR" ]; then
-              echo "Plugin source directory: $PLUGIN_SOURCE_DIR"
-              echo "Listing contents of its 'darwin' and 'ios' folders (if they exist):"
-              ls -laR "${PLUGIN_SOURCE_DIR}/darwin/webview_flutter_wkwebview/Sources/webview_flutter_wkwebview/Resources/" || echo "No 'Resources' in darwin path."
-              ls -laR "${PLUGIN_SOURCE_DIR}/ios/Classes/Resources/" || echo "No 'Resources' in ios path."
-              # More specific: check for bundle or specific files in the 'Resources' directory.
-              find "${PLUGIN_SOURCE_DIR}" -name "*.bundle" || echo "No .bundle file found in plugin source."
-              find "${PLUGIN_SOURCE_DIR}" -name "PrivacyInfo.xcprivacy" || echo "PrivacyInfo.xcprivacy not found in plugin source."
-          else
-              echo "Could not locate webview_flutter_wkwebview plugin source directory in pub-cache."
-          fi
-          echo "--- End Plugin Resources Diagnostic ---"
-
-      # Diagnostic: Webview_flutter Privacy Bundle (Pre-build check)
-      - name: webview_flutter_wkwebview_privacy Bundle Check (Pre-build)
-        run: |
-          echo "--- Checking webview_flutter_wkwebview_privacy.bundle (Pre-build) ---"
-          # This checks if the bundle is already in DerivedData before the main build command
-          # Note: It might not be here yet, as it's typically created during the build/archive phase itself.
-          BUNDLE_PATH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
-          if [ -n "$BUNDLE_PATH" ]; then
-              echo "Bundle found at: $BUNDLE_PATH"
-              echo "Contents of bundle:"
-              ls -laR "$BUNDLE_PATH" || true
-              echo "Checking for executable within bundle:"
-              find "$BUNDLE_PATH" -name "webview_flutter_wkwebview_privacy" || echo "Executable not found (as expected for a privacy bundle)."
-              echo "Checking for privacy manifest file:"
-              find "$BUNDLE_PATH" -name "*.xcprivacy" || echo "Privacy manifest (.xcprivacy) not found."
-          else
-              echo "webview_flutter_wkwebview_privacy.bundle not found in DerivedData (Pre-build). This is expected if it's created during the main build."
-          fi
-          echo "--- End Bundle Diagnostic (Pre-build) ---"
-
-      # New Diagnostic: Pre-Archive Check: List Webview Privacy Bundle Build Dir
-      - name: List Webview Privacy Bundle Build Dir
-        run: |
-          echo "--- Pre-Archive: Contents of webview_flutter_wkwebview_privacy TARGET_BUILD_DIR ---"
-          # This path is an example, it might vary. The actual path is usually in DerivedData.
-          # We'll try to find it more robustly.
-          TARGET_DIR_PATTERN="webview_flutter_wkwebview_privacy.bundle"
-          FOUND_TARGET_DIR=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -type d -name "$TARGET_DIR_PATTERN" -maxdepth 5 -print -quit)
+          # Reinstall CocoaPods using `sudo` to ensure it's installed globally for the runner
+          # -n /usr/local/bin ensures it's placed in a standard PATH location
+          sudo gem install cocoapods -n /usr/local/bin --no-document
           
-          if [ -d "$FOUND_TARGET_DIR" ]; then
-              echo "Listing contents of $FOUND_TARGET_DIR:"
-              ls -la "$FOUND_TARGET_DIR" || true
-              echo "Searching for PrivacyInfo.xcprivacy within the found bundle:"
-              find "$FOUND_TARGET_DIR" -name "PrivacyInfo.xcprivacy" || echo "PrivacyInfo.xcprivacy not found in the bundle's build directory."
-          else
-              echo "Target build directory for '$TARGET_DIR_PATTERN' not found yet (Pre-archive). This is expected if it's created during the main build."
-          fi
-          echo "--- End Pre-Archive Check ---"
+          # Verify CocoaPods version
+          pod --version
+          
+          # 2. Update CocoaPods Specs Repo (Crucial for fresh installs/updates)
+          # This pulls down the latest information about all available pods.
+          # This can take some time.
+          echo "--- Updating CocoaPods spec repo ---"
+          # Only run if not already updated recently or if issues persist.
+          # Forcing update can resolve "No such pod found" errors.
+          pod repo update || true # Use || true to prevent failure on transient issues
+          
+          # 3. Clean and install pods for your project
+          echo "--- Cleaning and installing project pods ---"
+          cd ios/
+          rm -rf Pods/ # Remove existing pods to ensure clean install
+          rm -f Podfile.lock # Remove lock file to force resolution
+          pod install --repo-update # --repo-update here forces an update of the specs for this install
+          
+          echo "--- CocoaPods setup complete ---"
+        # Add additional error handling / debug output if needed
+        # continue-on-error: true # Consider this temporarily if you want to see subsequent errors
 
-      # Diagnostic: Pods Build Phase Script Analysis (Deep Dive - crucial for bundle issues)
-      - name: Pods Build Phase Script Analysis (Deep Dive)
+      # Rest of your workflow steps remain the same
+      - name: Create Temporary Keychain for Signing
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
         run: |
-          echo "--- Analyzing Pods Build Phase Scripts for webview_flutter_wkwebview_privacy (Deep Dive) ---"
-          cd ios
-          TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          echo "Attempting to change directory to: $TARGET_SUPPORT_DIR"
-          if [ -d "$TARGET_SUPPORT_DIR" ]; then # Check if directory exists
-              echo "Successfully changed directory to $TARGET_SUPPORT_DIR."
-              cd "$TARGET_SUPPORT_DIR"
-              echo "Listing contents of $TARGET_SUPPORT_DIR:"
-              ls -la || true # List files in the current directory
-              echo "Searching for 'builtin-infoPlistUtility', 'copy-bundle-resources', 'builtin-copy', or 'builtin-tool' in scripts:"
-              grep -rE "builtin-infoPlistUtility|copy-bundle-resources|builtin-copy|builtin-tool|CopySwiftLibs" *.sh || echo "Relevant bundle/resource copy commands or CopySwiftLibs not found in .sh scripts. This is unusual for a resource bundle."
-              echo "Attempting to print contents of all .sh scripts:"
-              for script in *.sh; do
-                  if [ -f "$script" ]; then
-                      echo "--- Content of $script ---"
-                      cat "$script" || echo "Could not read script file: $script"
-                      echo "--- End of $script ---"
-                  fi
-              done
-              cd ../../.. # Go back to the ios directory, then project root
-          else
-              echo "Target support directory not found: $TARGET_SUPPORT_DIR. This is a critical indicator that the pod install might not be generating the expected target support files for this bundle."
-              echo "Listing contents of Pods/Target Support Files/ for inspection: "
-              ls -la Pods/Target\ Support\ Files/ || true
-              echo "Dumping the full pod install log (if available from previous steps, otherwise re-run pod install verbosely to get it):"
-          fi
-          echo "--- End Script Analysis Diagnostic (Deep Dive) ---"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "${HOME}/Library/Keychains/build.keychain"
+          security default-keychain -s "${HOME}/Library/Keychains/build.keychain"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "${HOME}/Library/Keychains/build.keychain"
+          security set-keychain-settings -t 3600 -l "${HOME}/Library/Keychains/build.keychain"
+          echo "Temporary keychain created and unlocked."
 
-      # Diagnostic: Verify webview_flutter_wkwebview_privacy target build settings after pod install
-      - name: Verify webview_flutter_wkwebview_privacy Build Settings Post-Install
+      - name: Configure App Store Connect API Key for Xcode CLI
+        env:
+          ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
         run: |
-          echo "--- Verifying build settings for webview_flutter_wkwebview_privacy target after pod install ---"
-          cd ios
-          TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          # Use -list to check if target exists, then dump settings
-          if xcodebuild -project Pods/Pods.xcodeproj -list | grep -q "$TARGET_NAME"; then
-              echo "Target '$TARGET_NAME' found. Dumping its build settings for Release configuration:"
-              xcodebuild -project Pods/Pods.xcodeproj -target "$TARGET_NAME" -sdk iphoneos -configuration Release -showBuildSettings | grep -E "ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES|EMBEDDED_CONTENT_CONTAINS_SWIFT|PRODUCT_TYPE|TARGET_BUILD_DIR|FULL_PRODUCT_NAME" || echo "Could not find relevant settings or dump failed."
-          else
-              echo "Target '$TARGET_NAME' not found in Pods project list. This might indicate the podspec didn't create it as expected."
-          fi
-          cd ..
-          echo "--- End Build Settings Verification Diagnostic ---"
+          mkdir -p ~/private_keys
+          echo "$ASC_PRIVATE_KEY_CONTENT" | base64 --decode > ~/private_keys/AuthKey_$ASC_KEY_ID.p8
+          echo "App Store Connect API key saved to ~/private_keys/AuthKey_$ASC_KEY_ID.p8"
 
-      # New Diagnostic: Validate all PrivacyInfo.xcprivacy files
-      - name: Validate PrivacyInfo.xcprivacy Files
-        run: |
-          echo "--- Validating all PrivacyInfo.xcprivacy files ---"
-          # Search in Pods directory and pub cache
-          find_command="find ios/Pods /Users/runner/.pub-cache/ -name 'PrivacyInfo.xcprivacy'"
-          PRIVACY_FILES=$(eval $find_command)
-          if [ -z "$PRIVACY_FILES" ]; then
-              echo "No PrivacyInfo.xcprivacy files found."
-          else
-              echo "Found PrivacyInfo.xcprivacy files. Validating them:"
-              echo "$PRIVACY_FILES" | while IFS= read -r file; do
-                  echo "  - Validating: $file"
-                  plutil -lint "$file"
-                  if [ $? -eq 0 ]; then
-                      echo "    Result: OK"
-                  else
-                      echo "    Result: FAILED"
-                  fi
-              done
-          fi
-          echo "--- End PrivacyInfo.xcprivacy Validation ---"
-
-      # Code Signing Setup
-      - name: Set Keychain Path Environment Variable
-        run: |
-          FULL_KEYCHAIN_PATH=""
-          if [ -n "$HOME" ]; then
-            FULL_KEYCHAIN_PATH="$HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
-          elif [ -n "$RUNNER_USER_HOME" ]; then
-            FULL_KEYCHAIN_PATH="$RUNNER_USER_HOME/Library/Keychains/${{ env.KEYCHAIN_NAME }}.keychain-db"
-          else
-            echo "Error: Neither \$HOME nor \$RUNNER_USER_HOME are set or empty! Cannot calculate keychain path."
-            exit 1
-          fi
-          if [ -z "${{ env.KEYCHAIN_NAME }}" ]; then
-            echo "Error: KEYCHAIN_NAME is not set or empty! Cannot calculate keychain path."
-            exit 1
-          fi
-          echo "KEYCHAIN_PATH=$FULL_KEYCHAIN_PATH" >> $GITHUB_ENV
-          echo "Set KEYCHAIN_PATH to: '$FULL_KEYCHAIN_PATH'"
-      - name: Import Code Signing Certificate
-        uses: Apple-Actions/import-codesign-certs@v2
-        with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
-          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-          keychain: ${{ env.KEYCHAIN_NAME }}
-          create-keychain: true
-          keychain-password: "" # Empty password for temporary keychain
-      - name: Verify Certificate Import
-        run: |
-          echo "Verifying certificate import in '${{ env.KEYCHAIN_PATH }}'..."
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH is empty. Skipping certificate verification."
-            exit 1
-          fi
-          security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" || true
-          echo "Certificate verification complete."
-      - name: Download Provisioning Profiles
-        uses: Apple-Actions/download-provisioning-profiles@v2
-        with:
-          bundle-id: com.literalomicus.kangarule
-          profile-type: 'IOS_APP_STORE'
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
-          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
-      - name: Get Code Signing Identity Name
-        id: get_signing_identity
-        run: |
-          echo "Finding code signing identity name..."
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ]; then
-            echo "Error: KEYCHAIN_PATH is empty. Cannot find identity."
-            exit 1
-          fi
-          IDENTITY_NAME=$(security find-identity -p codesigning -v "${{ env.KEYCHAIN_PATH }}" 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
-          if [ -z "$IDENTITY_NAME" ]; then
-            echo "Error: Code signing identity 'Apple Distribution:' not found in keychain. Build cannot proceed."
-            exit 1
-          else
-            echo "Found signing identity: '$IDENTITY_NAME'"
-            echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
-          fi
-
-      # Diagnostic: Dump suspected build script content right before archive
-      # This step runs just before the archive command, which is where the failure occurs.
-      - name: Dump Suspected Build Script Before Archive
-        run: |
-          echo "--- Dumping suspected build script content before archive ---"
-          cd ios
-          TARGET_SUPPORT_DIR="Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
-          # Common script name for resource bundles, sometimes just `script.sh` or `RunScript.sh`
-          SCRIPT_NAME_CANDIDATES=("webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-resources.sh" "webview_flutter_wkwebview-webview_flutter_wkwebview_privacy-embed.sh" "script.sh" "RunScript.sh")
-          FOUND_SCRIPT=false
-          for SCRIPT_FILE in "${SCRIPT_NAME_CANDIDATES[@]}"; do
-              if [ -f "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" ]; then
-                  echo "Found script file: $TARGET_SUPPORT_DIR/$SCRIPT_FILE. Contents:"
-                  cat "$TARGET_SUPPORT_DIR/$SCRIPT_FILE" || echo "Could not read script file."
-                  FOUND_SCRIPT=true
-                  break
-              fi
-          done
-          if [ "$FOUND_SCRIPT" = false ]; then
-              echo "Suspected script file not found among candidates in $TARGET_SUPPORT_DIR."
-              echo "Listing all .sh files in $TARGET_SUPPORT_DIR for inspection:"
-              ls -la "$TARGET_SUPPORT_DIR"/*.sh || echo "No .sh files found in target support directory."
-          fi
-          cd ..
-          echo "--- End Script Dump Diagnostic ---"
-
-      # Build & Archive
-      - name: "#️⃣ Generate Build Number"
-        id: buildnumber
-        uses: einaregilsson/build-number@v2
-        with:
-          token: ${{ secrets.github_token }}
-      - name: Show Resolved Build Settings for Runner Release
-        run: |
-          echo "Dumping resolved build settings for Runner Release configuration..."
-          cd ios
-          # Adding stderr to stdout redirection for more comprehensive output
-          xcodebuild -showBuildSettings -workspace Runner.xcworkspace -scheme Runner -configuration Release 2>&1 || true
-          echo "Finished dumping resolved build settings."
-      - name: Create ExportOptions.plist
-        run: |
-          echo "Creating ExportOptions.plist..."
-          mkdir -p build/ios
-          EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
-          cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>method</key>
-              <string>app-store</string>
-              <key>teamID</key>
-              <string>${{ secrets.APPLE_TEAM_ID }}</string>
-              <key>uploadBitcode</key>
-              <true/>
-              <key>uploadSymbols</key>
-              <true/>
-          </dict>
-          </plist>
-          EOF
-          echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "Contents of ExportOptions.plist:"
-          cat "${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "EXPORT_OPTIONS_PLIST_PATH=${EXPORT_OPTIONS_PLIST_PATH}" >> $GITHUB_ENV
       - name: Build and Archive iOS App
         run: |
-          echo "Starting archive process with increased verbosity..."
-          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
-          SCHEME_NAME="Runner"
-          ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
-            echo "Error: Missing signing environment variables. Cannot proceed with build."
-            exit 1
-          fi
-          # Clean and then Archive with maximum verbosity
-          # -showBuildTimingSummary helps diagnose where time is spent, and thus where bottlenecks are.
-          # 2>&1 | tee redirects stderr to stdout and saves to a file
-          xcodebuild clean archive \
-            -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
-            -scheme "${SCHEME_NAME}" \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-            IPHONEOS_DEPLOYMENT_TARGET=13.0 \
-            DEVELOPMENT_TEAM="${{ secrets.APPLE_TEAM_ID }}" \
-            CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
-            -allowProvisioningUpdates \
-            -verbose \
-            -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
-          echo "xcodebuild archive command finished. Full log saved to xcodebuild_archive_log.txt"
-          echo "--- Content of xcodebuild_archive_log.txt ---"
-          cat xcodebuild_archive_log.txt
-          echo "--- End of xcodebuild_archive_log.txt ---"
+          flutter build ipa --release \
+            --export-options-plist=ios/ExportOptions.plist \
+            --build-number=$(git rev-list --count HEAD) \
+            --build-name=1.0.0.$(git rev-list --count HEAD)
+          
+          ls -l build/ios/ipa/
 
-      # Diagnostic: Webview_flutter Privacy Bundle (Post-archive check)
-      - name: webview_flutter_wkwebview_privacy Bundle Check (Post-archive)
-        if: ${{ always() }} # Run this even if the archive step fails
+      - name: Upload IPA to TestFlight
         run: |
-          echo "--- Checking webview_flutter_wkwebview_privacy.bundle (Post-archive) ---"
-          ARCHIVE_PATH="build/Runner.xcarchive"
-          # The bundle might be within the Products directory inside the archive, or in Intermediates
-          # Let's search inside the archive first
-          BUNDLE_IN_ARCHIVE=$(find "${ARCHIVE_PATH}/Products" -name "webview_flutter_wkwebview_privacy.bundle" -print -quit)
-          if [ -n "$BUNDLE_IN_ARCHIVE" ]; then
-              echo "Bundle found within archive products at: $BUNDLE_IN_ARCHIVE"
-              echo "Contents of bundle:"
-              ls -laR "$BUNDLE_IN_ARCHIVE" || true
-              echo "Checking for PrivacyInfo.xcprivacy inside the archived bundle:"
-              find "$BUNDLE_IN_ARCHIVE" -name "*.xcprivacy" || echo "Privacy manifest (.xcprivacy) not found inside archived bundle."
-          else
-              echo "webview_flutter_wkwebview_privacy.bundle NOT found within archive products."
-              echo "Searching the exact problematic directory from the original error:"
-              # This path corresponds to the original error's expected location in DerivedData intermediates
-              # Note: This DerivedData path is specific to a runner and build, so it might not exist if the build fails early
-              FAILED_PATH_DIR="/Users/runner/Library/Developer/Xcode/DerivedData/Runner-exzqpjximnxpjphgkeaijblunmrm/Build/Intermediates.noindex/ArchiveIntermediates/Runner/IntermediateBuildFilesPath/UninstalledProducts/iphoneos/"
-              if [ -d "$FAILED_PATH_DIR" ]; then
-                  echo "Listing contents of the problematic directory: $FAILED_PATH_DIR"
-                  ls -la "$FAILED_PATH_DIR" || true
-              else
-                  echo "Problematic directory does not exist: $FAILED_PATH_DIR (This is expected if DerivedData was cleaned or path changed)."
-              fi
-              echo "Searching DerivedData for any instance of the bundle:"
-              FULL_DERIVED_DATA_SEARCH=$(find /Users/runner/Library/Developer/Xcode/DerivedData/ -name "webview_flutter_wkwebview_privacy.bundle" -print)
-              if [ -n "$FULL_DERIVED_DATA_SEARCH" ]; then
-                  echo "Found in DerivedData at other location(s):"
-                  echo "$FULL_DERIVED_DATA_SEARCH"
-                  echo "Listing contents of the first found bundle:"
-                  ls -laR "$(echo "$FULL_DERIVED_DATA_SEARCH" | head -n 1)" || true
-              else
-                  echo "webview_flutter_wkwebview_privacy.bundle NOT found anywhere in DerivedData after archive."
-              fi
-          fi
-          echo "--- End Bundle Diagnostic (Post-archive) ---"
+          IPA_PATH=$(find build/ios/ipa -name "*.ipa")
+          echo "Found IPA: $IPA_PATH"
 
-      - name: Export IPA from Archive
+          xcrun altool --upload-app \
+            --type ios \
+            --file "$IPA_PATH" \
+            --apiKey "$ASC_KEY_ID" \
+            --apiIssuer "$ASC_ISSUER_ID" \
+            --verbose
+
+          echo "Upload command executed. Check App Store Connect for processing status."
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.GOOG_ASC_ISSUER_ID }}
+
+      - name: Delete Temporary Keychain
+        if: always()
+        env:
+          KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
         run: |
-          echo "Starting IPA export process..."
-          ARCHIVE_INPUT_PATH="build/Runner.xcarchive"
-          IPA_OUTPUT_DIR="build/ios/ipa"
-          EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-          if [ -z "${{ env.KEYCHAIN_PATH }}" ] || [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
-            echo "Error: Missing environment variables or ExportOptions.plist. Cannot proceed with export."
-            exit 1
-          fi
-          mkdir -p "${IPA_OUTPUT_DIR}"
-          xcodebuild -exportArchive \
-            -archivePath "${ARCHIVE_INPUT_PATH}" \
-            -exportPath "${IPA_OUTPUT_DIR}" \
-            -exportOptionsPlist "${EXPORT_OPTIONS_PLIST_PATH}" \
-            -allowProvisioningUpdates \
-            -verbose 2>&1 | tee xcodebuild_export_log.txt
-          echo "xcodebuild -exportArchive command finished. Full log saved to xcodebuild_export_log.txt"
-          echo "--- Content of xcodebuild_export_log.txt ---"
-          cat xcodebuild_export_log.txt
-          echo "--- End of xcodebuild_export_log.txt ---"
+          security delete-keychain "${HOME}/Library/Keychains/build.keychain"
+          echo "Temporary keychain deleted."
 
-      - name: Upload xcodebuild Export Log
-        if: ${{ always() }} # Upload even on failure
+      - name: Upload IPA artifact (Optional)
         uses: actions/upload-artifact@v4
         with:
-          name: xcodebuild-export-log
-          path: xcodebuild_export_log.txt
-
-      # Upload to TestFlight & Cleanup
-      - name: Upload IPA to TestFlight
-        if: ${{ success() }} # Only upload if build/export was successful
-        uses: Apple-Actions/upload-testflight-build@v1
-        with:
-          app-path: build/ios/ipa/*.ipa
-          issuer-id: ${{ secrets.APPSTORE_ISSUER_ID }}
-          api-key-id: ${{ secrets.APPSTORE_KEY_ID }}
-          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
-
-      - name: Clean up keychain
-        if: ${{ always() }} # Ensure keychain is cleaned even if earlier steps fail
-        run: |
-          echo "Cleaning up keychain: ${{ env.KEYCHAIN_PATH }}"
-          security delete-keychain "${{ env.KEYCHAIN_PATH }}" || true # Use || true to prevent job failure if keychain not found
-          echo "Keychain cleanup attempted."
+          name: flutter-ios-app
+          path: build/ios/ipa/*.ipa
+          retention-days: 7
