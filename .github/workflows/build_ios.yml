@@ -40,7 +40,7 @@ jobs:
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
 
-      - name: List Directories after Flutter Setup 
+      - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
           echo "--- Current directory: $(pwd) ---"
           echo "--- Listing contents of ios/ directory ---"
@@ -49,13 +49,58 @@ jobs:
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
 
-      # --- Corrected Step: Import Apple Distribution Certificate ---
+      - name: Clean CocoaPods Environment and Install
+        run: |
+          echo "--- Starting CocoaPods setup ---"
+          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
+          sudo gem uninstall cocoapods -ax --force || true
+          sudo gem uninstall cocoapods-core -ax --force || true
+          sudo gem update --system
+          sudo gem install cocoapods -n /usr/local/bin --no-document
+          pod --version
+          
+          echo "--- Updating CocoaPods spec repo ---"
+          # Run pod repo update separately to ensure it completes before install
+          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
+          
+          echo "--- Cleaning project pods aggressively ---"
+          cd ios/
+          # Deintegrate previous Pods installation to ensure a clean slate
+          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
+          rm -rf Pods/ 
+          rm -f Podfile.lock 
+          
+          echo "--- Installing project pods ---"
+          # Now run pod install after deintegration and cleaning
+          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
+          
+          echo "--- CocoaPods setup complete ---"
+          cd .. 
+
+      - name: Verify CocoaPods Installation for audio_session
+        run: |
+          echo "--- Checking Podfile.lock for audio_session ---"
+          # This should show if audio_session was successfully listed as a dependency
+          grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
+          
+          echo "--- Listing contents of Pods/Headers/Public/ ---"
+          # Check if the public headers directory exists
+          ls -la ios/Pods/Headers/Public/ || echo "Warning: Pods/Headers/Public/ not found or empty. Module headers might be missing."
+          
+          echo "--- Listing contents of Pods/Headers/Public/audio_session/ ---"
+          # Explicitly check for audio_session's public headers
+          ls -la ios/Pods/Headers/Public/audio_session/ || echo "Warning: audio_session headers not found in public directory. Module might not be correctly integrated."
+          
+          echo "--- Listing contents of Pods/audio_session/ ---"
+          # Check the root pod directory itself
+          ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
+
+
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Corrected parameter name
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
-      # --- END Corrected Step ---
 
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
@@ -64,7 +109,7 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
-          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
+          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
 
       - name: Get Code Signing Identity Name
         id: get_signing_identity
@@ -144,7 +189,7 @@ jobs:
           echo "--- End of xcodebuild_archive_log.txt ---"
           echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
 
-      - name: Upload Xcodebuild Archive Log
+      - name: Upload Xcodebuild Archive Log 
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
@@ -189,7 +234,7 @@ jobs:
           path: xcodebuild_export_log.txt
           retention-days: 7
 
-      - name: Upload IPA artifact
+      - name: Upload IPA artifact 
         if: ${{ success() }} 
         uses: actions/upload-artifact@v4
         with:
