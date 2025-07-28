@@ -10,7 +10,8 @@ install! 'cocoapods',
 
 # This Flutter line is crucial and should be present in your Podfile
 flutter_application_path = File.join(__dir__, '..')
-load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')
+# CORRECTED LINE BELOW: Changed '.ios' to 'ios'
+load File.join(flutter_application_path, 'ios', 'Flutter', 'podhelper.rb')
 
 target 'Runner' do
   use_frameworks!
