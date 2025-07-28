@@ -45,7 +45,7 @@ jobs:
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
 
-      - name: Debug: List Directories after Flutter Setup
+      - name: List Directories after Flutter Setup
         run: |
           echo "--- Current directory: $(pwd) ---"
           echo "--- Listing project root contents (cursorybuild/) ---"
