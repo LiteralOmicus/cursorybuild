@@ -10,7 +10,7 @@ jobs:
   build_and_deploy_ios:
     runs-on: macos-latest
     env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' 
 
     steps:
       - name: Checkout code
@@ -23,56 +23,71 @@ jobs:
           channel: 'stable'
           cache: true
 
-      - name: Install dependencies
-        run: flutter pub get
+      - name: Clean Flutter Project and Regenerate iOS Structure
+        run: |
+          echo "--- Cleaning Flutter project ---"
+          flutter clean
+          echo "--- Removing and regenerating iOS folder ---"
+          rm -rf ios/ 
+          flutter create . 
+          echo "--- Getting Flutter dependencies ---"
+          flutter pub get
+          echo "--- Flutter dependencies retrieved ---"
+
+      - name: Debug: List Directories after Flutter Setup # <--- NEW DEBUG STEP 1
+        run: |
+          echo "--- Current directory: $(pwd) ---"
+          echo "--- Listing project root contents (cursorybuild/) ---"
+          ls -la
+          echo "--- Listing .symlinks/ contents ---"
+          ls -la .symlinks/ || echo "'.symlinks/' directory not found or empty."
+          echo "--- Listing .symlinks/flutter/ios/ contents ---"
+          ls -la .symlinks/flutter/ios/ || echo "'.symlinks/flutter/ios/' directory not found or empty."
+          echo "--- Checking for specific Flutter.podspec file ---"
+          find . -name "Flutter.podspec"
+          echo "--- Listing contents of ios/ directory ---"
+          ls -la ios/
+          echo "--- Listing contents of ios/Runner.xcodeproj/ ---"
+          ls -la ios/Runner.xcodeproj/ || echo "'ios/Runner.xcodeproj/' not found."
+          echo "--- Debug: Directory listing complete ---"
 
       - name: Clean CocoaPods Environment and Install
-        # This is the crucial step to make more robust
         run: |
           echo "--- Starting CocoaPods setup ---"
-          
-          # 1. Ensure correct Ruby environment for CocoaPods
-          # Use Homebrew-installed Ruby if available, often more reliable than system Ruby.
-          # The `chruby-release` action or manual setup ensures a consistent Ruby.
-          # GitHub's `macos-latest` usually has Homebrew Ruby, but explicit paths can help.
-          
-          # Forcing a specific Ruby version (if needed, e.g., 3.1.x, 3.2.x, 3.3.x)
-          # if the default one causes issues. The `gems/3.3.0` in your error implies Ruby 3.3.0 is used.
-          
-          # Clean up any potential old/conflicting CocoaPods installations
-          sudo gem uninstall cocoapods -ax --force || true # -ax: uninstall all versions, --force: no confirmation
+          sudo gem uninstall cocoapods -ax --force || true
           sudo gem uninstall cocoapods-core -ax --force || true
           
-          # Update RubyGems itself
           sudo gem update --system
-          
-          # Reinstall CocoaPods using `sudo` to ensure it's installed globally for the runner
-          # -n /usr/local/bin ensures it's placed in a standard PATH location
           sudo gem install cocoapods -n /usr/local/bin --no-document
-          
-          # Verify CocoaPods version
           pod --version
           
-          # 2. Update CocoaPods Specs Repo (Crucial for fresh installs/updates)
-          # This pulls down the latest information about all available pods.
-          # This can take some time.
           echo "--- Updating CocoaPods spec repo ---"
-          # Only run if not already updated recently or if issues persist.
-          # Forcing update can resolve "No such pod found" errors.
-          pod repo update || true # Use || true to prevent failure on transient issues
+          pod repo update || true
           
-          # 3. Clean and install pods for your project
           echo "--- Cleaning and installing project pods ---"
           cd ios/
-          rm -rf Pods/ # Remove existing pods to ensure clean install
-          rm -f Podfile.lock # Remove lock file to force resolution
-          pod install --repo-update # --repo-update here forces an update of the specs for this install
+          rm -rf Pods/ 
+          rm -f Podfile.lock 
+          # Ensure Flutter.podspec is valid after pub get before running pod install
+          # We've already confirmed this in the debug step above, but if you want another check:
+          # if [ ! -f ../.symlinks/flutter/ios/Flutter.podspec ]; then
+          #   echo "ERROR: Flutter.podspec is still missing before pod install. Aborting."
+          #   exit 1
+          # fi
+          pod install --repo-update
           
           echo "--- CocoaPods setup complete ---"
-        # Add additional error handling / debug output if needed
-        # continue-on-error: true # Consider this temporarily if you want to see subsequent errors
 
-      # Rest of your workflow steps remain the same
+      - name: Debug: List Directories after Pod Install # <--- NEW DEBUG STEP 2
+        run: |
+          echo "--- Current directory (inside ios/): $(pwd) ---"
+          echo "--- Listing ios/ contents after pod install ---"
+          ls -la
+          echo "--- Listing Pods/ contents ---"
+          ls -la Pods/ || echo "'Pods/' directory not found or empty."
+          echo "--- Debug: Directory listing complete ---"
+          cd .. # Go back to root for subsequent steps
+
       - name: Create Temporary Keychain for Signing
         env:
           KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
@@ -117,7 +132,7 @@ jobs:
           echo "Upload command executed. Check App Store Connect for processing status."
         env:
           ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.GOOG_ASC_ISSUER_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
 
       - name: Delete Temporary Keychain
         if: always()
