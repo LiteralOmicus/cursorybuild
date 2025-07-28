@@ -12,12 +12,9 @@ jobs:
     permissions:
       contents: write # Needed for build-number action
     env:
-      # These are the App Store Connect API Key secrets
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }} # Content of your .p8 key file
-      
-      # Your Apple Developer Team ID (still required for xcodebuild and ExportOptions.plist)
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }} 
 
     steps:
@@ -35,7 +32,6 @@ jobs:
         run: flutter doctor -v
 
       - name: Clean Flutter Project and Get Dependencies
-        # REMOVED: rm -rf ios/ and flutter create .
         run: |
           echo "--- Cleaning Flutter project ---"
           flutter clean
@@ -43,7 +39,7 @@ jobs:
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
 
-      - name: List Directories after Flutter Setup (Verify Podfile existence)
+      - name: List Directories after Flutter Setup
         run: |
           echo "--- Current directory: $(pwd) ---"
           echo "--- Listing contents of ios/ directory ---"
@@ -52,32 +48,14 @@ jobs:
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
 
-      - name: Clean CocoaPods Environment and Install
-        run: |
-          echo "--- Starting CocoaPods setup ---"
-          # Only uninstall/install cocoapods gems if you have persistent issues with the runner's ruby environment
-          # Otherwise, the `subosito/flutter-action` usually sets up a working ruby/cocoapods environment
-          sudo gem uninstall cocoapods -ax --force || true
-          sudo gem uninstall cocoapods-core -ax --force || true
-          
-          sudo gem update --system
-          sudo gem install cocoapods -n /usr/local/bin --no-document
-          pod --version
-          
-          echo "--- Updating CocoaPods spec repo ---"
-          pod repo update || true
-          
-          echo "--- Cleaning and installing project pods ---"
-          cd ios/
-          rm -rf Pods/ 
-          rm -f Podfile.lock 
-          # Ensure this command is run from the ios/ directory so it finds your Podfile
-          pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
-          
-          echo "--- CocoaPods setup complete ---"
-          cd .. 
+      # --- NEW STEP: Import Apple Distribution Certificate ---
+      - name: Import Apple Distribution Certificate
+        uses: Apple-Actions/import-codesign-certs@v1
+        with:
+          p12-base64: ${{ secrets.APPLE_CERTIFICATE_P12_BASE64 }} # Your Base64-encoded .p12 file content
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }} # The password for your .p12 file (can be empty string if no password)
+      # --- END NEW STEP ---
 
-      # ... (Rest of your workflow steps remain the same) ...
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
@@ -85,12 +63,13 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
-          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
+          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
 
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
           echo "Finding code signing identity name created by provisioning profile download..."
+          # This should now find the identity after the p12 is imported
           IDENTITY_NAME=$(security find-identity -p codesigning -v 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
           
           if [ -z "$IDENTITY_NAME" ]; then
@@ -127,7 +106,7 @@ jobs:
           cat "${EXPORT_OPTIONS_PLIST_PATH}"
           echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV 
 
-      - name: enerate Build Number
+      - name: Generate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
         with:
@@ -165,7 +144,7 @@ jobs:
           echo "--- End of xcodebuild_archive_log.txt ---"
           echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
 
-      - name: Upload Xcodebuild Archive Log 
+      - name: Upload Xcodebuild Archive Log
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
@@ -202,7 +181,7 @@ jobs:
           echo "--- End of xcodebuild_export_log.txt ---"
           echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV 
 
-      - name: Upload Xcodebuild Export Log (for debugging)
+      - name: Upload Xcodebuild Export Log 
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
@@ -210,7 +189,7 @@ jobs:
           path: xcodebuild_export_log.txt
           retention-days: 7
 
-      - name: Upload IPA artifact (Optional)
+      - name: Upload IPA artifact 
         if: ${{ success() }} 
         uses: actions/upload-artifact@v4
         with:
