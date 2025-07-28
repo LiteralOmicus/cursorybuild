@@ -1,53 +1,56 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
+# platform :ios, '12.0' # Adjust this if your app supports an older iOS version
+platform :ios, '14.0' # Set to 14.0 or higher as per your xcodebuild command
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
-ENV['COCOAPODS_DISABLE_STATS'] = 'true'
+# CocoaPods analytics sends network requests when CocoaPods is used.
+# For more information, see https://guides.cocoapods.org/syntax/podfile.html#install_all_pods_from_source
+# or to disable it completely, use `export COCOAPODS_DISABLE_STATS=1` in your shell.
+install! 'cocoapods',
+         :disable_input_output_paths => true
 
-project 'Runner', {
-  'Debug' => :debug,
-  'Profile' => :release,
-  'Release' => :release,
-}
-
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "Generated.xcconfig not found at #{generated_xcode_build_settings_path}. Try running `flutter pub get` first."
-  end
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
-    return matches[1].strip if matches
-  end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run `flutter pub get`"
-end
-
-require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
-
-flutter_ios_podfile_setup do |installer|
-  # This block is for Flutter's internal pod setup.
-  # You generally don't need to add anything here unless explicitly required by a plugin.
-end
+# This Flutter line is crucial and should be present in your Podfile
+flutter_application_path = File.join(__dir__, '..')
+load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb')
 
 target 'Runner' do
   use_frameworks!
-  use_modular_headers! # Recommended for many modern pods
-  
-  # Flutter Pods - these are automatically added by Flutter based on your pubspec.yaml plugins
-  flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
+  use_modular_headers!
 
-  # Add any other custom pods here if you have them, e.g.:
-  # pod 'AnotherSDK', '~> 1.0'
+  # Pods for Runner
+  pod 'FirebaseCoreOnly', :modular_headers => true
+  # Add any other specific pods you have here, e.g.,
+  # pod 'path_provider_foundation'
+  # pod 'webview_flutter_wkwebview'
+  # pod 'audio_session' # If you add it manually, otherwise Flutter adds it
 
+  flutter_additional_pods(flutter_application_path)
 end
+
+# IMPORTANT: Add the post_install hook below this line,
+# after the 'target 'Runner' do ... end' block.
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    # This line ensures all pods (including transitive dependencies) adhere to your
-    # desired minimum deployment target. MAKE SURE IT MATCHES `platform :ios` ABOVE.
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0' # Match this to the platform line
+      # Keep your existing deployment target setting
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      # And potentially this, if it helps other pods (from previous troubleshooting)
+      config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+
+      # --- NEW LOGIC TO HANDLE PRIVACY BUNDLES ---
+      # This block identifies targets ending with '_privacy' (or containing '_privacy-')
+      # and sets their build settings to correctly define them as resource bundles.
+      if target.name.end_with?('_privacy') || target.name.include?('_privacy-')
+        puts "Adjusting build settings for privacy bundle target: #{target.name}"
+        config.build_settings['DEFINES_MODULE'] = 'NO' # Not a module-defining target
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' # Does not contain embeddable Swift code
+        config.build_settings['MACH_O_TYPE'] = 'none' # Explicitly state it produces no Mach-O executable
+        config.build_settings['CODE_SIGN_IDENTITY'] = '' # No code signing needed for resource bundles
+        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+      end
+      # --- END NEW LOGIC ---
     end
   end
 end
