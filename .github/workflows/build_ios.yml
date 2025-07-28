@@ -1,16 +1,35 @@
-- name: Debug: List Directories after Flutter Setup
-        run: |
-          echo "--- Current directory: $(pwd) ---"
-          echo "--- Listing project root contents (cursorybuild/) ---"
-          ls -la
-          echo "--- Listing .symlinks/ contents ---"
-          ls -la .symlinks/ || echo "'.symlinks/' directory not found or empty."
-          echo "--- Listing .symlinks/flutter/ios/ contents ---"
-          ls -la .symlinks/flutter/ios/ || echo "'.symlinks/flutter/ios/' directory not found or empty."
-          echo "--- Checking for specific Flutter.podspec file ---"
-          find . -name "Flutter.podspec"
-          echo "--- Listing contents of ios/ directory ---"
-          ls -la ios/
-          echo "--- Listing contents of ios/Runner.xcodeproj/ ---"
-          ls -la ios/Runner.xcodeproj/ || echo "'ios/Runner.xcodeproj/' not found."
-          echo "--- Debug: Directory listing complete ---"
+    name: Flutter iOS CI/CD
+
+    on:
+      push:
+        branches:
+          - main
+
+    jobs:
+      build_and_deploy:
+        runs-on: macos-latest # Or a self-hosted runner with Xcode
+
+        steps:
+          - uses: actions/checkout@v4
+          - uses: subosito/flutter-action@v2
+            with:
+              flutter-version: '3.32.8' # Specify your Flutter version
+
+          - name: Get Flutter dependencies
+            run: flutter pub get
+
+          - name: Install CocoaPods dependencies
+            run: cd ios && pod install
+
+          # Add steps for code signing setup (Fastlane Match or manual)
+
+          - name: Build iOS App
+            run: flutter build ipa --release --export-options-plist=ExportOptions.plist # ExportOptions.plist might be needed for specific export settings
+
+          - name: Upload to App Store Connect
+            uses: apple-actions/upload-testflight-build@v1
+            with:
+              api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
+              api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
+              api-key-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
+              app-path: build/ios/ipa/*.ipa # Adjust path as needed
