@@ -3,7 +3,7 @@
 # It's located in the 'ios' directory of your Flutter project.
 
 # Uncomment this line to define a global platform for your project
-platform :ios, '13.0' # Or your desired minimum iOS deployment target
+platform :ios, '13.0' # Adjust this to your minimum supported iOS version
 
 # Flutter requires a minimum iOS version of 11.0 for the Runner target.
 # You can override this in Xcode if needed, but ensure it's at least 11.0.
@@ -19,26 +19,6 @@ load File.join(flutter_application_path, 'Flutter.podspec')
 target 'Runner' do
   # Use frameworks for all pods. This is generally recommended for Flutter.
   use_frameworks!
-
-  # Enable Swift optimization for release builds
-  # This helps reduce app size and improve performance.
-  # This is usually set by Flutter's default template.
-  # You might see `SWIFT_OPTIMIZATION_LEVEL = "-Onone"` for debug and `"-O wholemodule"` for release.
-  # This line ensures it's applied correctly.
-  # This is typically handled by Flutter's `Generated.xcconfig`
-  # but can be explicitly set if you have custom configurations.
-  # if !defined?($Flutter.disable_ios_deployment_target_override) || $Flutter.disable_ios_deployment_target_override == false
-  #   # Set the iOS deployment target for the Runner target
-  #   # This ensures all pods are built with this minimum version.
-  #   # You can adjust this to match your `platform :ios` setting above.
-  #   # post_install do |installer|
-  #   #   installer.pods_project.targets.each do |target|
-  #   #     target.build_configurations.each do |config|
-  #   #       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
-  #   #     end
-  #   #   end
-  #   # end
-  # end
 
   # Add any specific CocoaPods dependencies for your iOS project here.
   # For example, if you use Firebase or other native iOS libraries:
@@ -60,9 +40,7 @@ post_install do |installer|
     
     # Optional: If you encounter issues with specific pods, you might need to
     # manually set their build settings, for example:
-    # target.build_configurations.each do |config|
-    #   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-    #   config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FLUTTER_PRODUCTION=1' if config.name == 'Release'
-    # end
+    # config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+    # config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'FLUTTER_PRODUCTION=1' if config.name == 'Release'
   end
 end
