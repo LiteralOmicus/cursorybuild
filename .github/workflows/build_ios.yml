@@ -34,37 +34,29 @@ jobs:
       - name: Run Flutter Doctor -v
         run: flutter doctor -v
 
-      - name: Clean Flutter Project and Regenerate iOS Structure
+      - name: Clean Flutter Project and Get Dependencies
+        # REMOVED: rm -rf ios/ and flutter create .
         run: |
           echo "--- Cleaning Flutter project ---"
           flutter clean
-          echo "--- Removing and regenerating iOS folder ---"
-          rm -rf ios/ 
-          flutter create . 
           echo "--- Getting Flutter dependencies ---"
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
 
-      - name: List Directories after Flutter Setup
+      - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
           echo "--- Current directory: $(pwd) ---"
-          echo "--- Listing project root contents (cursorybuild/) ---"
-          ls -la
-          echo "--- Listing .symlinks/ contents ---"
-          ls -la .symlinks/ || echo "'.symlinks/' directory not found or empty."
-          echo "--- Listing .symlinks/flutter/ios/ contents ---"
-          ls -la .symlinks/flutter/ios/ || echo "'.symlinks/flutter/ios/' directory not found or empty."
-          echo "--- Checking for specific Flutter.podspec file ---"
-          find . -name "Flutter.podspec"
           echo "--- Listing contents of ios/ directory ---"
           ls -la ios/
-          echo "--- Listing contents of ios/Runner.xcodeproj/ ---"
-          ls -la ios/Runner.xcodeproj/ || echo "'ios/Runner.xcodeproj/' not found."
+          echo "--- Displaying content of ios/Podfile ---"
+          cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
 
       - name: Clean CocoaPods Environment and Install
         run: |
           echo "--- Starting CocoaPods setup ---"
+          # Only uninstall/install cocoapods gems if you have persistent issues with the runner's ruby environment
+          # Otherwise, the `subosito/flutter-action` usually sets up a working ruby/cocoapods environment
           sudo gem uninstall cocoapods -ax --force || true
           sudo gem uninstall cocoapods-core -ax --force || true
           
@@ -79,11 +71,13 @@ jobs:
           cd ios/
           rm -rf Pods/ 
           rm -f Podfile.lock 
+          # Ensure this command is run from the ios/ directory so it finds your Podfile
           pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
           
           echo "--- CocoaPods setup complete ---"
           cd .. 
 
+      # ... (Rest of your workflow steps remain the same) ...
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
@@ -91,7 +85,7 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
-          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
+          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
 
       - name: Get Code Signing Identity Name
         id: get_signing_identity
@@ -133,7 +127,7 @@ jobs:
           cat "${EXPORT_OPTIONS_PLIST_PATH}"
           echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV 
 
-      - name: "#️⃣ Generate Build Number"
+      - name: enerate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
         with:
@@ -157,7 +151,7 @@ jobs:
             -configuration Release \
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-            IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=14.0 \
             DEVELOPMENT_TEAM="${{ env.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
@@ -171,7 +165,7 @@ jobs:
           echo "--- End of xcodebuild_archive_log.txt ---"
           echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
 
-      - name: Upload Xcodebuild Archive Log (for debugging)
+      - name: Upload Xcodebuild Archive Log 
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
