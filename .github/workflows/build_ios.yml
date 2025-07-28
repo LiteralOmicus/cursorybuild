@@ -1,35 +1,254 @@
-    name: Flutter iOS CI/CD
+name: Deploy Flutter iOS to TestFlight (App Store Connect API Key)
 
-    on:
-      push:
-        branches:
-          - main
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual triggering from the GitHub UI
 
-    jobs:
-      build_and_deploy:
-        runs-on: macos-latest # Or a self-hosted runner with Xcode
+jobs:
+  build_and_deploy_ios:
+    runs-on: macos-latest
+    permissions:
+      contents: write # Needed for build-number action
+    env:
+      # These secrets are for the App Store Connect API Key
+      # APPSTORE_PRIVATE_KEY is the content of your .p8 key file (base64 encoded or raw, depending on usage)
+      APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
+      APPSTORE_KEY_ID: ${{ secrets.APPSTORE_KEY_ID }}
+      APPSTORE_PRIVATE_KEY_CONTENT: ${{ secrets.APPSTORE_PRIVATE_KEY }} # Renamed for clarity matching variable usage
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }} # Your Apple Developer Team ID
 
-        steps:
-          - uses: actions/checkout@v4
-          - uses: subosito/flutter-action@v2
-            with:
-              flutter-version: '3.32.8' # Specify your Flutter version
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-          - name: Get Flutter dependencies
-            run: flutter pub get
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable' # Or 'beta', 'master' if you use them
+          flutter-version: '3.32.8' # Specify exact version for consistency
+          cache: true
 
-          - name: Install CocoaPods dependencies
-            run: cd ios && pod install
+      - name: Run Flutter Doctor -v
+        run: flutter doctor -v
 
-          # Add steps for code signing setup (Fastlane Match or manual)
+      ---
 
-          - name: Build iOS App
-            run: flutter build ipa --release --export-options-plist=ExportOptions.plist # ExportOptions.plist might be needed for specific export settings
+      ## Flutter & iOS Dependencies Setup
 
-          - name: Upload to App Store Connect
-            uses: apple-actions/upload-testflight-build@v1
-            with:
-              api-key-id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
-              api-key-issuer-id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
-              api-key-private-key: ${{ secrets.APP_STORE_CONNECT_PRIVATE_KEY }}
-              app-path: build/ios/ipa/*.ipa # Adjust path as needed
+      - name: Clean Flutter Project and Regenerate iOS Structure
+        run: |
+          echo "--- Cleaning Flutter project ---"
+          flutter clean
+          echo "--- Removing and regenerating iOS folder ---"
+          rm -rf ios/ # CAUTION: This deletes your entire iOS folder! Ensure backups of custom changes.
+          flutter create . # Recreates the basic project structure, including ios/
+          echo "--- Getting Flutter dependencies ---"
+          flutter pub get
+          echo "--- Flutter dependencies retrieved ---"
+
+      - name: Debug: List Directories after Flutter Setup
+        run: |
+          echo "--- Current directory: $(pwd) ---"
+          echo "--- Listing project root contents (cursorybuild/) ---"
+          ls -la
+          echo "--- Listing .symlinks/ contents ---"
+          ls -la .symlinks/ || echo "'.symlinks/' directory not found or empty."
+          echo "--- Listing .symlinks/flutter/ios/ contents ---"
+          ls -la .symlinks/flutter/ios/ || echo "'.symlinks/flutter/ios/' directory not found or empty."
+          echo "--- Checking for specific Flutter.podspec file ---"
+          find . -name "Flutter.podspec"
+          echo "--- Listing contents of ios/ directory ---"
+          ls -la ios/
+          echo "--- Listing contents of ios/Runner.xcodeproj/ ---"
+          ls -la ios/Runner.xcodeproj/ || echo "'ios/Runner.xcodeproj/' not found."
+          echo "--- Debug: Directory listing complete ---"
+
+      - name: Clean CocoaPods Environment and Install
+        run: |
+          echo "--- Starting CocoaPods setup ---"
+          # Uninstalling old versions to ensure a clean install of the latest
+          sudo gem uninstall cocoapods -ax --force || true
+          sudo gem uninstall cocoapods-core -ax --force || true
+          
+          sudo gem update --system
+          sudo gem install cocoapods -n /usr/local/bin --no-document
+          pod --version
+          
+          echo "--- Updating CocoaPods spec repo ---"
+          pod repo update || true
+          
+          echo "--- Cleaning and installing project pods ---"
+          cd ios/
+          rm -rf Pods/ 
+          rm -f Podfile.lock 
+          # Use --verbose for more detailed logs during pod install
+          pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
+          
+          echo "--- CocoaPods setup complete ---"
+          cd .. # Go back to the project root
+
+      ---
+
+      ## Code Signing and Provisioning (App Store Connect API Key)
+
+      - name: Download Provisioning Profiles
+        uses: Apple-Actions/download-provisioning-profiles@v2
+        with:
+          bundle-id: com.literalomicus.kangarule # Replace with your app's Bundle ID
+          profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
+          issuer-id: ${{ env.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ env.APPSTORE_KEY_ID }}
+          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
+
+      - name: Get Code Signing Identity Name
+        id: get_signing_identity
+        run: |
+          echo "Finding code signing identity name created by provisioning profile download..."
+          # The download-provisioning-profiles action imports the necessary certificate into a temp keychain.
+          # We need to find the name of the identity it imported, typically "Apple Distribution: Your Team Name (XXXXXXXXXX)"
+          # We'll search the default keychain that the action likely used.
+          IDENTITY_NAME=$(security find-identity -p codesigning -v 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
+          
+          if [ -z "$IDENTITY_NAME" ]; then
+            echo "Error: Code signing identity 'Apple Distribution:' not found in any keychain. Build cannot proceed."
+            exit 1
+          else
+            echo "Found signing identity: '$IDENTITY_NAME'"
+            # Set this as an environment variable for subsequent steps
+            echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
+          fi
+
+      - name: Create ExportOptions.plist
+        run: |
+          echo "Creating ExportOptions.plist..."
+          mkdir -p build/ios
+          EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
+          cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>teamID</key>
+            <string>${{ env.APPLE_TEAM_ID }}</string>
+            <key>uploadBitcode</key>
+            <true/>
+            <key>uploadSymbols</key>
+            <true/>
+          </dict>
+          </plist>
+          EOF
+          echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
+          echo "Contents of ExportOptions.plist:"
+          cat "${EXPORT_OPTIONS_PLIST_PATH}"
+          echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV # Set for later steps
+
+      ---
+
+      ## Build and Deploy
+
+      - name: "#️⃣ Generate Build Number"
+        id: buildnumber
+        uses: einaregilsson/build-number@v2
+        with:
+          token: ${{ secrets.github_token }}
+
+      - name: Build and Archive iOS App
+        run: |
+          echo "Starting archive process for iOS..."
+          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
+          SCHEME_NAME="Runner"
+          ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
+          
+          if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
+            echo "Error: CODE_SIGN_IDENTITY_NAME is not set. Cannot proceed with build."
+            exit 1
+          fi
+
+          xcodebuild clean archive \
+            -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
+            -scheme "${SCHEME_NAME}" \
+            -configuration Release \
+            -sdk iphoneos \
+            -archivePath "${ARCHIVE_OUTPUT_PATH}" \
+            IPHONEOS_DEPLOYMENT_TARGET=13.0 \
+            DEVELOPMENT_TEAM="${{ env.APPLE_TEAM_ID }}" \
+            CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
+            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
+            -allowProvisioningUpdates \
+            -verbose \
+            -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
+          
+          echo "xcodebuild archive command finished. Full log saved to xcodebuild_archive_log.txt"
+          echo "--- Content of xcodebuild_archive_log.txt ---"
+          cat xcodebuild_archive_log.txt
+          echo "--- End of xcodebuild_archive_log.txt ---"
+          echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV # Set for export step
+
+      - name: Upload Xcodebuild Archive Log (for debugging)
+        if: ${{ always() }} # Upload even on failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-archive-log
+          path: xcodebuild_archive_log.txt
+          retention-days: 7
+
+      - name: Export IPA from Archive
+        run: |
+          echo "Starting IPA export process..."
+          IPA_OUTPUT_DIR="build/ios/ipa"
+          EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
+
+          if [ -z "${{ env.ARCHIVE_PATH }}" ] || [ ! -d "${{ env.ARCHIVE_PATH }}" ]; then
+            echo "Error: Archive path is missing or invalid. Cannot proceed with export."
+            exit 1
+          fi
+          if [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
+            echo "Error: ExportOptions.plist path is missing or file not found. Cannot proceed with export."
+            exit 1
+          fi
+
+          mkdir -p "${IPA_OUTPUT_DIR}"
+          xcodebuild -exportArchive \
+            -archivePath "${{ env.ARCHIVE_PATH }}" \
+            -exportPath "${IPA_OUTPUT_DIR}" \
+            -exportOptionsPlist "${EXPORT_OPTIONS_PLIST_PATH}" \
+            -allowProvisioningUpdates \
+            -verbose 2>&1 | tee xcodebuild_export_log.txt
+          
+          echo "xcodebuild -exportArchive command finished. Full log saved to xcodebuild_export_log.txt"
+          echo "--- Content of xcodebuild_export_log.txt ---"
+          cat xcodebuild_export_log.txt
+          echo "--- End of xcodebuild_export_log.txt ---"
+          echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV # Set for upload step
+
+      - name: Upload Xcodebuild Export Log (for debugging)
+        if: ${{ always() }} # Upload even on failure
+        uses: actions/upload-artifact@v4
+        with:
+          name: xcodebuild-export-log
+          path: xcodebuild_export_log.txt
+          retention-days: 7
+
+      - name: Upload IPA artifact (Optional)
+        if: ${{ success() }} # Only upload if previous steps succeeded
+        uses: actions/upload-artifact@v4
+        with:
+          name: flutter-ios-app
+          path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa
+          retention-days: 7
+
+      - name: Upload IPA to TestFlight
+        if: ${{ success() }} # Only upload if build and export were successful
+        uses: Apple-Actions/upload-testflight-build@v1
+        with:
+          app-path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa # Use the output directory where IPA is
+          issuer-id: ${{ env.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ env.APPSTORE_KEY_ID }}
+          api-private-key: ${{ env.APPSTORE_PRIVATE_KEY_CONTENT }}
+
+      # No explicit keychain cleanup is needed here, as Apple-Actions handle temporary keychains.
+      # If you were manually creating keychains, you'd need a delete-keychain step.
