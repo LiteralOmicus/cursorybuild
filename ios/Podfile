@@ -23,7 +23,7 @@ def flutter_root
   unless File.exist?(generated_xcode_build_settings_path)
     raise "Generated.xcconfig not found at #{generated_xcode_build_settings_path}. Try running `flutter pub get` first."
   end
-  File.foreach(generated_xcode_build_build_settings_path) do |line|
+  File.foreach(generated_xcode_build_settings_path) do |line|
     matches = line.match(/FLUTTER_ROOT\=(.*)/)
     return matches[1].strip if matches
   end
