@@ -26,7 +26,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable' # Or 'beta', 'master' if you use them
-          flutter-version: '3.32.8' # Specify exact version for consistency
+          flutter-version: '3.32.4' # Specify exact version for consistency
           cache: true
 
       - name: Run Flutter Doctor -v
