@@ -2,13 +2,13 @@
 platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
 # Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
 # Ensure these match if you intend for your app to target iOS 18.0 as its minimum.
-install! 'cocoapods',
-         :disable_input_output_paths => true
+#install! 'cocoapods',
+  #       :disable_input_output_paths => true
 
 # This Flutter line is crucial and should be present in your Podfile
-flutter_application_path = File.join(__dir__, '..')
+#flutter_application_path = File.join(__dir__, '..')
 # CORRECTED LINE BELOW: Changed '.ios' to 'ios'
-load File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
+#load File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
