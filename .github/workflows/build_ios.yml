@@ -49,7 +49,7 @@ jobs:
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
 
-      - name: Debug: Verify Flutter iOS structure before Pod Install
+      - name: Verify Flutter iOS structure before Pod Install
         run: |
           echo "--- Listing contents of Flutter directory within iOS project ---"
           ls -la ios/Flutter/ || { echo "Error: ios/Flutter directory not found or empty. Is the Flutter iOS project structure correct?"; exit 1; }
@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
 
-      - name: Install CocoaPods (Less Aggressive) # <--- REVISED STEP NAME
+      - name: Install CocoaPods 
         run: |
           echo "--- Starting CocoaPods setup ---"
           # Only install CocoaPods if not already installed, avoid aggressive uninstall/reinstall
@@ -87,7 +87,7 @@ jobs:
           echo "--- CocoaPods setup complete ---"
           cd .. 
 
-      - name: Verify CocoaPods Installation for audio_session
+      - name: Verify CocoaPods Installation 
         run: |
           echo "--- Checking Podfile.lock for audio_session ---"
           grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
