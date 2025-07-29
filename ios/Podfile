@@ -52,25 +52,33 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    # This line ensures all pods (including transitive dependencies) adhere to your
-    # desired minimum deployment target. MAKE SURE IT MATCHES `platform :ios` ABOVE.
+    
+    # Apply global deployment target first
     target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0' # Match this to the platform line
-      # You may want to set BUILD_LIBRARY_FOR_DISTRIBUTION for all targets if needed for Swift frameworks
-      # config.build_settings['BUILD_LIBRARY_FOR_DISTRIBUTION'] = 'YES'
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0' # Keep this as per your project
+    end
 
-      # --- NEW LOGIC TO HANDLE PRIVACY BUNDLES ---
-      # This block identifies targets ending with '_privacy' (or containing '_privacy-')
-      # and sets their build settings to correctly define them as resource bundles.
-      if target.name.end_with?('_privacy') || target.name.include?('_privacy-')
-        puts "Adjusting build settings for privacy bundle target: #{target.name}"
-        config.build_settings['DEFINES_MODULE'] = 'NO' # Not a module-defining target
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' # Does not contain embeddable Swift code
-        config.build_settings['MACH_O_TYPE'] = 'none' # Explicitly state it produces no Mach-O executable
-        config.build_settings['CODE_SIGN_IDENTITY'] = '' # No code signing needed for resource bundles
+    # --- REVISED LOGIC FOR PRIVACY BUNDLES ---
+    # This block specifically targets privacy bundles and applies settings to prevent CopySwiftLibs
+    # This might need to be ordered carefully, or applied in a way that overrides previous settings.
+    
+    # Check if the target is a privacy bundle by its common naming convention
+    if target.name.end_with?('_privacy') || target.name.include?('_privacy-') || target.name.include?('PrivacyResources')
+      puts "Adjusting build settings for identified privacy bundle target: #{target.name}"
+      target.build_configurations.each do |config|
+        # Set explicitly for resource bundles
+        config.build_settings['DEFINES_MODULE'] = 'NO'
+        config.build_settings['MACH_O_TYPE'] = 'none' # Crucial: Not an executable
+        config.build_settings['CODE_SIGN_IDENTITY'] = ''
         config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
         config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
+        
+        # This is the most direct control for CopySwiftLibs.
+        # Ensure it's set to NO for bundles that *should not* contain Swift code.
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' 
       end
+    end
+    # --- END REVISED LOGIC ---
       # --- END NEW LOGIC ---
     end
   end
