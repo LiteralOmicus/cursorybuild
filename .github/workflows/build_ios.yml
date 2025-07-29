@@ -26,7 +26,7 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          flutter-version: '3.32.8' # Using a known stable Flutter version
+          flutter-version: '3.22.2' # Using a known stable Flutter version
           cache: true
 
       - name: Run Flutter Doctor -v
@@ -40,6 +40,12 @@ jobs:
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
 
+      - name: Force Flutter iOS Project Files Generation 
+        run: |
+          echo "--- Forcing Flutter iOS project files generation ---"
+          flutter build ios --no-codesign || { echo "Flutter iOS build (no-codesign) failed! Exiting."; exit 1; }
+          echo "--- Flutter iOS project files generation complete ---"
+
       - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
           echo "--- Current directory: $(pwd) ---"
@@ -49,7 +55,7 @@ jobs:
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
 
-      - name: Verify Flutter iOS structure before Pod Install
+      - name: Verify Flutter iOS structure before Pod Install 
         run: |
           echo "--- Listing contents of Flutter directory within iOS project ---"
           ls -la ios/Flutter/ || { echo "Error: ios/Flutter directory not found or empty. Is the Flutter iOS project structure correct?"; exit 1; }
@@ -65,10 +71,9 @@ jobs:
             exit 1
           fi
 
-      - name: Install CocoaPods 
+      - name: Install CocoaPods
         run: |
           echo "--- Starting CocoaPods setup ---"
-          # Only install CocoaPods if not already installed, avoid aggressive uninstall/reinstall
           if ! command -v pod &> /dev/null
           then
               echo "CocoaPods not found, installing..."
@@ -80,14 +85,12 @@ jobs:
           
           echo "--- Installing project pods with repo update ---"
           cd ios/
-          # Use 'pod install --repo-update' directly, which is less aggressive and usually sufficient
-          # It updates the spec repo and installs/updates pods based on Podfile.lock or Podfile
           pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
           
           echo "--- CocoaPods setup complete ---"
           cd .. 
 
-      - name: Verify CocoaPods Installation 
+      - name: Verify CocoaPods Installation for audio_session
         run: |
           echo "--- Checking Podfile.lock for audio_session ---"
           grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
