@@ -25,8 +25,8 @@ jobs:
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          flutter-version: '3.32.8' # Using a known stable Flutter version
+          channel: 'stable' # Or 'beta', 'master' if you use them
+          flutter-version: '3.32.8' # Specify exact version for consistency
           cache: true
 
       - name: Run Flutter Doctor -v
@@ -39,14 +39,7 @@ jobs:
           echo "--- Getting Flutter dependencies ---"
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
-
-      - name: Force Flutter iOS Project Files Generation 
-        run: |
-          echo "--- Forcing Flutter iOS project files generation ---"
-          flutter build ios --no-codesign || { echo "Flutter iOS build (no-codesign) failed! Exiting."; exit 1; }
-          echo "--- Flutter iOS project files generation complete ---"
-
-      - name: List Directories after Flutter Setup (Verify Podfile existence)
+      - name: List Directories after Flutter Setup 
         run: |
           echo "--- Current directory: $(pwd) ---"
           echo "--- Listing contents of ios/ directory ---"
@@ -54,62 +47,13 @@ jobs:
           echo "--- Displaying content of ios/Podfile ---"
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
-
-      - name: Verify Flutter iOS structure before Pod Install 
-        run: |
-          echo "--- Listing contents of Flutter directory within iOS project ---"
-          ls -la ios/Flutter/ || { echo "Error: ios/Flutter directory not found or empty. Is the Flutter iOS project structure correct?"; exit 1; }
-          
-          echo "--- Checking for podhelper.rb ---"
-          if [ -f ios/Flutter/podhelper.rb ]; then
-            echo "SUCCESS: podhelper.rb found at ios/Flutter/podhelper.rb"
-            echo "Content of podhelper.rb:"
-            cat ios/Flutter/podhelper.rb
-          else
-            echo "ERROR: podhelper.rb NOT FOUND at ios/Flutter/podhelper.rb"
-            echo "This indicates that 'flutter clean' and 'flutter pub get' may not have properly set up the iOS project."
-            exit 1
-          fi
-
-      - name: Install CocoaPods
-        run: |
-          echo "--- Starting CocoaPods setup ---"
-          if ! command -v pod &> /dev/null
-          then
-              echo "CocoaPods not found, installing..."
-              sudo gem install cocoapods -n /usr/local/bin --no-document
-          else
-              echo "CocoaPods is already installed."
-          fi
-          pod --version
-          
-          echo "--- Installing project pods with repo update ---"
-          cd ios/
-          pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
-          
-          echo "--- CocoaPods setup complete ---"
-          cd .. 
-
-      - name: Verify CocoaPods Installation for audio_session
-        run: |
-          echo "--- Checking Podfile.lock for audio_session ---"
-          grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
-          
-          echo "--- Listing contents of Pods/Headers/Public/ ---"
-          ls -la ios/Pods/Headers/Public/ || echo "Warning: Pods/Headers/Public/ not found or empty. Module headers might be missing."
-          
-          echo "--- Listing contents of Pods/Headers/Public/audio_session/ ---"
-          ls -la ios/Pods/Headers/Public/audio_session/ || echo "Warning: audio_session headers not found in public directory. Module might not be correctly integrated."
-          
-          echo "--- Listing contents of Pods/audio_session/ ---"
-          ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
-
-
+      # --- Corrected Step: Import Apple Distribution Certificate ---
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Corrected parameter name
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      # --- END Corrected Step ---
 
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
@@ -118,7 +62,7 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
-          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
+          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
 
       - name: Get Code Signing Identity Name
         id: get_signing_identity
@@ -133,7 +77,6 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
-
       - name: Create ExportOptions.plist
         run: |
           echo "Creating ExportOptions.plist..."
@@ -159,7 +102,6 @@ jobs:
           echo "Contents of ExportOptions.plist:"
           cat "${EXPORT_OPTIONS_PLIST_PATH}"
           echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV 
-
       - name: Generate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
@@ -177,7 +119,6 @@ jobs:
             echo "Error: CODE_SIGN_IDENTITY_NAME is not set. Cannot proceed with build."
             exit 1
           fi
-
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
@@ -197,8 +138,7 @@ jobs:
           cat xcodebuild_archive_log.txt
           echo "--- End of xcodebuild_archive_log.txt ---"
           echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
-
-      - name: Upload Xcodebuild Archive Log 
+      - name: Upload Xcodebuild Archive Log
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
@@ -211,7 +151,6 @@ jobs:
           echo "Starting IPA export process..."
           IPA_OUTPUT_DIR="build/ios/ipa"
           EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-
           if [ -z "${{ env.ARCHIVE_PATH }}" ] || [ ! -d "${{ env.ARCHIVE_PATH }}" ]; then
             echo "Error: Archive path is missing or invalid. Cannot proceed with export."
             exit 1
@@ -220,7 +159,6 @@ jobs:
             echo "Error: ExportOptions.plist path is missing or file not found. Cannot proceed with export."
             exit 1
           fi
-
           mkdir -p "${IPA_OUTPUT_DIR}"
           xcodebuild -exportArchive \
             -archivePath "${{ env.ARCHIVE_PATH }}" \
@@ -234,7 +172,6 @@ jobs:
           cat xcodebuild_export_log.txt
           echo "--- End of xcodebuild_export_log.txt ---"
           echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV 
-
       - name: Upload Xcodebuild Export Log 
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
@@ -243,7 +180,7 @@ jobs:
           path: xcodebuild_export_log.txt
           retention-days: 7
 
-      - name: Upload IPA artifact 
+      - name: Upload IPA artifact
         if: ${{ success() }} 
         uses: actions/upload-artifact@v4
         with:
