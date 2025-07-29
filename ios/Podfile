@@ -46,7 +46,7 @@ target 'Runner' do
 
   # Add any other custom pods here if you have them, e.g.:
   # pod 'AnotherSDK', '~> 1.0'
-  flutter_additional_pods(flutter_application_path)
+  #flutter_additional_pods(flutter_application_path)
 end
 
 post_install do |installer|
