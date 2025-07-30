@@ -82,4 +82,3 @@ post_install do |installer|
       # --- END NEW LOGIC ---
     end
   end
-end
