@@ -80,5 +80,14 @@ post_install do |installer|
     end
     # --- END REVISED LOGIC ---
       # --- END NEW LOGIC ---
+    # Optional: If the above still fails, sometimes explicitly removing the CopySwiftLibs phase for such targets helps.
+    # This is a more aggressive workaround and should be used only if absolutely necessary.
+    # It attempts to remove the problematic build phase if it exists.
+     target.shell_script_build_phases.each do |shell_script_phase|
+       if shell_script_phase.name == "CopySwiftLibs" || shell_script_phase.shell_script.include?("builtin-swiftStdLibTool")
+         puts "Removing CopySwiftLibs phase from target: #{target.name}"
+        target.remove_build_phase(shell_script_phase)
+       end
+     end
     end
   end
