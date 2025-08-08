@@ -152,60 +152,26 @@ jobs:
         uses: einaregilsson/build-number@v2
         with:
           token: ${{ secrets.github_token }}
-      - name: Remove CopySwiftLibs for Privacy Bundles
+      
+      - name: Patch Pods Project for Privacy Bundles
         run: |
-          echo "--- Starting workaround for CopySwiftLibs on privacy bundles ---"
-          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
-          TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy" # The exact target name from your logs
+          echo "--- Starting new workaround to patch Pods.xcodeproj ---"
+          PODS_PROJECT_FILE="./ios/Pods/Pods.xcodeproj/project.pbxproj"
+          TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
 
-          if [ -d "$PODS_PROJECT_PATH" ]; then
-            echo "Modifying Pods project at $PODS_PROJECT_PATH"
-            # Use 'sed' to remove the lines that define the CopySwiftLibs build phase
-            # This is a highly aggressive and potentially fragile workaround, but often necessary.
-            # It targets the build phase by looking for its UUID in the project.pbxproj file
-            # You might need to refine the regex based on the exact UUID of the phase in your project.
+          if [ -f "$PODS_PROJECT_FILE" ]; then
+            echo "Patching build settings for target '$TARGET_NAME' in $PODS_PROJECT_FILE..."
+            # Use 'sed' to find the target's build settings and add the crucial flag
+            sed -i '' '/"'$TARGET_NAME'"/{:a;n;/"CODE_SIGN_IDENTITY"/s/.*/\t\t\t\tEMBEDDED_CONTENT_CONTAINS_SWIFT = NO;\n&/;t;ba}' "$PODS_PROJECT_FILE"
+            echo "Patching complete. Verifying change..."
             
-            # First, find the UUID of the problematic CopySwiftLibs build phase for the target
-            # This requires inspecting the project.pbxproj file (e.g., in Xcode locally)
-            # A more robust way might be to parse it with Ruby, but for a quick fix, sed can work if the UUID is known.
-            # For now, let's try a generic removal by looking for the script phase name
-            
-            echo "Searching for CopySwiftLibs build phases to remove from target '$TARGET_NAME'..."
-            
-            # This is a more generic way to remove shell script phases by their content
-            # This works by finding the PBXShellScriptBuildPhase entry for the target
-            # This exact script can be tricky due to how xcodeproj files are structured.
-            # A more robust solution might use 'xcodeproj' gem's scripting capabilities within a Ruby step.
-            
-            # Let's try to remove based on the target itself having a build phase with the tool
-            ruby -e "
-              require 'xcodeproj'
-              project_path = ARGV[0]
-              target_to_fix = ARGV[1]
-              
-              project = Xcodeproj::Project.open(project_path)
-              project.targets.each do |target|
-                if target.name == target_to_fix
-                  puts \"Found target '#{target.name}'. Checking build phases...\"
-                  target.build_phases.to_a.each do |phase|
-                    if phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && phase.shell_script.include?('builtin-swiftStdLibTool')
-                      puts \"Removing problematic CopySwiftLibs build phase from #{target.name}\"
-                      target.build_phases.delete(phase)
-                      project.save
-                      puts \"Successfully removed build phase for #{target.name}\"
-                      break # Assuming only one such phase
-                    end
-                  end
-                end
-              end
-              puts \"Finished scanning targets.\"
-            " "$PODS_PROJECT_PATH" "$TARGET_NAME" || { echo "Failed to remove CopySwiftLibs phase via Ruby script."; exit 1; }
-            
+            # Use grep to verify the change was applied
+            grep "EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;" "$PODS_PROJECT_FILE" && echo "Patch verified successfully." || { echo "Patch failed to apply."; exit 1; }
           else
-            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
+            echo "Pods project file not found. Skipping workaround."
           fi
           echo "--- Workaround complete ---"
-
+      # --- NEW WORKAROUND STEP END ---
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
