@@ -52,46 +52,5 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    
-    # Apply global deployment target first
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '18.0' # Keep this as per your project
-    end
-
-    # --- REVISED LOGIC FOR PRIVACY BUNDLES ---
-    # This block specifically targets privacy bundles and applies settings to prevent CopySwiftLibs
-    
-    # Check if the target is a privacy bundle by its common naming convention
-    if target.name.end_with?('_privacy') || target.name.include?('_privacy-') || target.name.include?('PrivacyResources')
-      puts "Adjusting build settings for identified privacy bundle target: #{target.name}"
-      target.build_configurations.each do |config|
-        # Set explicitly for resource bundles
-        config.build_settings['DEFINES_MODULE'] = 'NO'
-        config.build_settings['MACH_O_TYPE'] = 'none' # Crucial: Not an executable
-        config.build_settings['CODE_SIGN_IDENTITY'] = ''
-        config.build_settings['CODE_SIGNING_REQUIRED'] = 'NO'
-        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-        
-        # This is the most direct control for CopySwiftLibs.
-        # Ensure it's set to NO for bundles that *should not* contain Swift code.
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' 
-      end
-    end
-    # --- END REVISED LOGIC ---
-
-    # --- AGGRESSIVE WORKAROUND: REMOVE COPIESWIFTLIBS BUILD PHASE ---
-    # This is a very strong measure to prevent the CopySwiftLibs step from running at all
-    # on targets that are not supposed to contain Swift.
-    # We must explicitly check if the target is a privacy bundle before attempting to remove the phase.
-    if target.name.end_with?('_privacy') || target.name.include?('_privacy-') || target.name.include?('PrivacyResources')
-      target.shell_script_build_phases.each do |shell_script_phase|
-        if shell_script_phase.name.include?("CopySwiftLibs") || shell_script_phase.shell_script.include?("builtin-swiftStdLibTool")
-          puts "Removing CopySwiftLibs build phase from target: #{target.name}"
-          target.remove_build_phase(shell_script_phase)
-        end
-      end
-    end
-    # --- END AGGRESSIVE WORKAROUND ---
-
-  end # end of installer.pods_project.targets.each
-end # end of post_install
+  end
+end
