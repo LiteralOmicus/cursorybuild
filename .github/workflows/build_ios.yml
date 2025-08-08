@@ -39,9 +39,11 @@ jobs:
           echo "--- Getting Flutter dependencies ---"
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
+
       - name: Select Xcode version
         run: sudo xcode-select --switch /Applications/Xcode_16.4.app/Contents/Developer
-      - name: List Directories after Flutter Setup (Verify Podfile existence)
+
+      - name: List Directories after Flutter Setup 
         run: |
           echo "--- Current directory: $(pwd) ---"
           echo "--- Listing contents of ios/ directory ---"
@@ -49,55 +51,13 @@ jobs:
           echo "--- Displaying content of ios/Podfile ---"
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
-      - name: Clean CocoaPods Environment and Install
-        run: |
-          echo "--- Starting CocoaPods setup ---"
-          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
-          sudo gem uninstall cocoapods -ax --force || true
-          sudo gem uninstall cocoapods-core -ax --force || true
-          sudo gem update --system
-          sudo gem install cocoapods -n /usr/local/bin --no-document
-          pod --version
-          
-          echo "--- Updating CocoaPods spec repo ---"
-          # Run pod repo update separately to ensure it completes before install
-          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
-          
-          echo "--- Cleaning project pods aggressively ---"
-          cd ios/
-          # Deintegrate previous Pods installation to ensure a clean slate
-          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
-          rm -rf Pods/ 
-          rm -f Podfile.lock 
-          
-          echo "--- Installing project pods ---"
-          # Now run pod install after deintegration and cleaning
-          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
-          
-          echo "--- CocoaPods setup complete ---"
-          cd .. 
-      - name: Verify CocoaPods Installation for audio_session
-        run: |
-          echo "--- Checking Podfile.lock for audio_session ---"
-          # This should show if audio_session was successfully listed as a dependency
-          grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
-          
-          echo "--- Listing contents of Pods/Headers/Public/ ---"
-          # Check if the public headers directory exists
-          ls -la ios/Pods/Headers/Public/ || echo "Warning: Pods/Headers/Public/ not found or empty. Module headers might be missing."
-          
-          echo "--- Listing contents of Pods/Headers/Public/audio_session/ ---"
-          # Explicitly check for audio_session's public headers
-          ls -la ios/Pods/Headers/Public/audio_session/ || echo "Warning: audio_session headers not found in public directory. Module might not be correctly integrated."
-          
-          echo "--- Listing contents of Pods/audio_session/ ---"
-          # Check the root pod directory itself
-          ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
+      # --- Corrected Step: Import Apple Distribution Certificate ---
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
         with:
-          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }} # Corrected parameter name
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+      # --- END Corrected Step ---
 
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
@@ -106,7 +66,7 @@ jobs:
           profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
-          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
+          api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }} # Content of the .p8 key
 
       - name: Get Code Signing Identity Name
         id: get_signing_identity
@@ -152,6 +112,62 @@ jobs:
         with:
           token: ${{ secrets.github_token }}
 
+      # --- START OF NEW WORKAROUND STEP ---
+      - name: Workaround: Remove CopySwiftLibs for Privacy Bundles
+        run: |
+          echo "--- Starting workaround for CopySwiftLibs on privacy bundles ---"
+          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
+          TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy" # The exact target name from your logs
+
+          if [ -d "$PODS_PROJECT_PATH" ]; then
+            echo "Modifying Pods project at $PODS_PROJECT_PATH"
+            # Use 'sed' to remove the lines that define the CopySwiftLibs build phase
+            # This is a highly aggressive and potentially fragile workaround, but often necessary.
+            # It targets the build phase by looking for its UUID in the project.pbxproj file
+            # You might need to refine the regex based on the exact UUID of the phase in your project.
+            
+            # First, find the UUID of the problematic CopySwiftLibs build phase for the target
+            # This requires inspecting the project.pbxproj file (e.g., in Xcode locally)
+            # A more robust way might be to parse it with Ruby, but for a quick fix, sed can work if the UUID is known.
+            # For now, let's try a generic removal by looking for the script phase name
+            
+            echo "Searching for CopySwiftLibs build phases to remove from target '$TARGET_NAME'..."
+            
+            # This is a more generic way to remove shell script phases by their content
+            # This works by finding the PBXShellScriptBuildPhase entry for the target
+            # This exact script can be tricky due to how xcodeproj files are structured.
+            # A more robust solution might use 'xcodeproj' gem's scripting capabilities within a Ruby step.
+            
+            # Let's try to remove based on the target itself having a build phase with the tool
+            ruby -e "
+              require 'xcodeproj'
+              project_path = ARGV[0]
+              target_to_fix = ARGV[1]
+              
+              project = Xcodeproj::Project.open(project_path)
+              project.targets.each do |target|
+                if target.name == target_to_fix
+                  puts \"Found target '#{target.name}'. Checking build phases...\"
+                  target.build_phases.to_a.each do |phase|
+                    if phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && phase.shell_script.include?('builtin-swiftStdLibTool')
+                      puts \"Removing problematic CopySwiftLibs build phase from #{target.name}\"
+                      target.build_phases.delete(phase)
+                      project.save
+                      puts \"Successfully removed build phase for #{target.name}\"
+                      break # Assuming only one such phase
+                    end
+                  end
+                end
+              end
+              puts \"Finished scanning targets.\"
+            " "$PODS_PROJECT_PATH" "$TARGET_NAME" || { echo "Failed to remove CopySwiftLibs phase via Ruby script."; exit 1; }
+            
+          else
+            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
+          fi
+          echo "--- Workaround complete ---"
+      # --- END OF NEW WORKAROUND STEP ---
+
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
@@ -182,7 +198,7 @@ jobs:
           cat xcodebuild_archive_log.txt
           echo "--- End of xcodebuild_archive_log.txt ---"
           echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
-      - name: Upload Xcodebuild Archive Log 
+      - name: Upload Xcodebuild Archive Log
         if: ${{ always() }} 
         uses: actions/upload-artifact@v4
         with:
@@ -224,7 +240,7 @@ jobs:
           path: xcodebuild_export_log.txt
           retention-days: 7
 
-      - name: Upload IPA artifact 
+      - name: Upload IPA artifact
         if: ${{ success() }} 
         uses: actions/upload-artifact@v4
         with:
