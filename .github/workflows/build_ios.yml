@@ -113,7 +113,7 @@ jobs:
           token: ${{ secrets.github_token }}
 
       # --- START OF NEW WORKAROUND STEP ---
-      - name: Workaround: Remove CopySwiftLibs for Privacy Bundles
+      - name: Remove CopySwiftLibs for Privacy Bundles
         run: |
           echo "--- Starting workaround for CopySwiftLibs on privacy bundles ---"
           PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
