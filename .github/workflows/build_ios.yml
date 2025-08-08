@@ -39,6 +39,8 @@ jobs:
           echo "--- Getting Flutter dependencies ---"
           flutter pub get
           echo "--- Flutter dependencies retrieved ---"
+      - name: Select Xcode version
+        run: sudo xcode-select --switch /Applications/Xcode_16.4.app/Contents/Developer
       - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
           echo "--- Current directory: $(pwd) ---"
