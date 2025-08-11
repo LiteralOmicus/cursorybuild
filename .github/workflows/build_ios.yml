@@ -155,23 +155,34 @@ jobs:
       
       - name: Patch Pods Project for Privacy Bundles
         run: |
-          echo "--- Starting new workaround to patch Pods.xcodeproj ---"
-          PODS_PROJECT_FILE="./ios/Pods/Pods.xcodeproj/project.pbxproj"
+          echo "--- Starting new workaround to patch Pods.xcodeproj using Ruby ---"
+          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
           TARGET_NAME="webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
 
-          if [ -f "$PODS_PROJECT_FILE" ]; then
-            echo "Patching build settings for target '$TARGET_NAME' in $PODS_PROJECT_FILE..."
-            # Use 'sed' to find the target's build settings and add the crucial flag
-            sed -i '' '/"'$TARGET_NAME'"/{:a;n;/"CODE_SIGN_IDENTITY"/s/.*/\t\t\t\tEMBEDDED_CONTENT_CONTAINS_SWIFT = NO;\n&/;t;ba}' "$PODS_PROJECT_FILE"
-            echo "Patching complete. Verifying change..."
-            
-            # Use grep to verify the change was applied
-            grep "EMBEDDED_CONTENT_CONTAINS_SWIFT = NO;" "$PODS_PROJECT_FILE" && echo "Patch verified successfully." || { echo "Patch failed to apply."; exit 1; }
+          if [ -d "$PODS_PROJECT_PATH" ]; then
+            echo "Modifying Pods project at $PODS_PROJECT_PATH"
+            ruby -e "
+              require 'xcodeproj'
+              project = Xcodeproj::Project.open(ARGV[0])
+              target = project.targets.find { |t| t.name == ARGV[1] }
+              
+              if target
+                puts \"Found target '#{target.name}'. Updating build settings...\"
+                target.build_configurations.each do |config|
+                  puts \"  - Fixing configuration: \#{config.name}\"
+                  config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+                end
+                project.save
+                puts \"Successfully patched build settings for #{target.name}.\"
+              else
+                puts \"Error: Target '#{ARGV[1]}' not found in project. Skipping patch.\"
+                exit 1
+              end
+            " "$PODS_PROJECT_PATH" "$TARGET_NAME"
           else
-            echo "Pods project file not found. Skipping workaround."
+            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
           fi
           echo "--- Workaround complete ---"
-      # --- NEW WORKAROUND STEP END ---
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
