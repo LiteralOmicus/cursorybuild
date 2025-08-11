@@ -50,24 +50,23 @@ target 'Runner' do
 end
 
 post_install do |installer|
-  # Loop through all targets in the Pods project
   installer.pods_project.targets.each do |target|
-    # First, apply Flutter's default build settings
     flutter_additional_ios_build_settings(target)
 
-    # Then, apply our custom fix for privacy bundles
-    # We check for the 'privacy' keyword in the target name
     if target.name.include?('privacy')
-      puts "Applying aggressive fix for privacy bundle: #{target.name}"
-      target.build_configurations.each do |config|
-        # Setting MACH_O_TYPE to 'none' prevents the linker from running
-        config.build_settings['MACH_O_TYPE'] = 'none'
-        # Explicitly telling Xcode there's no Swift code to copy
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+      puts "Applying aggressive workaround to skip CopySwiftLibs for #{target.name}"
+      target.build_phases.each do |build_phase|
+        if build_phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && build_phase.name == 'CopySwiftLibs'
+          # This command overwrites the build phase script to be a simple 'exit 0'
+          # which forces the phase to succeed without doing anything.
+          build_phase.shell_script = 'exit 0'
+          puts "  - Found and disabled CopySwiftLibs script phase for #{target.name}."
+          break
+        end
       end
     end
-
-    # Apply the Swift version fix for any specific pods that need it
+    
+    # Set Swift version for specific pods if needed
     if target.name == 'RecaptchaInterop'
       target.build_configurations.each do |config|
         config.build_settings['SWIFT_VERSION'] = '5.0'
