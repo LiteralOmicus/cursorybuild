@@ -154,7 +154,7 @@ jobs:
           token: ${{ secrets.github_token }}
       
        # --- NEW AGGRESSIVE WORKAROUND STEP START ---
-      - name: Workaround: Remove CopySwiftLibs build phase
+      - name: Remove CopySwiftLibs build phase
         run: |
           echo "--- Starting aggressive workaround to remove CopySwiftLibs build phase ---"
           PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
