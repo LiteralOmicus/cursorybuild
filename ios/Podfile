@@ -51,6 +51,23 @@ end
 
 post_install do |installer|
   installer.pods_project.targets.each do |target|
+    # Flutter's default build settings should be applied to all targets
     flutter_additional_ios_build_settings(target)
+
+    # --- AGGRESSIVE FIX: For ALL privacy bundles that incorrectly trigger SwiftLibs copying ---
+    if target.name.include?('privacy')
+      target.build_configurations.each do |config|
+        puts "Applying fix to #{target.name} in configuration #{config.name}"
+        config.build_settings['MACH_O_TYPE'] = 'none'
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+      end
+    end
+
+    # Set Swift version for pods that need it
+    if target.name == 'RecaptchaInterop'
+      target.build_configurations.each do |config|
+        config.build_settings['SWIFT_VERSION'] = '5.0'
+      end
+    end
   end
 end
