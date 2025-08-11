@@ -153,36 +153,38 @@ jobs:
         with:
           token: ${{ secrets.github_token }}
       
-       # --- NEW WORKAROUND STEP START ---
-      - name: Patch Pods Project for Privacy Bundles
+       # --- NEW AGGRESSIVE WORKAROUND STEP START ---
+      - name: Workaround: Remove CopySwiftLibs build phase
         run: |
-          echo "--- Starting new, comprehensive workaround to patch Pods.xcodeproj using Ruby ---"
+          echo "--- Starting aggressive workaround to remove CopySwiftLibs build phase ---"
           PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
 
           if [ -d "$PODS_PROJECT_PATH" ]; then
-            echo "Modifying Pods project at $PODS_PROJECT_PATH"
+            echo "Removing CopySwiftLibs build phase from Pods project at $PODS_PROJECT_PATH"
             ruby -e "
               require 'xcodeproj'
               project = Xcodeproj::Project.open(ARGV[0])
               
               fixed_targets_count = 0
               project.targets.each do |target|
-                # Check if the target's name matches a common privacy bundle naming convention.
-                if target.name.include?('_privacy') || target.name.end_with?('_privacy.bundle')
-                  puts \"Found privacy bundle target: '#{target.name}'. Updating build settings...\"
-                  target.build_configurations.each do |config|
-                    puts \"  - Fixing configuration: \#{config.name}\"
-                    config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+                if target.name.include?('privacy')
+                  puts \"Found privacy bundle target: '#{target.name}'. Removing CopySwiftLibs phase...\"
+                  target.build_phases.each do |phase|
+                    if phase.isa == 'PBXCopyFilesBuildPhase' && phase.name == 'CopySwiftLibs'
+                      puts \"  - Found and removed CopySwiftLibs phase.\"
+                      target.build_phases.delete(phase)
+                      fixed_targets_count += 1
+                      break
+                    end
                   end
-                  fixed_targets_count += 1
                 end
               end
               
               if fixed_targets_count > 0
                 project.save
-                puts \"Successfully patched build settings for \#{fixed_targets_count} targets.\"
+                puts \"Successfully removed build phases from \#{fixed_targets_count} targets.\"
               else
-                puts \"No privacy bundle targets found that needed patching. Continuing build.\"
+                puts \"No privacy bundle targets with a CopySwiftLibs phase were found. Continuing build.\"
               end
             " "$PODS_PROJECT_PATH"
           else
@@ -190,7 +192,7 @@ jobs:
             exit 1 # Exit with an error if the Pods project is missing, indicating a core problem.
           fi
           echo "--- Workaround complete ---"
-      # --- NEW WORKAROUND STEP END ---
+      # --- NEW AGGRESSIVE WORKAROUND STEP END ---
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
