@@ -1,3 +1,4 @@
+#TUESDDAYX
 # Uncomment this line to define a global platform for your project
 platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
 # Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
