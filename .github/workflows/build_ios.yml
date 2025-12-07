@@ -21,6 +21,15 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }} 
 
     steps:
+      # Use an action to select a specific Xcode version
+      - name: Select Xcode 26.1.1
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: '26.1.1' # Use the latest stable version 
+
+      - name: Show Xcode Version (for verification)
+        run: xcodebuild -version
+     
       - name: Checkout code
         uses: actions/checkout@v4
 
