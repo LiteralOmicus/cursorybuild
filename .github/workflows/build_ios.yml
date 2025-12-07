@@ -185,6 +185,34 @@ jobs:
         with:
           token: ${{ secrets.github_token }}
 
+      - name: Inspect webview_flutter_wkwebview_privacy.bundle
+        if: ${{ always() }} # Run this step even if the patch fails, for maximum debug info
+        run: |
+          echo "--- Verifying webview_flutter_wkwebview_privacy.bundle existence and contents ---"
+          
+          # 1. Check for the existence of the bundle directory
+          BUNDLE_PATH="./ios/Pods/Target Support Files/webview_flutter_wkwebview-webview_flutter_wkwebview_privacy"
+          if [ -d "$BUNDLE_PATH" ]; then
+            echo "✅ Found Target Support Files directory for the bundle."
+            echo "Listing contents of $BUNDLE_PATH:"
+            ls -la "$BUNDLE_PATH"
+          else
+            echo "❌ Target Support Files directory not found at: $BUNDLE_PATH"
+          fi
+          
+          # 2. Look for the actual bundle file (though it might be generated later)
+          # A more reliable check is to see the target's build settings in the Pods project
+          
+          # 3. Use grep to confirm if the build settings were applied in the Pods.xcodeproj
+          # This requires the Pods project to be openable, which the previous Ruby step handles.
+          # Since the Ruby step modified the Pods project, we can look at the project.pbxproj
+          
+          # Note: Directly grepping the pbxproj for EMBEDDED_CONTENT_CONTAINS_SWIFT='NO'
+          # for the target name is the best way to confirm the Ruby patch worked.
+          echo "--- Checking Pods.xcodeproj for EMBEDDED_CONTENT_CONTAINS_SWIFT=NO ---"
+          grep -C 5 "webview_flutter_wkwebview_privacy" ./ios/Pods/Pods.xcodeproj/project.pbxproj | grep "EMBEDDED_CONTENT_CONTAINS_SWIFT" || echo "Warning: Could not confirm patch via grep. Check Ruby script output."
+          
+          echo "--- Inspection complete ---"
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
