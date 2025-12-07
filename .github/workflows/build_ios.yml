@@ -13,6 +13,8 @@ jobs:
       contents: write # Needed for build-number action
     env:
       ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+      FLUTTER_ROOT: /Users/runner/hostedtoolcache/flutter/3.22.8-stable/macos 
+      COCOAPODS_SKIP_UPDATE: 'TRUE' 
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }} # Content of your .p8 key file
