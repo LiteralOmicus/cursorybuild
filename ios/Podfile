@@ -1,7 +1,7 @@
 # Podfile for a Clean Flutter iOS Project
 # Designed to work with a CI system that runs 'flutter pub get' and 'pod install'.
 
-platform :ios, '14.0' # Set your minimum iOS deployment target. Ensure this matches your project's settings.
+platform :ios, '18.0' # Set your minimum iOS deployment target. Ensure this matches your project's settings.
 
 # Recommended best practice to silence CocoaPods stats, improving CI speed.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
