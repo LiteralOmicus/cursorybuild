@@ -52,20 +52,35 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-    
-    # Fix for ALL bundles (including privacy manifest bundles)
-    if target.product_type == 'com.apple.product-type.bundle'
-      target.build_configurations.each do |config|
-        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
-      end
+
+    target.build_configurations.each do |config|
       
-      # Remove CopySwiftLibs build phase if it exists
-      target.build_phases.delete_if do |phase|
-        phase.display_name == 'Copy Swift Standard Libraries'
+      # FIX FOR ALL TARGETS (Optional but good practice)
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+
+      # ==========================================================
+      # FIX 1: PRIVACY/RESOURCE BUNDLES (Previous successful fix)
+      if target.name.include?('_privacy') || target.name.end_with?('_Privacy')
+        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+        config.build_settings['EXECUTABLE_NAME'] = '' # Clears the expected executable path
       end
+      # ==========================================================
+      
+      # ==========================================================
+      # FIX 2: PRIMARY PLUGIN BUNDLES (NEW FIX for google_mobile_ads)
+      # Force the failing plugin targets to be compiled as static libraries, 
+      # eliminating the CopySwiftLibs dependency entirely.
+      if ['google_mobile_ads', 'webview_flutter_wkwebview'].include?(target.name)
+        # Force compilation as a static library
+        config.build_settings['MACH_O_TYPE'] = 'staticlib' 
+        # Ensure it defines a module (required for Swift/Objective-C interop)
+        config.build_settings['DEFINES_MODULE'] = 'YES'
+        # Disable strict messaging often needed when mixing static/dynamic libs
+        config.build_settings['ENABLE_STRICT_OBJC_MSGSEND'] = 'NO' 
+      end
+      # ==========================================================
+      
     end
   end
-  installer.pods_project.save
 end
