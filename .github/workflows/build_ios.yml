@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write # Needed for build-number action
     env:
-      # Removed ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' as it's an unnecessary workaround now.
+      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }} # Content of your .p8 key file
