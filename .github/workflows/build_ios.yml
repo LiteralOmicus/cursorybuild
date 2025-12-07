@@ -91,6 +91,41 @@ jobs:
           echo "--- Listing contents of Pods/audio_session/ ---"
           # Check the root pod directory itself
           ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
+      - name: Patch Pods Project for Privacy Bundles
+        run: |
+          echo "--- Starting comprehensive workaround to patch Pods.xcodeproj ---"
+          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
+          if [ -d "$PODS_PROJECT_PATH" ]; then
+            echo "Modifying Pods project at $PODS_PROJECT_PATH"
+            # We use ruby to find targets that look like privacy bundles and set EMBEDDED_CONTENT_CONTAINS_SWIFT to NO
+            ruby -e "
+              require 'xcodeproj'
+              project = Xcodeproj::Project.open(ARGV[0])
+              
+              fixed_targets_count = 0
+              project.targets.each do |target|
+                # Targets named like '*-privacy' or ending in '_privacy.bundle' are the culprits.
+                if target.name.include?('_privacy') || target.name.end_with?('_privacy.bundle')
+                  puts \"Found privacy bundle target: '#{target.name}'. Updating build settings...\"
+                  target.build_configurations.each do |config|
+                    config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
+                  end
+                  fixed_targets_count += 1
+                end
+              end
+              
+              if fixed_targets_count > 0
+                project.save
+                puts \"Successfully patched build settings for \#{fixed_targets_count} targets.\"
+              else
+                puts \"No privacy bundle targets found that needed patching. Continuing build.\"
+              end
+            " "$PODS_PROJECT_PATH"
+          else
+            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
+            # Exit with 0 if the pods folder is missing, as that means pod install failed earlier.
+          fi
+          echo "--- Workaround complete ---"
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
         with:
