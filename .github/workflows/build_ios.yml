@@ -50,33 +50,7 @@ jobs:
           echo "--- Displaying content of ios/Podfile ---"
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
-      - name: Clean CocoaPods Environment and Install
-        run: |
-          echo "--- Starting CocoaPods setup ---"
-          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
-          sudo gem uninstall cocoapods -ax --force || true
-          sudo gem uninstall cocoapods-core -ax --force || true
-          sudo gem update --system
-          sudo gem install cocoapods -n /usr/local/bin --no-document
-          pod --version
-          
-          echo "--- Updating CocoaPods spec repo ---"
-          # Run pod repo update separately to ensure it completes before install
-          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
-          
-          echo "--- Cleaning project pods aggressively ---"
-          cd ios/
-          # Deintegrate previous Pods installation to ensure a clean slate
-          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
-          rm -rf Pods/ 
-          rm -f Podfile.lock 
-          
-          echo "--- Installing project pods ---"
-          # Now run pod install after deintegration and cleaning
-          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
-          
-          echo "--- CocoaPods setup complete ---"
-          cd .. 
+  
       - name: Verify CocoaPods Installation for audio_session
         run: |
           echo "--- Checking Podfile.lock for audio_session ---"
@@ -153,43 +127,7 @@ jobs:
         with:
           token: ${{ secrets.github_token }}
       
-       # --- NEW WORKAROUND STEP START ---
-      - name: Patch Pods Project for Privacy Bundles
-        run: |
-          echo "--- Starting new, comprehensive workaround to patch Pods.xcodeproj using Ruby ---"
-          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
-          if [ -d "$PODS_PROJECT_PATH" ]; then
-            echo "Modifying Pods project at $PODS_PROJECT_PATH"
-            ruby -e "
-              require 'xcodeproj'
-              project = Xcodeproj::Project.open(ARGV[0])
-              
-              fixed_targets_count = 0
-              project.targets.each do |target|
-                # Check if the target's name matches a common privacy bundle naming convention.
-                if target.name.include?('_privacy') || target.name.end_with?('_privacy.bundle')
-                  puts \"Found privacy bundle target: '#{target.name}'. Updating build settings...\"
-                  target.build_configurations.each do |config|
-                    puts \"  - Fixing configuration: \#{config.name}\"
-                    config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-                  end
-                  fixed_targets_count += 1
-                end
-              end
-              
-              if fixed_targets_count > 0
-                project.save
-                puts \"Successfully patched build settings for \#{fixed_targets_count} targets.\"
-              else
-                puts \"No privacy bundle targets found that needed patching. Continuing build.\"
-              end
-            " "$PODS_PROJECT_PATH"
-          else
-            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
-            exit 1 # Exit with an error if the Pods project is missing, indicating a core problem.
-          fi
-          echo "--- Workaround complete ---"
-      # --- NEW WORKAROUND STEP END ---
+     
       - name: Build and Archive iOS App
         run: |
           echo "Starting archive process for iOS..."
