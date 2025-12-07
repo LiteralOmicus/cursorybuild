@@ -53,18 +53,17 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
-    # 🛑 CRITICAL FIX for CopySwiftLibs failure on Privacy Bundles 🛑
     target.build_configurations.each do |config|
-      # 1. Disable embedding Swift libraries for all pod targets
-      #    (The bundles are incorrectly inheriting YES from the main target)
+      # CRITICAL FIX 1: Prevent Swift libraries from being copied
       config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
 
-      # 2. Ensure all Pods are using the same minimum deployment target as the Runner
-      #    This prevents linker warnings/errors due to version mismatches.
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0' # Adjust to your platform :ios version
-
-      # 3. Suppress a common warning that leads to CI failures
-      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      # CRITICAL FIX 2: Ensure the target is treated as a simple resource bundle
+      if target.name.include?('_privacy') || target.name.end_with?('_Privacy')
+        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
+      end
+      
+      # (Optional) Retain other fixes like deployment target consistency
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
     end
   end
 end
