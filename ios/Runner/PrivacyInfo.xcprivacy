@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+
+<plist version="1.0">
+<dict>
+<!--
+NSPrivacyTracking: Set to TRUE if you use the data collected for the purpose
+of tracking the user across apps and websites owned by other companies.
+We assume non-tracking/contextual ads here, but review this if you use personalized ads.
+-->
+<key>NSPrivacyTracking</key>
+<false/>
+
+<!-- Data Collected by the App Itself or Its Third-Party SDKs (Firebase, AdMob) -->
+<key>NSPrivacyCollectedDataTypes</key>
+<array>
+    
+    <!-- 1. Advertising Data (Required by google_mobile_ads/AdMob) -->
+    <dict>
+        <key>NSPrivacyCollectedDataType</key>
+        <string>Advertising Data</string>
+        <key>NSPrivacyCollectedDataReasons</key>
+        <array>
+            <string>59F6.1</string> <!-- Product Advertising -->
+            <string>E174.1</string> <!-- App Functionality -->
+        </array>
+        <key>NSPrivacyCollectedDataInferred</key>
+        <true/>
+        <key>NSPrivacyCollectedDataLinked</key>
+        <true/>
+    </dict>
+    
+    <!-- 2. Device ID (Required by AdMob for fraud prevention and analytics) -->
+    <dict>
+        <key>NSPrivacyCollectedDataType</key>
+        <string>Device ID</string>
+        <key>NSPrivacyCollectedDataReasons</key>
+        <array>
+            <string>35F6.1</string> <!-- Security/Fraud Prevention -->
+            <string>A9FY.1</string> <!-- Analytics -->
+            <string>E174.1</string> <!-- App Functionality -->
+        </array>
+        <key>NSPrivacyCollectedDataInferred</key>
+        <true/>
+        <key>NSPrivacyCollectedDataLinked</key>
+        <true/>
+    </dict>
+
+    <!-- 3. User ID (For firebase_auth/Account Management) -->
+    <dict>
+        <key>NSPrivacyCollectedDataType</key>
+        <string>User ID</string>
+        <key>NSPrivacyCollectedDataReasons</key>
+        <array>
+            <string>35F6.1</string> <!-- Account Management -->
+        </array>
+        <key>NSPrivacyCollectedDataInferred</key>
+        <false/>
+        <key>NSPrivacyCollectedDataLinked</key>
+        <true/>
+    </dict>
+    
+    <!-- 4. Crash Data (For Firebase Crashlytics/Diagnostics) -->
+    <dict>
+        <key>NSPrivacyCollectedDataType</key>
+        <string>Crash Data</string>
+        <key>NSPrivacyCollectedDataReasons</key>
+        <array>
+            <string>35F6.1</string> <!-- Product Personalization -->
+            <string>A9FY.1</string> <!-- Analytics -->
+            <string>E174.1</string> <!-- App Functionality -->
+        </array>
+        <key>NSPrivacyCollectedDataInferred</key>
+        <true/>
+        <key>NSPrivacyCollectedDataLinked</key>
+        <false/>
+    </dict>
+    
+    <!-- 5. Product Interaction (For Firebase Analytics/Usage tracking) -->
+    <dict>
+        <key>NSPrivacyCollectedDataType</key>
+        <string>Product Interaction</string>
+        <key>NSPrivacyCollectedDataReasons</key>
+        <array>
+            <string>A9FY.1</string> <!-- Analytics -->
+            <string>35F6.1</string> <!-- Product Personalization -->
+        </array>
+        <key>NSPrivacyCollectedDataInferred</key>
+        <true/>
+        <key>NSPrivacyCollectedDataLinked</key>
+        <false/>
+    </dict>
+</array>
+
+<!-- Required Reason APIs: Used by path_provider, just_audio, and other system APIs -->
+<key>NSPrivacyAccessedAPITypes</key>
+<array>
+    <!-- API: File Timestamp API (Used by path_provider, shared_preferences, caching) -->
+    <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array>
+            <string>C617.1</string> <!-- Accessing the creation date of a file (e.g., caching/temp files) -->
+        </array>
+    </dict>
+    
+    <!-- API: System Boot Time API (Used by diagnostic tools and audio packages like just_audio) -->
+    <dict>
+        <key>NSPrivacyAccessedAPIType</key>
+        <string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+        <key>NSPrivacyAccessedAPITypeReasons</key>
+        <array>
+            <string>35F6.1</string> <!-- Diagnostics or display of elapsed time since boot (e.g., performance) -->
+        </array>
+    </dict>
+</array>
+
+
+</dict>
+</plist>
