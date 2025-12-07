@@ -47,7 +47,33 @@ jobs:
           echo "--- Displaying content of ios/Podfile ---"
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
-
+      - name: Clean CocoaPods Environment and Install
+        run: |
+          echo "--- Starting CocoaPods setup ---"
+          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
+          sudo gem uninstall cocoapods -ax --force || true
+          sudo gem uninstall cocoapods-core -ax --force || true
+          sudo gem update --system
+          sudo gem install cocoapods -n /usr/local/bin --no-document
+          pod --version
+          
+          echo "--- Updating CocoaPods spec repo ---"
+          # Run pod repo update separately to ensure it completes before install
+          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
+          
+          echo "--- Cleaning project pods aggressively ---"
+          cd ios/
+          # Deintegrate previous Pods installation to ensure a clean slate
+          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
+          rm -rf Pods/ 
+          rm -f Podfile.lock 
+          
+          echo "--- Installing project pods ---"
+          # Now run pod install after deintegration and cleaning
+          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
+          
+          echo "--- CocoaPods setup complete ---"
+          cd .. 
       - name: Verify CocoaPods Installation for audio_session
         run: |
           echo "--- Checking Podfile.lock for audio_session ---"
