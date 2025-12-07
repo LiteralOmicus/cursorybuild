@@ -1,9 +1,15 @@
 # Uncomment this line to define a global platform for your project
-platform :ios, '18.0' 
-
+platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
 # Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
-# I recommend setting this to your minimum deployment target, e.g., '14.0'.
+# Ensure these match if you intend for your app to target iOS 18.0 as its minimum.
+#install! 'cocoapods',
+  #       :disable_input_output_paths => true
 
+# This Flutter line is crucial and should be present in your Podfile
+#flutter_application_path = File.join(__dir__, '..')
+# CORRECTED LINE BELOW: Changed '.ios' to 'ios'
+#load File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
+# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
@@ -11,8 +17,6 @@ project 'Runner', {
   'Profile' => :release,
   'Release' => :release,
 }
-
-# (The flutter_root and require... blocks are standard and should be left as is)
 
 def flutter_root
   generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
@@ -30,27 +34,21 @@ require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelpe
 
 flutter_ios_podfile_setup do |installer|
   # This block is for Flutter's internal pod setup.
+  # You generally don't need to add anything here unless explicitly required by a plugin.
 end
 
 target 'Runner' do
   use_frameworks!
   use_modular_headers! # Recommended for many modern pods
   
-  # --- BEGIN INTEGRATION ---
-  
-  # The essential line that installs ALL Flutter plugins
+  # Flutter Pods - these are automatically added by Flutter based on your pubspec.yaml plugins
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
-  # **NEW LINE:** Explicitly define the problematic pod.
-  # This ensures CocoaPods processes it with the 'Runner' target's settings (like use_frameworks!).
-  pod 'webview_flutter_wkwebview' 
-  
-  # --- END INTEGRATION ---
-
-  # Add any other custom pods here if you have them
+  # Add any other custom pods here if you have them, e.g.:
+  # pod 'AnotherSDK', '~> 1.0'
+  #flutter_additional_pods(flutter_application_path)
 end
 
-# (The post_install block is for advanced settings and should be left as is)
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
@@ -59,6 +57,8 @@ post_install do |installer|
       puts "Applying aggressive workaround to skip CopySwiftLibs for #{target.name}"
       target.build_phases.each do |build_phase|
         if build_phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && build_phase.name == 'CopySwiftLibs'
+          # This command overwrites the build phase script to be a simple 'exit 0'
+          # which forces the phase to succeed without doing anything.
           build_phase.shell_script = 'exit 0'
           puts "  - Found and disabled CopySwiftLibs script phase for #{target.name}."
           break
@@ -66,6 +66,7 @@ post_install do |installer|
       end
     end
     
+    # Set Swift version for specific pods if needed
     if target.name == 'RecaptchaInterop'
       target.build_configurations.each do |config|
         config.build_settings['SWIFT_VERSION'] = '5.0'
