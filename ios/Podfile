@@ -52,35 +52,20 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
-
-    target.build_configurations.each do |config|
-      
-      # FIX FOR ALL TARGETS: Ensure no unnecessary warnings
-      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
-
-      # ==========================================================
-      # FIX 1: PRIVACY/RESOURCE BUNDLES (The previous fix)
-      # These targets should NOT have an executable or Swift libs.
-      if target.name.include?('_privacy') || target.name.end_with?('_Privacy')
-        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
+    
+    # Fix for ALL bundles (including privacy manifest bundles)
+    if target.product_type == 'com.apple.product-type.bundle'
+      target.build_configurations.each do |config|
+        config.build_settings['ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES'] = 'NO'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        config.build_settings['EXECUTABLE_NAME'] = '' # Ensure no executable is sought
+        config.build_settings['CODE_SIGNING_ALLOWED'] = 'NO'
       end
-      # ==========================================================
       
-      # ==========================================================
-      # FIX 2: MAIN PLUGIN TARGETS (The new fix for google_mobile_ads)
-      # These are main plugin targets compiled as bundles/frameworks.
-      # Forcing them to be compiled as static libraries often fixes CI issues.
-      if target.name == 'google_mobile_ads' || target.name == 'webview_flutter_wkwebview' 
-        config.build_settings['DEFINES_MODULE'] = 'YES'
-        # Explicitly enforce static library compilation to bypass dynamic linking issues
-        config.build_settings['MACH_O_TYPE'] = 'staticlib' 
-        config.build_settings['ENABLE_STRICT_OBJC_MSGSEND'] = 'NO'
+      # Remove CopySwiftLibs build phase if it exists
+      target.build_phases.delete_if do |phase|
+        phase.display_name == 'Copy Swift Standard Libraries'
       end
-      # ==========================================================
-      
     end
   end
+  installer.pods_project.save
 end
-
