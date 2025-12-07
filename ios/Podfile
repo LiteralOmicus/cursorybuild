@@ -1,77 +1,39 @@
-#TUESDDAYX
 # Uncomment this line to define a global platform for your project
-platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
-# Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
-# Ensure these match if you intend for your app to target iOS 18.0 as its minimum.
-#install! 'cocoapods',
-  #       :disable_input_output_paths => true
+platform :ios, '14.0' # Set your minimum iOS deployment target here.
+# Note: It's best practice to match this with your project's IPHONEOS_DEPLOYMENT_TARGET.
+# I've set it to '14.0' for compatibility, you should adjust as needed.
 
-# This Flutter line is crucial and should be present in your Podfile
-#flutter_application_path = File.join(__dir__, '..')
-# CORRECTED LINE BELOW: Changed '.ios' to 'ios'
-#load File.join(File.dirname(__FILE__), 'Flutter', 'podhelper.rb')
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
-project 'Runner', {
-  'Debug' => :debug,
-  'Profile' => :release,
-  'Release' => :release,
-}
+# The standard, correct way to integrate Flutter pods using the official podhelper.rb
+flutter_application_path = File.join(__dir__, '..')
+load File.join(flutter_application_path, '.ios', 'Flutter', 'podhelper.rb') # Standard, correct path
 
-def flutter_root
-  generated_xcode_build_settings_path = File.expand_path(File.join('..', 'Flutter', 'Generated.xcconfig'), __FILE__)
-  unless File.exist?(generated_xcode_build_settings_path)
-    raise "Generated.xcconfig not found at #{generated_xcode_build_settings_path}. Try running `flutter pub get` first."
-  end
-  File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
-    return matches[1].strip if matches
-  end
-  raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run `flutter pub get`"
-end
-
-require File.expand_path(File.join('packages', 'flutter_tools', 'bin', 'podhelper'), flutter_root)
-
-flutter_ios_podfile_setup do |installer|
-  # This block is for Flutter's internal pod setup.
-  # You generally don't need to add anything here unless explicitly required by a plugin.
-end
-
+# This block is required by Flutter's podhelper.rb to set up the build system.
 target 'Runner' do
   use_frameworks!
   use_modular_headers! # Recommended for many modern pods
-  
+
   # Flutter Pods - these are automatically added by Flutter based on your pubspec.yaml plugins
+  # This command is the correct way to include all Flutter-managed pods.
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
 
   # Add any other custom pods here if you have them, e.g.:
   # pod 'AnotherSDK', '~> 1.0'
-  #flutter_additional_pods(flutter_application_path)
 end
 
+# Standard post_install to apply Flutter-required build settings to targets.
 post_install do |installer|
   installer.pods_project.targets.each do |target|
+    # Apply essential build settings for Flutter
     flutter_additional_ios_build_settings(target)
 
-    if target.name.include?('privacy')
-      puts "Applying aggressive workaround to skip CopySwiftLibs for #{target.name}"
-      target.build_phases.each do |build_phase|
-        if build_phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && build_phase.name == 'CopySwiftLibs'
-          # This command overwrites the build phase script to be a simple 'exit 0'
-          # which forces the phase to succeed without doing anything.
-          build_phase.shell_script = 'exit 0'
-          puts "  - Found and disabled CopySwiftLibs script phase for #{target.name}."
-          break
-        end
-      end
-    end
-    
-    # Set Swift version for specific pods if needed
-    if target.name == 'RecaptchaInterop'
-      target.build_configurations.each do |config|
-        config.build_settings['SWIFT_VERSION'] = '5.0'
-      end
-    end
+    # Re-enable this section if you need to manually set SWIFT_VERSION for a specific pod.
+    # if target.name == 'RecaptchaInterop'
+    #   target.build_configurations.each do |config|
+    #     config.build_settings['SWIFT_VERSION'] = '5.0'
+    #   end
+    # end
   end
 end
