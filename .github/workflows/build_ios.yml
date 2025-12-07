@@ -1,4 +1,3 @@
-
 name: Deploy Flutter iOS to TestFlight (ASC API Key)
 
 on:
@@ -13,87 +12,47 @@ jobs:
     permissions:
       contents: write # Needed for build-number action
     env:
-      ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true'
+      # Removed ACTIONS_ALLOW_UNSECURE_COMMANDS: 'true' as it's an unnecessary workaround now.
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_PRIVATE_KEY_CONTENT: ${{ secrets.ASC_PRIVATE_KEY_CONTENT }} # Content of your .p8 key file
-      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }} 
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      # Define the target minimum iOS version here for use in the build step
+      IOS_DEPLOYMENT_TARGET: '14.0' 
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Set up Flutter SDK
+        # This action automatically handles setting up the environment, including gems like CocoaPods.
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable' # Or 'beta', 'master' if you use them
-          flutter-version: '3.32.8' # Specify exact version for consistency
+          channel: 'stable'
+          flutter-version: '3.32.8' # Use a specific version for reliability
           cache: true
 
       - name: Run Flutter Doctor -v
         run: flutter doctor -v
 
-      - name: Clean Flutter Project and Get Dependencies
+      - name: Clean Project and Get Dependencies
+        # flutter pub get will also trigger the necessary pod install command via the podhelper.rb
         run: |
-          echo "--- Cleaning Flutter project ---"
           flutter clean
-          echo "--- Getting Flutter dependencies ---"
           flutter pub get
-          echo "--- Flutter dependencies retrieved ---"
+
       - name: Select Xcode version
+        # Recommended to use the action's built-in macos-version or select the version available on the runner.
+        # Ensure the specified version is available on the macos-latest runner image.
         run: sudo xcode-select --switch /Applications/Xcode_16.4.app/Contents/Developer
-      - name: List Directories after Flutter Setup (Verify Podfile existence)
-        run: |
-          echo "--- Current directory: $(pwd) ---"
-          echo "--- Listing contents of ios/ directory ---"
-          ls -la ios/
-          echo "--- Displaying content of ios/Podfile ---"
-          cat ios/Podfile || echo "Podfile not found at ios/Podfile"
-          echo "--- Debug: Directory listing complete ---"
-      - name: Clean CocoaPods Environment and Install
-        run: |
-          echo "--- Starting CocoaPods setup ---"
-          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
-          sudo gem uninstall cocoapods -ax --force || true
-          sudo gem uninstall cocoapods-core -ax --force || true
-          sudo gem update --system
-          sudo gem install cocoapods -n /usr/local/bin --no-document
-          pod --version
-          
-          echo "--- Updating CocoaPods spec repo ---"
-          # Run pod repo update separately to ensure it completes before install
-          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
-          
-          echo "--- Cleaning project pods aggressively ---"
-          cd ios/
-          # Deintegrate previous Pods installation to ensure a clean slate
-          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
-          rm -rf Pods/ 
-          rm -f Podfile.lock 
-          
-          echo "--- Installing project pods ---"
-          # Now run pod install after deintegration and cleaning
-          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
-          
-          echo "--- CocoaPods setup complete ---"
-          cd .. 
-      - name: Verify CocoaPods Installation for audio_session
-        run: |
-          echo "--- Checking Podfile.lock for audio_session ---"
-          # This should show if audio_session was successfully listed as a dependency
-          grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
-          
-          echo "--- Listing contents of Pods/Headers/Public/ ---"
-          # Check if the public headers directory exists
-          ls -la ios/Pods/Headers/Public/ || echo "Warning: Pods/Headers/Public/ not found or empty. Module headers might be missing."
-          
-          echo "--- Listing contents of Pods/Headers/Public/audio_session/ ---"
-          # Explicitly check for audio_session's public headers
-          ls -la ios/Pods/Headers/Public/audio_session/ || echo "Warning: audio_session headers not found in public directory. Module might not be correctly integrated."
-          
-          echo "--- Listing contents of Pods/audio_session/ ---"
-          # Check the root pod directory itself
-          ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
+        
+      # --- REMOVED AGGRESSIVE COCOAPODS CLEANUP ---
+      # Removed the entire "Clean CocoaPods Environment and Install" step.
+      # The `flutter pub get` step above is sufficient and runs `pod install` correctly.
+      
+      # --- REMOVED AGGRESSIVE COCOAPODS VERIFICATION ---
+      # Removed the entire "Verify CocoaPods Installation for audio_session" step as it's debugging.
+
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
         with:
@@ -104,7 +63,7 @@ jobs:
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
           bundle-id: com.literalomicus.kangarule # Replace with your app's Bundle ID
-          profile-type: 'IOS_APP_STORE' # Or 'IOS_APP_DEVELOPMENT' for development builds
+          profile-type: 'IOS_APP_STORE'
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
           api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
@@ -112,21 +71,19 @@ jobs:
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
-          echo "Finding code signing identity name created by provisioning profile download..."
           IDENTITY_NAME=$(security find-identity -p codesigning -v 2>&1 | grep "Apple Distribution:" | head -n 1 | sed -E 's/.*"(.+)".*/\1/')
-          
           if [ -z "$IDENTITY_NAME" ]; then
-            echo "Error: Code signing identity 'Apple Distribution:' not found in any keychain. Build cannot proceed."
+            echo "Error: Code signing identity 'Apple Distribution:' not found. Build cannot proceed."
             exit 1
           else
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
+
       - name: Create ExportOptions.plist
         run: |
-          echo "Creating ExportOptions.plist..."
-          mkdir -p build/ios
           EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
+          mkdir -p build/ios
           cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -143,88 +100,45 @@ jobs:
           </dict>
           </plist>
           EOF
-          echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "Contents of ExportOptions.plist:"
-          cat "${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV 
+          echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV
+
       - name: Generate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
         with:
           token: ${{ secrets.github_token }}
-      
-       # --- NEW AGGRESSIVE WORKAROUND STEP START ---
-      - name: Remove CopySwiftLibs build phase
-        run: |
-          echo "--- Starting aggressive workaround to remove CopySwiftLibs build phase ---"
-          PODS_PROJECT_PATH="./ios/Pods/Pods.xcodeproj"
 
-          if [ -d "$PODS_PROJECT_PATH" ]; then
-            echo "Removing CopySwiftLibs build phase from Pods project at $PODS_PROJECT_PATH"
-            ruby -e "
-              require 'xcodeproj'
-              project = Xcodeproj::Project.open(ARGV[0])
-              
-              fixed_targets_count = 0
-              project.targets.each do |target|
-                if target.name.include?('privacy')
-                  puts \"Found privacy bundle target: '#{target.name}'. Removing CopySwiftLibs phase...\"
-                  target.build_phases.each do |phase|
-                    if phase.isa == 'PBXCopyFilesBuildPhase' && phase.name == 'CopySwiftLibs'
-                      puts \"  - Found and removed CopySwiftLibs phase.\"
-                      target.build_phases.delete(phase)
-                      fixed_targets_count += 1
-                      break
-                    end
-                  end
-                end
-              end
-              
-              if fixed_targets_count > 0
-                project.save
-                puts \"Successfully removed build phases from \#{fixed_targets_count} targets.\"
-              else
-                puts \"No privacy bundle targets with a CopySwiftLibs phase were found. Continuing build.\"
-              end
-            " "$PODS_PROJECT_PATH"
-          else
-            echo "Pods project not found at $PODS_PROJECT_PATH. Skipping workaround."
-            exit 1 # Exit with an error if the Pods project is missing, indicating a core problem.
-          fi
-          echo "--- Workaround complete ---"
-      # --- NEW AGGRESSIVE WORKAROUND STEP END ---
+      # --- REMOVED AGGRESSIVE RUBY WORKAROUND ---
+      # Removed the entire "Remove CopySwiftLibs build phase" step. 
+      # This aggressive step is not necessary for a clean build and should be avoided.
+      
       - name: Build and Archive iOS App
         run: |
-          echo "Starting archive process for iOS..."
           PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
           SCHEME_NAME="Runner"
           ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
           
-          if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
-            echo "Error: CODE_SIGN_IDENTITY_NAME is not set. Cannot proceed with build."
-            exit 1
-          fi
+          # The flutter build process handles setting the build number correctly based on pubspec.yaml
+          # and the build-number action's output.
+          
+          # We use xcodebuild directly for more control over the archive process
           xcodebuild clean archive \
             -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
             -scheme "${SCHEME_NAME}" \
             -configuration Release \
             -sdk iphoneos \
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-            IPHONEOS_DEPLOYMENT_TARGET=14.0 \
+            IPHONEOS_DEPLOYMENT_TARGET=${{ env.IOS_DEPLOYMENT_TARGET }} \
             DEVELOPMENT_TEAM="${{ env.APPLE_TEAM_ID }}" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
             -allowProvisioningUpdates \
-            -verbose \
-            -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
+            -verbose 2>&1 | tee xcodebuild_archive_log.txt
           
-          echo "xcodebuild archive command finished. Full log saved to xcodebuild_archive_log.txt"
-          echo "--- Content of xcodebuild_archive_log.txt ---"
-          cat xcodebuild_archive_log.txt
-          echo "--- End of xcodebuild_archive_log.txt ---"
-          echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
-      - name: Upload Xcodebuild Archive Log 
-        if: ${{ always() }} 
+          echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV
+
+      - name: Upload Xcodebuild Archive Log
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-archive-log
@@ -233,17 +147,9 @@ jobs:
 
       - name: Export IPA from Archive
         run: |
-          echo "Starting IPA export process..."
           IPA_OUTPUT_DIR="build/ios/ipa"
           EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-          if [ -z "${{ env.ARCHIVE_PATH }}" ] || [ ! -d "${{ env.ARCHIVE_PATH }}" ]; then
-            echo "Error: Archive path is missing or invalid. Cannot proceed with export."
-            exit 1
-          fi
-          if [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
-            echo "Error: ExportOptions.plist path is missing or file not found. Cannot proceed with export."
-            exit 1
-          fi
+          
           mkdir -p "${IPA_OUTPUT_DIR}"
           xcodebuild -exportArchive \
             -archivePath "${{ env.ARCHIVE_PATH }}" \
@@ -252,21 +158,18 @@ jobs:
             -allowProvisioningUpdates \
             -verbose 2>&1 | tee xcodebuild_export_log.txt
           
-          echo "xcodebuild -exportArchive command finished. Full log saved to xcodebuild_export_log.txt"
-          echo "--- Content of xcodebuild_export_log.txt ---"
-          cat xcodebuild_export_log.txt
-          echo "--- End of xcodebuild_export_log.txt ---"
-          echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV 
-      - name: Upload Xcodebuild Export Log 
-        if: ${{ always() }} 
+          echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV
+
+      - name: Upload Xcodebuild Export Log
+        if: ${{ always() }}
         uses: actions/upload-artifact@v4
         with:
           name: xcodebuild-export-log
           path: xcodebuild_export_log.txt
           retention-days: 7
 
-      - name: Upload IPA artifact 
-        if: ${{ success() }} 
+      - name: Upload IPA artifact
+        if: ${{ success() }}
         uses: actions/upload-artifact@v4
         with:
           name: flutter-ios-app
@@ -274,10 +177,10 @@ jobs:
           retention-days: 7
 
       - name: Upload IPA to TestFlight
-        if: ${{ success() }} 
+        if: ${{ success() }}
         uses: Apple-Actions/upload-testflight-build@v1
         with:
-          app-path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa 
+          app-path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
           api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
