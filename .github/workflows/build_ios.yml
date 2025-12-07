@@ -32,13 +32,17 @@ jobs:
       - name: Run Flutter Doctor -v
         run: flutter doctor -v
 
-      - name: Clean Flutter Project and Get Dependencies
+      - name: Super Clean Flutter/iOS Cache
         run: |
-          echo "--- Cleaning Flutter project ---"
+          echo "--- Running super clean to clear all generated build files ---"
           flutter clean
-          echo "--- Getting Flutter dependencies ---"
+          rm -rf "$HOME/.pub-cache"
+          pod cache clean --all
+          rm -rf ios/Pods
+          rm -f ios/Podfile.lock
+          echo "--- Running pub get (will re-install pods cleanly) ---"
           flutter pub get
-          echo "--- Flutter dependencies retrieved ---"
+          
       - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
           echo "--- Current directory: $(pwd) ---"
