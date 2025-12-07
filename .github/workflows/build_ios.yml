@@ -1,4 +1,3 @@
-
 name: Deploy Flutter iOS to TestFlight (ASC API Key)
 
 on:
@@ -26,8 +25,8 @@ jobs:
       - name: Set up Flutter SDK
         uses: subosito/flutter-action@v2
         with:
-          channel: 'stable'
-          flutter-version: '3.32.8' # Using a known stable Flutter version
+          channel: 'stable' # Or 'beta', 'master' if you use them
+          flutter-version: '3.32.8' # Specify exact version for consistency
           cache: true
 
       - name: Run Flutter Doctor -v
@@ -48,54 +47,49 @@ jobs:
           echo "--- Displaying content of ios/Podfile ---"
           cat ios/Podfile || echo "Podfile not found at ios/Podfile"
           echo "--- Debug: Directory listing complete ---"
-      - name: Verify Flutter iOS structure before Pod Install
-        run: |
-          echo "--- Listing contents of Flutter directory within iOS project ---"
-          ls -la ios/Flutter/ || { echo "Error: ios/Flutter directory not found or empty. Is the Flutter iOS project structure correct?"; exit 1; }
-          
-          echo "--- Checking for podhelper.rb ---"
-          if [ -f ios/Flutter/podhelper.rb ]; then
-            echo "SUCCESS: podhelper.rb found at ios/Flutter/podhelper.rb"
-            echo "Content of podhelper.rb:"
-            cat ios/Flutter/podhelper.rb
-          else
-            echo "ERROR: podhelper.rb NOT FOUND at ios/Flutter/podhelper.rb"
-            echo "This indicates that 'flutter clean' and 'flutter pub get' may not have properly set up the iOS project."
-            exit 1
-          fi
-      - name: Install CocoaPods 
+      - name: Clean CocoaPods Environment and Install
         run: |
           echo "--- Starting CocoaPods setup ---"
-          # Only install CocoaPods if not already installed, avoid aggressive uninstall/reinstall
-          if ! command -v pod &> /dev/null
-          then
-              echo "CocoaPods not found, installing..."
-              sudo gem install cocoapods -n /usr/local/bin --no-document
-          else
-              echo "CocoaPods is already installed."
-          fi
+          # It's usually good to let the Flutter action manage gem versions, but keeping explicit install for robustness.
+          sudo gem uninstall cocoapods -ax --force || true
+          sudo gem uninstall cocoapods-core -ax --force || true
+          sudo gem update --system
+          sudo gem install cocoapods -n /usr/local/bin --no-document
           pod --version
           
-          echo "--- Installing project pods with repo update ---"
+          echo "--- Updating CocoaPods spec repo ---"
+          # Run pod repo update separately to ensure it completes before install
+          pod repo update || { echo "Pod repo update failed! Exiting."; exit 1; }
+          
+          echo "--- Cleaning project pods aggressively ---"
           cd ios/
-          # Use 'pod install --repo-update' directly, which is less aggressive and usually sufficient
-          # It updates the spec repo and installs/updates pods based on Podfile.lock or Podfile
-          pod install --repo-update --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
+          # Deintegrate previous Pods installation to ensure a clean slate
+          pod deintegrate || true # '|| true' allows the step to pass if no pods were integrated yet
+          rm -rf Pods/ 
+          rm -f Podfile.lock 
+          
+          echo "--- Installing project pods ---"
+          # Now run pod install after deintegration and cleaning
+          pod install --verbose || { echo "Pod install failed! See logs above for details."; exit 1; }
           
           echo "--- CocoaPods setup complete ---"
           cd .. 
-      - name: Verify CocoaPods Installation 
+      - name: Verify CocoaPods Installation for audio_session
         run: |
           echo "--- Checking Podfile.lock for audio_session ---"
+          # This should show if audio_session was successfully listed as a dependency
           grep "audio_session" ios/Podfile.lock || echo "Warning: audio_session not found in Podfile.lock. This is suspicious."
           
           echo "--- Listing contents of Pods/Headers/Public/ ---"
+          # Check if the public headers directory exists
           ls -la ios/Pods/Headers/Public/ || echo "Warning: Pods/Headers/Public/ not found or empty. Module headers might be missing."
           
           echo "--- Listing contents of Pods/Headers/Public/audio_session/ ---"
+          # Explicitly check for audio_session's public headers
           ls -la ios/Pods/Headers/Public/audio_session/ || echo "Warning: audio_session headers not found in public directory. Module might not be correctly integrated."
           
           echo "--- Listing contents of Pods/audio_session/ ---"
+          # Check the root pod directory itself
           ls -la ios/Pods/audio_session/ || echo "Warning: audio_session pod directory not found."
       - name: Import Apple Distribution Certificate
         uses: Apple-Actions/import-codesign-certs@v1
