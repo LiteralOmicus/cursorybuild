@@ -55,32 +55,33 @@ post_install do |installer|
 
     target.build_configurations.each do |config|
       
-      # FIX FOR ALL TARGETS (Optional but good practice)
-      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+      # FIX FOR ALL TARGETS: Deployment Target consistency
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0' # Adjust this value if your minimum target is different
 
       # ==========================================================
-      # FIX 1: PRIVACY/RESOURCE BUNDLES (Previous successful fix)
+      # FIX 1: PRIVACY/RESOURCE BUNDLES (To prevent similar errors)
       if target.name.include?('_privacy') || target.name.end_with?('_Privacy')
         config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
         config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO'
-        config.build_settings['EXECUTABLE_NAME'] = '' # Clears the expected executable path
+        config.build_settings['EXECUTABLE_NAME'] = '' 
       end
       # ==========================================================
       
       # ==========================================================
-      # FIX 2: PRIMARY PLUGIN BUNDLES (NEW FIX for google_mobile_ads)
-      # Force the failing plugin targets to be compiled as static libraries, 
-      # eliminating the CopySwiftLibs dependency entirely.
-      if ['google_mobile_ads', 'webview_flutter_wkwebview'].include?(target.name)
-        # Force compilation as a static library
+      # FIX 2: PRIMARY PLUGIN BUNDLES (CRITICAL FIX for google_mobile_ads)
+      # We target the common names for the main plugin libraries and force them to staticlib.
+      if target.name == 'google_mobile_ads' || target.name == 'google_mobile_ads-google_mobile_ads' || target.name == 'webview_flutter_wkwebview' 
+        
+        # Enforce static library compilation to bypass CopySwiftLibs issue
         config.build_settings['MACH_O_TYPE'] = 'staticlib' 
-        # Ensure it defines a module (required for Swift/Objective-C interop)
+        
+        # Ensure modules are still defined correctly for interop
         config.build_settings['DEFINES_MODULE'] = 'YES'
-        # Disable strict messaging often needed when mixing static/dynamic libs
-        config.build_settings['ENABLE_STRICT_OBJC_MSGSEND'] = 'NO' 
+        config.build_settings['ENABLE_STRICT_OBJC_MSGSEND'] = 'NO'
       end
       # ==========================================================
       
     end
   end
 end
+
