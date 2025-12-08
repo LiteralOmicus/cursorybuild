@@ -40,17 +40,16 @@ jobs:
           flutter-version: '3.32.8' # Specify exact version for consistency
           cache: true
 
-      - name: Aggressive Clean
+      - name: Final Guaranteed Clean and Fix
         run: |
-          flutter clean
-          rm -rf ios/Pods
-          rm -f ios/Podfile.lock
-          rm -rf ios/Runner.xcworkspace
-    
-          flutter pub get 
-          cd ios
-          pod install --repo-update --clean-install
-          cd ..
+         flutter clean
+         rm -rf ios/Pods
+         rm -f ios/Podfile.lock
+         rm -rf ios/Runner.xcworkspace
+         flutter pub get
+         cd ios
+         pod install --repo-update --clean-install --verbose || { echo "Pod install failed to apply final fix!"; exit 1; }
+         cd ..
       
       - name: Run Flutter Doctor -v
         run: flutter doctor -v
