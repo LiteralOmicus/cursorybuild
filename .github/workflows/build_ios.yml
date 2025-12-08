@@ -40,19 +40,20 @@ jobs:
           flutter-version: '3.32.8' # Specify exact version for consistency
           cache: true
 
-      - name: Run Flutter Doctor -v
-        run: flutter doctor -v
-
-      - name: Super Clean Flutter/iOS Cache
+      - name: Aggressive Clean
         run: |
-          echo "--- Running super clean to clear all generated build files ---"
           flutter clean
-          rm -rf "$HOME/.pub-cache"
-          pod cache clean --all
           rm -rf ios/Pods
           rm -f ios/Podfile.lock
-          echo "--- Running pub get (will re-install pods cleanly) ---"
-          flutter pub get
+          rm -rf ios/Runner.xcworkspace
+    
+          flutter pub get 
+          cd ios
+          pod install --repo-update --clean-install
+          cd ..
+      
+      - name: Run Flutter Doctor -v
+        run: flutter doctor -v
           
       - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
