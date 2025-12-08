@@ -85,8 +85,4 @@ post_install do |installer|
     end
   installer.pods_project.save
 end
-      
-    end
-  end
-end
 
