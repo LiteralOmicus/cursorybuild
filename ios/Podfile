@@ -61,14 +61,16 @@ post_install do |installer|
 
     target.build_configurations.each do |config|
       
-      # FIX A: RESOURCE BUNDLES (The new failure point is caught here)
-      # This handles 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
-      if target.name.include?('_privacy') || target.name.end_with?('_Privacy') || target.product_type == 'com.apple.product-type.bundle'
-        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
-        # CRITICAL: Ensures no Swift linking is attempted on resource bundles
-        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' 
-        config.build_settings['EXECUTABLE_NAME'] = '' 
-      end
+      # 🛑 CRITICAL FIX: Add a guard clause here to prevent the 'undefined method' error.
+      if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
+        # FIX A: RESOURCE BUNDLES (This handles targets like *_privacy bundles)
+        if target.name.include?('_privacy') || target.name.end_with?('_Privacy') || target.product_type == 'com.apple.product-type.bundle'
+          config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
+          # CRITICAL: Ensures no Swift linking is attempted on resource bundles
+          config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' 
+          config.build_settings['EXECUTABLE_NAME'] = '' 
+        end
+      end # <--- NEW 'end' for the PBXNativeTarget check
 
       # FIX B: PRIMARY PLUGIN BUNDLES (Force Static Lib on known culprits)
       if failing_bundle_targets.include?(target.name)
@@ -78,8 +80,6 @@ post_install do |installer|
     end
 
     # 🛑 THE DEFINITIVE FIX: Remove the failing build phase for all non-executable bundles.
-    # We must include the Privacy Bundles in this phase removal check!
-    
     # Check if the target is a known failure or a privacy bundle
     if failing_bundle_targets.include?(target.name) || target.name.include?('_privacy') 
       target.build_phases.delete_if do |phase|
@@ -93,3 +93,4 @@ post_install do |installer|
   end
   installer.pods_project.save
 end
+
