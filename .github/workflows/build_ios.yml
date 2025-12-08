@@ -153,31 +153,31 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
-      - name: Create ExportOptions.plist
+      - name: 📝 Create ExportOptions.plist
         run: |
-          echo "Creating ExportOptions.plist..."
-          mkdir -p build/ios
-          EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
-          cat <<EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>method</key>
-            <string>app-store</string>
-            <key>teamID</key>
-            <string>${{ env.APPLE_TEAM_ID }}</string>
-            <key>uploadBitcode</key>
-            <true/>
-            <key>uploadSymbols</key>
-            <true/>
-          </dict>
-          </plist>
-          EOF
-          echo "ExportOptions.plist created at: ${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "Contents of ExportOptions.plist:"
-          cat "${EXPORT_OPTIONS_PLIST_PATH}"
-          echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV 
+         echo "Creating ExportOptions.plist..."
+         mkdir -p build/ios
+         EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
+         cat <<-EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
+         <?xml version="1.0" encoding="UTF-8"?>
+         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+         <plist version="1.0">
+         <dict>
+         <key>method</key>
+         <string>app-store-connect</string>
+         <key>teamID</key>
+         <string>${{ env.APPLE_TEAM_ID }}</string>
+         <key>signingStyle</key>
+         <string>automatic</string>
+         <key>uploadBitcode</key>
+         <true/>
+         <key>uploadSymbols</key>
+         <true/>
+         </dict>
+         </plist>
+         EOF
+         echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV
+        
       - name: Generate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
