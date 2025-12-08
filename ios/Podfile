@@ -53,37 +53,43 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
 
-    # CRITICAL LIST: The exact targets that are failing CopySwiftLibs
-    problematic_targets = [
-      'google_mobile_ads-google_mobile_ads', 
-      'webview_flutter_wkwebview-webview_flutter_wkwebview'
+    # List of *executable-free* bundles that fail CopySwiftLibs
+    failing_bundle_targets = [
+      'google_mobile_ads-google_mobile_ads', # Already fixed, keep for safety
+      'webview_flutter_wkwebview-webview_flutter_wkwebview' # Keep this primary plugin target
     ]
 
     target.build_configurations.each do |config|
-      # Optional, but keep for good measure:
-      if problematic_targets.include?(target.name)
+      
+      # FIX A: RESOURCE BUNDLES (The new failure point is caught here)
+      # This handles 'webview_flutter_wkwebview-webview_flutter_wkwebview_privacy'
+      if target.name.include?('_privacy') || target.name.end_with?('_Privacy') || target.product_type == 'com.apple.product-type.bundle'
+        config.build_settings['PRODUCT_TYPE'] = 'com.apple.product-type.bundle'
+        # CRITICAL: Ensures no Swift linking is attempted on resource bundles
+        config.build_settings['EMBEDDED_CONTENT_CONTAINS_SWIFT'] = 'NO' 
+        config.build_settings['EXECUTABLE_NAME'] = '' 
+      end
+
+      # FIX B: PRIMARY PLUGIN BUNDLES (Force Static Lib on known culprits)
+      if failing_bundle_targets.include?(target.name)
         config.build_settings['MACH_O_TYPE'] = 'staticlib' 
         config.build_settings['DEFINES_MODULE'] = 'YES'
       end
     end
 
-    # 🛑 THE DEFINITIVE FIX: Remove the failing build phase based on its command.
-    if problematic_targets.include?(target.name)
-      target.build_phases.each do |phase|
-        # Check if the phase is a shell script phase and contains the problematic tool command
-        if phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && phase.shell_script.include?('builtin-swiftStdLibTool')
-          target.build_phases.delete(phase)
-          puts "SUCCESS: Deleted the CRASHING CopySwiftLibs phase from target: #{target.name}"
-          break # Done with this target
-        # Check by display name as a fallback
-        elsif phase.display_name == 'Copy Swift Standard Libraries'
-          target.build_phases.delete(phase)
-          puts "SUCCESS: Deleted Copy Swift Standard Libraries phase by name from target: #{target.name}"
-          break # Done with this target
-        end
+    # 🛑 THE DEFINITIVE FIX: Remove the failing build phase for all non-executable bundles.
+    # We must include the Privacy Bundles in this phase removal check!
+    
+    # Check if the target is a known failure or a privacy bundle
+    if failing_bundle_targets.include?(target.name) || target.name.include?('_privacy') 
+      target.build_phases.delete_if do |phase|
+        # Check by command or display name
+        (phase.is_a?(Xcodeproj::Project::Object::PBXShellScriptBuildPhase) && phase.shell_script.include?('builtin-swiftStdLibTool')) ||
+        (phase.display_name == 'Copy Swift Standard Libraries')
       end
+      puts "SUCCESS: Cleaned CopySwiftLibs phase from target: #{target.name}"
     end
-end
+
+  end
   installer.pods_project.save
 end
-
