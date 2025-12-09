@@ -12,7 +12,11 @@
     <true/>
     <key>signingStyle</key>
     <string>automatic</string>
+
+    <key>signingCertificate</key>
+    <string>74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8</string>
     </dict>
 
 </plist>
+
 
