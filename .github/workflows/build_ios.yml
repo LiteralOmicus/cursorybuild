@@ -170,6 +170,7 @@ jobs:
     
       - name: 📝 Create ExportOptions.plist
         run: |
+         CERT_HASH="${{ steps.get_cert_hash.outputs.CERT_HASH }}"
          echo "Creating ExportOptions.plist..."
          mkdir -p build/ios
          EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
