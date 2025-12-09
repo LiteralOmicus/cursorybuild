@@ -249,6 +249,7 @@ jobs:
             -archivePath "${ARCHIVE_OUTPUT_PATH}" \
             IPHONEOS_DEPLOYMENT_TARGET=14.0 \
             DEVELOPMENT_TEAM="${{ env.APPLE_TEAM_ID }}" \
+            CODE_SIGN_STYLE="Manual" \
             CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
             ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
             -allowProvisioningUpdates \
