@@ -294,8 +294,10 @@ jobs:
           --type ios \
           --issuer "$ASC_ISSUER_ID" \
           --key "$ASC_KEY_ID" \
-          --secret "$ASC_PRIVATE_KEY_CONTENT"
+          --secret "$ASC_PRIVATE_KEY_CONTENT" \
+          --api-private-key-file "$KEY_FILE"
           echo "Upload command completed. Check App Store Connect for processing status."
+          rm "$KEY_FILE"
 
       - name: Export IPA from Archive
         run: |
