@@ -277,7 +277,7 @@ jobs:
         if: ${{ success() }} 
         uses: Apple-Actions/upload-testflight-build@v1
         with:
-          app-path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa 
+          app-path: build/ios/ipa/*.ipa
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
           api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
