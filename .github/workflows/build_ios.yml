@@ -261,7 +261,7 @@ jobs:
           echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
 
       - name: Upload Build Log Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: build-log
           path: ${{ env.LOG_FILE }}
