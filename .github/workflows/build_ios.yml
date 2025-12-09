@@ -284,21 +284,6 @@ jobs:
           path: xcodebuild_archive_log.txt
           retention-days: 7
 
-      - name: Upload to App Store Connect (Without Fastlane)
-        run: |
-          ARCHIVE_PATH="./build/ios/Runner.xcarchive" 
-          echo "Starting upload using xcrun altool..."
-          xcrun altool \
-          --upload-app \
-          --archive-path "$ARCHIVE_PATH" \
-          --type ios \
-          --issuer "$ASC_ISSUER_ID" \
-          --key "$ASC_KEY_ID" \
-          --secret "$ASC_PRIVATE_KEY_CONTENT" \
-          --api-private-key-file "$KEY_FILE"
-          echo "Upload command completed. Check App Store Connect for processing status."
-          rm "$KEY_FILE"
-
       - name: Export IPA from Archive
         run: |
           echo "Starting IPA export process..."
