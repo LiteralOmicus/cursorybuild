@@ -177,7 +177,7 @@ jobs:
           echo "Found Certificate Hash: $CERT_HASH"
           echo "CERT_HASH=$CERT_HASH" >> $GITHUB_OUTPUT
     
-      - name: 📝 Create ExportOptions.plist
+      - name: Create ExportOptions.plist
         run: |
          CERT_HASH="${{ steps.get_cert_hash.outputs.CERT_HASH }}"
          echo "Creating ExportOptions.plist..."
@@ -191,11 +191,11 @@ jobs:
          <key>method</key>
          <string>app-store-connect</string>
          <key>teamID</key>
-         <string>${APPLE_TEAM_ID}</string>
+         <string>${{ env.APPLE_TEAM_ID }}</string>
          <key>signingStyle</key>
          <string>automatic</string>
          <key>signingCertificate</key>
-         <string>${CERT_HASH}</string>
+         <string>${{ steps.get_cert_hash.outputs.CERT_HASH }}</string>
          <key>uploadBitcode</key>
          <true/>
          <key>uploadSymbols</key>
