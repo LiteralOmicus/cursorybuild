@@ -246,12 +246,26 @@ jobs:
           grep -C 5 "webview_flutter_wkwebview_privacy" ./ios/Pods/Pods.xcodeproj/project.pbxproj | grep "EMBEDDED_CONTENT_CONTAINS_SWIFT" || echo "Warning: Could not confirm patch via grep. Check Ruby script output."
           
           echo "--- Inspection complete ---"
-      - name: Build IPA
+      
+      - name: Flutter Build IPA and Capture Log
         run: |
-         flutter build ipa \
+            LOG_FILE="flutter_build_ipa.log"
+    
+      - name: Flutter Build IPA and Capture Log
+        run: |
+          LOG_FILE="flutter_build_ipa.log"
+          flutter build ipa \
           --release \
-          --export-options-plist=ios/ExportOptions.plist \
-          --verbose
+          --export-options-plist=build/ios/ExportOptions.plist \
+          | tee "$LOG_FILE"
+          echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
+
+      - name: Upload Build Log Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: build-log
+          path: ${{ env.LOG_FILE }}
+          retention-days: 2
         
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
