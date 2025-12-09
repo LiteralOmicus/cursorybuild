@@ -246,86 +246,13 @@ jobs:
           grep -C 5 "webview_flutter_wkwebview_privacy" ./ios/Pods/Pods.xcodeproj/project.pbxproj | grep "EMBEDDED_CONTENT_CONTAINS_SWIFT" || echo "Warning: Could not confirm patch via grep. Check Ruby script output."
           
           echo "--- Inspection complete ---"
-      - name: Build and Archive iOS App
+      - name: Build IPA
         run: |
-          echo "Starting archive process for iOS..."
-          PROJECT_OR_WORKSPACE_PATH="./ios/Runner.xcworkspace"
-          SCHEME_NAME="Runner"
-          ARCHIVE_OUTPUT_PATH="build/Runner.xcarchive"
-          
-          if [ -z "${{ env.CODE_SIGN_IDENTITY_NAME }}" ]; then
-            echo "Error: CODE_SIGN_IDENTITY_NAME is not set. Cannot proceed with build."
-            exit 1
-          fi
-          xcodebuild clean archive \
-            -workspace "${PROJECT_OR_WORKSPACE_PATH}" \
-            -scheme "${SCHEME_NAME}" \
-            -configuration Release \
-            -sdk iphoneos \
-            -archivePath "${ARCHIVE_OUTPUT_PATH}" \
-            IPHONEOS_DEPLOYMENT_TARGET=14.0 \
-            DEVELOPMENT_TEAM="${{ env.APPLE_TEAM_ID }}" \
-            CODE_SIGN_IDENTITY="${{ env.CODE_SIGN_IDENTITY_NAME }}" \
-            ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES=YES \
-            -allowProvisioningUpdates \
-            -verbose \
-            -showBuildTimingSummary 2>&1 | tee xcodebuild_archive_log.txt
-          
-          echo "xcodebuild archive command finished. Full log saved to xcodebuild_archive_log.txt"
-          echo "--- Content of xcodebuild_archive_log.txt ---"
-          cat xcodebuild_archive_log.txt
-          echo "--- End of xcodebuild_archive_log.txt ---"
-          echo "ARCHIVE_PATH=$ARCHIVE_OUTPUT_PATH" >> $GITHUB_ENV 
-      - name: Upload Xcodebuild Archive Log 
-        if: ${{ always() }} 
-        uses: actions/upload-artifact@v4
-        with:
-          name: xcodebuild-archive-log
-          path: xcodebuild_archive_log.txt
-          retention-days: 7
-
-      - name: Export IPA from Archive
-        run: |
-          echo "Starting IPA export process..."
-          IPA_OUTPUT_DIR="build/ios/ipa"
-          EXPORT_OPTIONS_PLIST_PATH="${{ env.EXPORT_OPTIONS_PLIST_PATH }}"
-          if [ -z "${{ env.ARCHIVE_PATH }}" ] || [ ! -d "${{ env.ARCHIVE_PATH }}" ]; then
-            echo "Error: Archive path is missing or invalid. Cannot proceed with export."
-            exit 1
-          fi
-          if [ -z "${EXPORT_OPTIONS_PLIST_PATH}" ] || [ ! -f "${EXPORT_OPTIONS_PLIST_PATH}" ]; then
-            echo "Error: ExportOptions.plist path is missing or file not found. Cannot proceed with export."
-            exit 1
-          fi
-          mkdir -p "${IPA_OUTPUT_DIR}"
-          xcodebuild -exportArchive \
-            -archivePath "${{ env.ARCHIVE_PATH }}" \
-            -exportPath "${IPA_OUTPUT_DIR}" \
-            -exportOptionsPlist "${EXPORT_OPTIONS_PLIST_PATH}" \
-            -allowProvisioningUpdates \
-            -verbose 2>&1 | tee xcodebuild_export_log.txt
-          
-          echo "xcodebuild -exportArchive command finished. Full log saved to xcodebuild_export_log.txt"
-          echo "--- Content of xcodebuild_export_log.txt ---"
-          cat xcodebuild_export_log.txt
-          echo "--- End of xcodebuild_export_log.txt ---"
-          echo "IPA_OUTPUT_DIR=$IPA_OUTPUT_DIR" >> $GITHUB_ENV 
-      - name: Upload Xcodebuild Export Log 
-        if: ${{ always() }} 
-        uses: actions/upload-artifact@v4
-        with:
-          name: xcodebuild-export-log
-          path: xcodebuild_export_log.txt
-          retention-days: 7
-
-      - name: Upload IPA artifact 
-        if: ${{ success() }} 
-        uses: actions/upload-artifact@v4
-        with:
-          name: flutter-ios-app
-          path: ${{ env.IPA_OUTPUT_DIR }}/*.ipa
-          retention-days: 7
-
+         flutter build ipa \
+          --release \
+          --export-options-plist=ios/ExportOptions.plist \
+          --verbose
+        
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
         uses: Apple-Actions/upload-testflight-build@v1
