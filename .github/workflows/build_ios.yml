@@ -247,7 +247,7 @@ jobs:
           
           echo "--- Inspection complete ---"
       
-      - name: Flutter Build IPA and Capture Log
+      - name: Flutter Build Capture Log
         run: |
             LOG_FILE="flutter_build_ipa.log"
     
@@ -266,6 +266,12 @@ jobs:
           name: build-log
           path: ${{ env.LOG_FILE }}
           retention-days: 2
+      - name: 📦 Upload IPA Artifact
+        uses: actions/upload-artifact@v4
+        with:
+         name: app-ipa
+         path: build/ios/ipa/*.ipa  # Points to the final IPA file
+         retention-days: 2
         
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
