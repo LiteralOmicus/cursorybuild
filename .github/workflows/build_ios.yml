@@ -131,6 +131,15 @@ jobs:
           p12-file-base64: ${{ secrets.APPLE_CERTIFICATE_BASE64 }}
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
 
+      - name: Grant Full Codesign Access
+        env:
+         KEYCHAIN_PASS: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }} 
+        run: |
+            KEYCHAIN_NAME="signing_temp.keychain"
+            /usr/bin/security set-key-partition-list \
+            -S apple-tool:,apple:,codesign:,security:,productbuild: \
+            -k "$KEYCHAIN_PASS" "$KEYCHAIN_NAME"
+
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
