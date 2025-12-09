@@ -132,6 +132,12 @@ jobs:
           p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
           keychain-password: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
 
+      - name: Install Apple Intermediate Certificate
+        run: |
+         curl -o apple_g4.cer https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
+         /usr/bin/security import apple_g4.cer -k signing_temp.keychain -t cert -f pkcs7 -A
+         echo "Apple Worldwide Developer Relations G4 Certificate imported."
+
       - name: Grant Full Codesign Access
         env:
          KEYCHAIN_PASS: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }} 
