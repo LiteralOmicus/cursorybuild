@@ -166,7 +166,7 @@ jobs:
           exit 1
           fi
           echo "Found Certificate Hash: $CERT_HASH"
-          echo "CERT_HASH=$CERT_HASH" >> $GITHUB_ENV
+          echo "CERT_HASH=$CERT_HASH" >> $GITHUB_OUTPUT
     
       - name: 📝 Create ExportOptions.plist
         run: |
