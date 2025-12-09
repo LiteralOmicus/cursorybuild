@@ -153,6 +153,21 @@ jobs:
             echo "Found signing identity: '$IDENTITY_NAME'"
             echo "CODE_SIGN_IDENTITY_NAME=$IDENTITY_NAME" >> $GITHUB_ENV
           fi
+          
+      - name: Retrieve and Store Signing Certificate Hash
+        id: get_cert_hash
+        run: |
+          CERT_HASH=$(security find-identity -p codesigning -v \
+          | grep 'Apple Distribution' \
+          | awk '{print $2}' \
+          | tr -d '[:space:]"')
+          if [ -z "$CERT_HASH" ]; then
+          echo "ERROR: Could not find Apple Distribution certificate hash. Check p12 credentials."
+          exit 1
+          fi
+          echo "Found Certificate Hash: $CERT_HASH"
+          echo "CERT_HASH=$CERT_HASH" >> $GITHUB_ENV
+    
       - name: 📝 Create ExportOptions.plist
         run: |
          echo "Creating ExportOptions.plist..."
@@ -169,6 +184,8 @@ jobs:
          <string>${APPLE_TEAM_ID}</string>
          <key>signingStyle</key>
          <string>automatic</string>
+         <key>signingCertificate</key>
+         <string>${CERT_HASH}</string>
          <key>uploadBitcode</key>
          <true/>
          <key>uploadSymbols</key>
