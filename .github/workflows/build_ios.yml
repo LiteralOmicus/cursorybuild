@@ -162,6 +162,14 @@ jobs:
           api-key-id: ${{ env.ASC_KEY_ID }}
           api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
 
+      - name: Install Provisioning Profile
+        env:
+    # This is your Base64 encoded secret from GitHub
+          PROFILE_BASE64: ${{ secrets.APPLE_PROVISIONING_PROFILE_BASE64 }} 
+        run: |
+         mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
+         echo $PROFILE_BASE64 | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/app_store_profile_uuid.mobileprovision
+
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
