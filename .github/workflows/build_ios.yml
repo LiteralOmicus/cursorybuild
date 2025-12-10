@@ -136,6 +136,7 @@ jobs:
         run: |
          curl -o apple_g4.cer https://www.apple.com/certificateauthority/AppleWWDRCAG4.cer
          /usr/bin/security import apple_g4.cer -k signing_temp.keychain -t cert -f pkcs7 -A
+         /usr/bin/security unlock-keychain -p "${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}" signing_temp.keychain
          echo "Apple Worldwide Developer Relations G4 Certificate imported."
 
       - name: Grant Full Codesign Access
@@ -250,6 +251,18 @@ jobs:
       - name: Flutter Build Capture Log
         run: |
             LOG_FILE="flutter_build_ipa.log"
+
+      - name: 🔎 Display ExportOptions.plist Contents
+        run: |
+          PLIST_PATH="build/ios/ExportOptions.plist"
+          echo "--- Contents of ${PLIST_PATH} ---"
+          if [ -f "$PLIST_PATH" ]; then
+          cat "$PLIST_PATH"
+          echo "-----------------------------------"
+          else
+          echo "Error: ExportOptions.plist not found at $PLIST_PATH"
+          exit 1
+          fi
     
       - name: Flutter Build IPA and Capture Log
         run: |
