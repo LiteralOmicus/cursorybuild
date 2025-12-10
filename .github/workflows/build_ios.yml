@@ -257,7 +257,7 @@ jobs:
           flutter build ipa \
           --release \
           --export-options-plist=build/ios/ExportOptions.plist \
-          | tee "$LOG_FILE"
+          -v | tee "$LOG_FILE"
           echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
 
       - name: Upload Build Log Artifact
@@ -269,9 +269,9 @@ jobs:
       - name: 📦 Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
-         name: app-ipa
-         path: build/ios/ipa/*.ipa  # Points to the final IPA file
-         retention-days: 2
+            name: app-ipa
+            path: build/ios/ipa/*.ipa
+            retention-days: 2
         
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
