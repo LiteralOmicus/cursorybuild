@@ -222,6 +222,11 @@ jobs:
          <true/>
          <key>uploadSymbols</key>
          <true/>
+         <key>provisioningProfiles</key>
+         <dict>
+          <key>com.literalomicus.kangarule</key>
+          <string>literalomicus</string> </dict>
+         </dict>
          </dict>
          </plist>
          EOF
