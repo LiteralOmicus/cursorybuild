@@ -148,6 +148,11 @@ jobs:
             -S apple-tool:,apple:,codesign:,security:,productbuild: \
             -k "$KEYCHAIN_PASS" "$KEYCHAIN_NAME"
 
+      - name: 3. Unlock Temporary Keychain
+        run: |
+          /usr/bin/security unlock-keychain \
+          -p "${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}" signing_temp.keychain
+
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
