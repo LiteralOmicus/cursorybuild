@@ -287,7 +287,6 @@ jobs:
           LOG_FILE="flutter_build_ipa.log"
           flutter build ipa \
           --release \
-          --export-options-plist=build/ios/ExportOptions.plist \
           -v | tee "$LOG_FILE"
           echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
 
