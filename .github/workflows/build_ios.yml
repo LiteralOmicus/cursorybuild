@@ -288,7 +288,10 @@ jobs:
           SIGNING_IDENTITY: "Apple Distribution: literalomicus (6ABV2967CN)"
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
+          PROFILE_NAME: "literalomicus"
+          KEYCHAIN_PATH: "${{ github.workspace }}/signing_temp.keychain"
         run: |
+         CODE_SIGN_FLAGS="--keychain=${{ env.KEYCHAIN_PATH }}"
          /usr/bin/xcrun xcodebuild archive \
          -workspace ios/Runner.xcworkspace \
          -scheme Runner \
@@ -299,6 +302,7 @@ jobs:
          DEVELOPMENT_TEAM="$TEAM_ID" \
          CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
          PROVISIONING_PROFILE_SPECIFIER="" \
+         OTHER_CODE_SIGN_FLAGS="$CODE_SIGN_FLAGS" \
          | tee -a ${{ env.LOG_FILE }} 
 
       - name: Manual xcrun Export to IPA (Forces Identity)
