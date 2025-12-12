@@ -282,7 +282,7 @@ jobs:
           exit 1
           fi
     
-      - name: 1. Direct xcrun Archive
+      - name: Direct xcrun Archive
         env:
           SIGNING_IDENTITY: "Apple Distribution: literalomicus (6ABV2967CN)"
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -299,13 +299,13 @@ jobs:
          CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
          PROVISIONING_PROFILE_SPECIFIER=""
 
-      - name: 2. Manual xcrun Export to IPA (Forces Identity)
+      - name: Manual xcrun Export to IPA (Forces Identity)
         env:
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
          ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
          IPA_PATH: "${{ github.workspace }}/build/ios/ipa"
          PLIST_PATH: "${{ github.workspace }}/build/ios/ExportOptions.plist"
-         run: |
+        run: |
           mkdir -p "$IPA_PATH"
           /usr/bin/xcrun xcodebuild -exportArchive \
           -archivePath "$ARCHIVE_PATH" \
