@@ -297,7 +297,7 @@ jobs:
     
       - name: Direct xcrun Archive
         env:
-          SIGNING_IDENTITY: "21EA22FDD73C0895B0EFD075C598605EE774F4F6"
+          SIGNING_IDENTITY: "74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8"
           PROVISIONING_PROFILE_UUID: "63fcd44a-ff22-44db-8b80-ce59919d6ef9"
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
