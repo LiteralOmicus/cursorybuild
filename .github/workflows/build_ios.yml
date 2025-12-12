@@ -282,13 +282,36 @@ jobs:
           exit 1
           fi
     
-      - name: Flutter Build IPA and Capture Log
+      - name: 1. Direct xcrun Archive
+        env:
+          SIGNING_IDENTITY: "Apple Distribution: literalomicus (6ABV2967CN)"
+          TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
         run: |
-          LOG_FILE="flutter_build_ipa.log"
-          flutter build ipa \
-          --release \
-          -v | tee "$LOG_FILE"
-          echo "LOG_FILE=$LOG_FILE" >> $GITHUB_ENV
+         /usr/bin/xcrun xcodebuild archive \
+         -workspace Runner.xcworkspace \
+         -scheme Runner \
+         -configuration Release \
+         -sdk iphoneos \
+         -destination generic/platform=iOS \
+         -archivePath "$ARCHIVE_PATH" \
+         DEVELOPMENT_TEAM="$TEAM_ID" \
+         CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
+         PROVISIONING_PROFILE_SPECIFIER=""
+
+      - name: 2. Manual xcrun Export to IPA (Forces Identity)
+        env:
+         SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
+         ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
+         IPA_PATH: "${{ github.workspace }}/build/ios/ipa"
+         PLIST_PATH: "${{ github.workspace }}/build/ios/ExportOptions.plist"
+         run: |
+          mkdir -p "$IPA_PATH"
+          /usr/bin/xcrun xcodebuild -exportArchive \
+          -archivePath "$ARCHIVE_PATH" \
+          -exportPath "$IPA_PATH" \
+          -exportOptionsPlist "$PLIST_PATH" \
+          -exportSigningIdentity "$SIGNING_IDENTITY"
 
       - name: Upload Build Log Artifact
         uses: actions/upload-artifact@v4
@@ -296,6 +319,7 @@ jobs:
           name: build-log
           path: ${{ env.LOG_FILE }}
           retention-days: 2
+          
       - name: 📦 Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
