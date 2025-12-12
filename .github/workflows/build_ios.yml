@@ -307,7 +307,7 @@ jobs:
           PROVISIONING_PROFILE_UUID: "63fcd44a-ff22-44db-8b80-ce59919d6ef9"
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
-          PROFILE_NAME: "IOS_APP_STORE literalomicus" 
+          PROFILE_NAME: "IOS_APP_STORE literalomicus"
           KEYCHAIN_PATH: "${{ github.workspace }}/signing_temp.keychain"
         run: |
          CODE_SIGN_FLAGS="--keychain=${{ env.KEYCHAIN_PATH }}"
@@ -323,6 +323,7 @@ jobs:
          PROVISIONING_PROFILE="$PROVISIONING_PROFILE_UUID" \
          PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
          OTHER_CODE_SIGN_FLAGS="$CODE_SIGN_FLAGS" \
+         PROVISIONING_PROFILE_SPECIFIER_PODS="" \
          | tee -a ${{ env.LOG_FILE }} 
 
       - name: Manual xcrun Export to IPA (Forces Identity)
