@@ -266,9 +266,10 @@ jobs:
           
           echo "--- Inspection complete ---"
       
-      - name: Flutter Build Capture Log
+      - name: Setup Build Environment Variables
         run: |
-            LOG_FILE="flutter_build_ipa.log"
+          echo "LOG_FILE=build/ios/archive.log" >> $GITHUB_ENV
+          touch build/ios/archive.log
 
       - name: 🔎 Display ExportOptions.plist Contents
         run: |
@@ -289,7 +290,7 @@ jobs:
           ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
         run: |
          /usr/bin/xcrun xcodebuild archive \
-         -workspace Runner.xcworkspace \
+         -workspace ios/Runner.xcworkspace \
          -scheme Runner \
          -configuration Release \
          -sdk iphoneos \
@@ -297,7 +298,8 @@ jobs:
          -archivePath "$ARCHIVE_PATH" \
          DEVELOPMENT_TEAM="$TEAM_ID" \
          CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
-         PROVISIONING_PROFILE_SPECIFIER=""
+         PROVISIONING_PROFILE_SPECIFIER="" \
+         | tee -a ${{ env.LOG_FILE }} 
 
       - name: Manual xcrun Export to IPA (Forces Identity)
         env:
@@ -311,7 +313,8 @@ jobs:
           -archivePath "$ARCHIVE_PATH" \
           -exportPath "$IPA_PATH" \
           -exportOptionsPlist "$PLIST_PATH" \
-          -exportSigningIdentity "$SIGNING_IDENTITY"
+          -exportSigningIdentity "$SIGNING_IDENTITY" \
+           | tee -a ${{ env.LOG_FILE }} 
 
       - name: Upload Build Log Artifact
         uses: actions/upload-artifact@v4
