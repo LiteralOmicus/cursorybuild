@@ -140,6 +140,24 @@ jobs:
          /usr/bin/security unlock-keychain -p "${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}" signing_temp.keychain
          echo "Apple Worldwide Developer Relations G4 Certificate imported."
 
+      - name: 🔎 Verify Installed Code Signing Identity
+        env:
+          KEYCHAIN_NAME: signing_temp.keychain
+          KEYCHAIN_PASSWORD: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}
+        run: |
+          echo "--- Listing identities in $KEYCHAIN_NAME ---"
+          /usr/bin/security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_NAME"
+          /usr/bin/security find-identity -v -p codesigning "$KEYCHAIN_NAME" \
+          | tee codesigning_check.log
+          echo "--- Diagnostic Complete ---"
+
+      - name: 📦 Upload Codesigning Diagnostic Log
+        uses: actions/upload-artifact@v4
+        with:
+          name: codesigning-identity-check
+          path: codesigning_check.log
+          retention-days: 1
+
       - name: Grant Full Codesign Access
         env:
          KEYCHAIN_PASS: ${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }} 
