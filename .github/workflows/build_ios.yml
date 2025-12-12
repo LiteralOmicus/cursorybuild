@@ -139,7 +139,6 @@ jobs:
          /usr/bin/security import apple_g4.cer -k signing_temp.keychain -t cert -f pkcs7 -A
          /usr/bin/security unlock-keychain -p "${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}" signing_temp.keychain
          echo "Apple Worldwide Developer Relations G4 Certificate imported."
-
       - name: 🔎 Verify Installed Code Signing Identity
         env:
           KEYCHAIN_NAME: signing_temp.keychain
@@ -150,7 +149,6 @@ jobs:
           /usr/bin/security find-identity -v -p codesigning "$KEYCHAIN_NAME" \
           | tee codesigning_check.log
           echo "--- Diagnostic Complete ---"
-
       - name: 📦 Upload Codesigning Diagnostic Log
         uses: actions/upload-artifact@v4
         with:
@@ -166,12 +164,10 @@ jobs:
             /usr/bin/security set-key-partition-list \
             -S apple-tool:,apple:,codesign:,security:,productbuild: \
             -k "$KEYCHAIN_PASS" "$KEYCHAIN_NAME"
-
       - name: 3. Unlock Temporary Keychain
         run: |
           /usr/bin/security unlock-keychain \
           -p "${{ secrets.XCODE_TEMP_KEYCHAIN_PASSWORD }}" signing_temp.keychain
-
       - name: Download Provisioning Profiles
         uses: Apple-Actions/download-provisioning-profiles@v2
         with:
@@ -188,7 +184,6 @@ jobs:
         run: |
          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
          echo $PROFILE_BASE64 | base64 --decode > ~/Library/MobileDevice/Provisioning\ Profiles/app_store_profile_uuid.mobileprovision
-
       - name: Get Code Signing Identity Name
         id: get_signing_identity
         run: |
@@ -288,7 +283,6 @@ jobs:
         run: |
           echo "LOG_FILE=build/ios/archive.log" >> $GITHUB_ENV
           touch build/ios/archive.log
-
       - name: 🔎 Display ExportOptions.plist Contents
         run: |
           PLIST_PATH="build/ios/ExportOptions.plist"
@@ -320,13 +314,12 @@ jobs:
          -archivePath "$ARCHIVE_PATH" \
          DEVELOPMENT_TEAM="$TEAM_ID" \
          CODE_SIGN_IDENTITY="$SIGNING_IDENTITY" \
-         PROVISIONING_PROFILE="$PROVISIONING_PROFILE_UUID" \
-         PROVISIONING_PROFILE_SPECIFIER="$PROFILE_NAME" \
          PROVISIONING_PROFILE_SPECIFIER="" \
          PROVISIONING_PROFILE="" \
+         "PROVISIONING_PROFILE_SPECIFIER[config=Release]=$PROFILE_NAME" \
+         "PROVISIONING_PROFILE[config=Release]=$PROVISIONING_PROFILE_UUID" \
          OTHER_CODE_SIGN_FLAGS="$CODE_SIGN_FLAGS" \
          | tee -a ${{ env.LOG_FILE }} 
-
       - name: Manual xcrun Export to IPA (Forces Identity)
         env:
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
@@ -341,7 +334,6 @@ jobs:
           -exportOptionsPlist "$PLIST_PATH" \
           -exportSigningIdentity "$SIGNING_IDENTITY" \
            | tee -a ${{ env.LOG_FILE }} 
-
       - name: Upload Build Log Artifact
         uses: actions/upload-artifact@v4
         with:
