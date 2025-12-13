@@ -233,8 +233,8 @@ jobs:
          <string>${{ env.APPLE_TEAM_ID }}</string>
          <key>signingStyle</key>
          <string>manual</string>
-         <key>signingCertificate</key>
-         <string>$CERT_NAME</string>
+         <key>signingIdentity</key> 
+         <string>Apple Distribution: Westley Dunn (***)</string>
          <key>uploadBitcode</key>
          <true/>
          <key>uploadSymbols</key>
