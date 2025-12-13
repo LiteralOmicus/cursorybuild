@@ -287,13 +287,6 @@ jobs:
           -exportOptionsPlist "$FIXED_PLIST_PATH" \
            | tee -a ${{ env.LOG_FILE }} 
       
-      - name: 📦 Upload IPA Artifact
-        uses: actions/upload-artifact@v4
-        with:
-            name: app-ipa
-            path: build/ios/ipa/*.ipa
-            retention-days: 2
-        
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
         uses: Apple-Actions/upload-testflight-build@v1
