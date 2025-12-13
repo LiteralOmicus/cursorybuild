@@ -246,19 +246,7 @@ jobs:
           grep -C 5 "webview_flutter_wkwebview_privacy" ./ios/Pods/Pods.xcodeproj/project.pbxproj | grep "EMBEDDED_CONTENT_CONTAINS_SWIFT" || echo "Warning: Could not confirm patch via grep. Check Ruby script output."
           
           echo "--- Inspection complete ---"
-      
-      - name: 🔎 Display ExportOptions.plist Contents
-        run: |
-          PLIST_PATH="build/ios/ExportOptions.plist"
-          echo "--- Contents of ${PLIST_PATH} ---"
-          if [ -f "$PLIST_PATH" ]; then
-          cat "$PLIST_PATH"
-          echo "-----------------------------------"
-          else
-          echo "Error: ExportOptions.plist not found at $PLIST_PATH"
-          exit 1
-          fi
-    
+        
       - name: Direct xcrun Archive
         env:
           SIGNING_IDENTITY: "74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8"
@@ -290,13 +278,11 @@ jobs:
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
          ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
          IPA_PATH: "${{ github.workspace }}/build/ios/ipa"
-         PLIST_PATH: "${{ github.workspace }}/ios/ExportOptions.plist" 
         run: |
           mkdir -p "$IPA_PATH"
           /usr/bin/xcrun xcodebuild -exportArchive \
           -archivePath "$ARCHIVE_PATH" \
           -exportPath "$IPA_PATH" \
-          -exportOptionsPlist "$PLIST_PATH" \
            | tee -a ${{ env.LOG_FILE }} 
       - name: Upload Build Log Artifact
         uses: actions/upload-artifact@v4
