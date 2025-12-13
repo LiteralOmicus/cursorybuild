@@ -335,7 +335,6 @@ jobs:
           -archivePath "$ARCHIVE_PATH" \
           -exportPath "$IPA_PATH" \
           -exportOptionsPlist "$PLIST_PATH" \
-          -exportSigningIdentity "$SIGNING_IDENTITY" \
            | tee -a ${{ env.LOG_FILE }} 
       - name: Upload Build Log Artifact
         uses: actions/upload-artifact@v4
