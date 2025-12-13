@@ -286,12 +286,25 @@ jobs:
           -exportPath "$IPA_PATH" \
           -exportOptionsPlist "$FIXED_PLIST_PATH" \
            | tee -a ${{ env.LOG_FILE }} 
+
+      - name: 5a. Locate IPA File Path
+        id: find_ipa_path 
+        run: |
+         IPA_OUTPUT_DIR="${{ github.workspace }}/build/ios/ipa"
+         IPA_PATH=$(find "$IPA_OUTPUT_DIR" -name "*.ipa" -print -quit)
+         if [ -z "$IPA_PATH" ]; then
+         echo "Error: IPA file was not found in $IPA_OUTPUT_DIR."
+         ls -l "$IPA_OUTPUT_DIR"
+         exit 1
+         fi
+         echo "Found IPA at: $IPA_PATH"
+         echo "ipa_file_path=$IPA_PATH" >> $GITHUB_OUTPUT
       
       - name: Upload IPA to TestFlight
         if: ${{ success() }} 
         uses: Apple-Actions/upload-testflight-build@v1
         with:
-          app-path: build/ios/ipa/*.ipa
+          app-path: ${{ steps.find_ipa_path.outputs.ipa_file_path }}
           issuer-id: ${{ env.ASC_ISSUER_ID }}
           api-key-id: ${{ env.ASC_KEY_ID }}
           api-private-key: ${{ env.ASC_PRIVATE_KEY_CONTENT }}
