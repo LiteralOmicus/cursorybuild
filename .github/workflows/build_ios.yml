@@ -277,7 +277,6 @@ jobs:
         env:
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
          ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
-         IPA_PATH: "${{ github.workspace }}/build/ios/ipa"
         run: |
           mkdir -p "$IPA_PATH"
           /usr/bin/xcrun xcodebuild -exportArchive \
