@@ -318,6 +318,19 @@ jobs:
          "PROVISIONING_PROFILE=$PROVISIONING_PROFILE_UUID" \
          OTHER_CODE_SIGN_FLAGS="$CODE_SIGN_FLAGS" \
          | tee -a ${{ env.LOG_FILE }} 
+
+      - name: 3. Export IPA File
+        env:
+         ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
+         OUTPUT_DIR: "${{ github.workspace }}/build/ios/ipa" # The folder the IPA will go into
+        run: |
+          mkdir -p "$OUTPUT_DIR"
+          /usr/bin/xcrun xcodebuild -exportArchive \
+          -archivePath "$ARCHIVE_PATH" \
+          -exportPath "$OUTPUT_DIR" \
+          -exportOptionsPlist ios/ExportOptions.plist
+      
+    # This should now result in a file at build/ios/ipa/Runner.ipa
       - name: Manual xcrun Export to IPA (Forces Identity)
         env:
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
