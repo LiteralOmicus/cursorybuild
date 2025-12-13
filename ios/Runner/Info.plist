@@ -49,5 +49,7 @@
 		<string>ca-app-pub-5815053066312487~5018271779</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>We use the microphone to enable voice recording to allow users to interface with the Exercises functionality by inputting answers through speech to text..</string>
 	</dict>
 </plist>
