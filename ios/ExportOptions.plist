@@ -3,24 +3,29 @@
 <plist version="1.0">
 <dict>
     <key>method</key>
-    <string>app-store-connect</string>
+    <string>app-store</string>
+    
     <key>teamID</key>
     <string>6ABV2967CN</string>
+    
+    <key>signingStyle</key>
+    <string>manual</string>
+    
+    <key>provisioningProfiles</key>
+    <dict>
+        <key>com.literalomicus.kangarule</key>
+        <string>literalomicus</string>
+    </dict>
+    
+    <key>signingCertificate</key>
+    <string>74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8</string>
+    
     <key>uploadBitcode</key>
     <false/>
     <key>uploadSymbols</key>
     <true/>
-    <key>signingStyle</key>
-    <string>manual</string>
-    <key>provisioningProfiles</key>
-        <key>com.literalomicus.kangarule</key>
-        <string>literalomicus</string> </dict>
-    <key>signingCertificate</key>
-    <string>74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8</string>
-    </dict>
 
-</plist>
-
+</dict> </plist>
 
 
 
