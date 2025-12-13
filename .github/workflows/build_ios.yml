@@ -286,13 +286,7 @@ jobs:
           -exportPath "$IPA_PATH" \
           -exportOptionsPlist "$FIXED_PLIST_PATH" \
            | tee -a ${{ env.LOG_FILE }} 
-      - name: Upload Build Log Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: ${{ env.LOG_FILE }}
-          retention-days: 2
-          
+      
       - name: 📦 Upload IPA Artifact
         uses: actions/upload-artifact@v4
         with:
