@@ -275,6 +275,7 @@ jobs:
     # This should now result in a file at build/ios/ipa/Runner.ipa
       - name: Manual xcrun Export to IPA (Forces Identity)
         env:
+         IPA_PATH: "${{ github.workspace }}/build/ios/ipa"
          SIGNING_IDENTITY:  "Apple Distribution: literalomicus (6ABV2967CN)" 
          ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
         run: |
