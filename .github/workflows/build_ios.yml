@@ -211,43 +211,7 @@ jobs:
           fi
           echo "Found Certificate Hash: $CERT_HASH"
           echo "CERT_HASH=$CERT_HASH" >> $GITHUB_OUTPUT
-    
-      - name: Create ExportOptions.plist
-        env:
-         CERT_NAME: "Apple Distribution: Westley Dunn (6ABV2967CN)" 
-         PROFILE_NAME: "literalomicus" # Your clean profile name
-         BUNDLE_ID: "com.literalomicus.kangarule" # Your actual bundle ID
-         TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
-        run: |
-         echo "Creating ExportOptions.plist..."
-         mkdir -p build/ios
-         EXPORT_OPTIONS_PLIST_PATH="build/ios/ExportOptions.plist"
-         cat <<-EOF > "${EXPORT_OPTIONS_PLIST_PATH}"
-         <?xml version="1.0" encoding="UTF-8"?>
-         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-         <plist version="1.0">
-         <dict>
-         <key>method</key>
-         <string>app-store</string>
-         <key>teamID</key>
-         <string>${{ env.APPLE_TEAM_ID }}</string>
-         <key>signingStyle</key>
-         <string>manual</string>
-         <key>signingIdentity</key> 
-         <string>Apple Distribution: Westley Dunn (***)</string>
-         <key>uploadBitcode</key>
-         <true/>
-         <key>uploadSymbols</key>
-         <true/>
-         <key>provisioningProfiles</key>
-         <dict>
-          <key>$BUNDLE_ID</key>
-          <string>$PROFILE_NAME</string>
-         </dict>
-         </plist>
-         EOF
-         echo "EXPORT_OPTIONS_PLIST_PATH=$EXPORT_OPTIONS_PLIST_PATH" >> $GITHUB_ENV
-        
+      
       - name: Generate Build Number
         id: buildnumber
         uses: einaregilsson/build-number@v2
