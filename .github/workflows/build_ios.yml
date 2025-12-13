@@ -247,10 +247,6 @@ jobs:
           
           echo "--- Inspection complete ---"
       
-      - name: Setup Build Environment Variables
-        run: |
-          echo "LOG_FILE=build/ios/archive.log" >> $GITHUB_ENV
-          touch build/ios/archive.log
       - name: 🔎 Display ExportOptions.plist Contents
         run: |
           PLIST_PATH="build/ios/ExportOptions.plist"
