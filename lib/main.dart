@@ -969,18 +969,18 @@ class MyCard extends StatelessWidget {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-unawaited(MobileAds.instance.initialize());
-await Firebase.initializeApp(
+//unawaited(MobileAds.instance.initialize());
+//await Firebase.initializeApp(
    //options: DefaultFirebaseOptions.currentPlatform,
-);
+//);
 
 
-try{
+//try{
 //final auth = FirebaseAuth.instance;
-} catch (e) {
+//} catch (e) {
 // ignore: avoid_print
-  await Firebase.initializeApp();
-}
+//  await Firebase.initializeApp();
+//}
 
 
 
@@ -1063,7 +1063,7 @@ class SignIn extends StatefulWidget {
 
 
 class SignInState extends State<SignIn> {
-  final auth = FirebaseAuth.instance;
+  late final auth = FirebaseAuth.instance;
   final ButtonStyle style =
   ElevatedButton.styleFrom(textStyle: const TextStyle(fontSize: 20),
       backgroundColor: Colors.red);
