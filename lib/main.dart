@@ -581,7 +581,8 @@ class Referencer extends ChangeNotifier {
       data['lemmas'] = {0:0};
       Lemx =data['lemmas'];
     };
-    setPic(info["info"]["photo"]);
+      //CAUSE FOR CONCERN
+   // setPic(info["info"]["photo"]);
     info["info"]["photo"] = ["4", "UP"];
     _isLoading = false;
     //openNotebook();
