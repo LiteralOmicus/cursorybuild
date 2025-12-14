@@ -46,6 +46,7 @@ jobs:
          rm -rf ios/Pods
          rm -f ios/Podfile.lock
          rm -rf ios/Runner.xcworkspace
+         rm -rf ios/build
          flutter pub get
          cd ios
          pod install --repo-update --clean-install --verbose || { echo "Pod install failed to apply final fix!"; exit 1; }
@@ -53,6 +54,9 @@ jobs:
       
       - name: Run Flutter Doctor -v
         run: flutter doctor -v
+
+      - name: Generate and Fix Native Splash Screen
+        run: flutter pub run flutter_native_splash:create
           
       - name: List Directories after Flutter Setup (Verify Podfile existence)
         run: |
