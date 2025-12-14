@@ -1028,7 +1028,7 @@ class HelloFlutterApp extends StatelessWidget {
           title: 'Flutter Demo',
           theme: Provider.of<ThemeProvider>(context, listen: true).currentTheme,
           //CHANGERU
-          home: myForm()
+          home: myHomePage()
           )
             // Your app's main content and routing starts here
             // Example:
@@ -1072,7 +1072,13 @@ class SignInState extends State<SignIn> {
   final TextEditingController confirmController = TextEditingController();
   final TextEditingController usernameController = TextEditingController();
   bool Dunn = false;
+  String? _errorMessage;
 
+  void _clearError() {
+    setState(() {
+      _errorMessage = null;
+    });
+  }
 
 
   void gateKeep(Map foo) {
@@ -1451,7 +1457,7 @@ class _MyHomePageState extends State<MyHomePage> {
       "info": {
         "date": DateFormat.yMMMd().format(DateTime.now()),
         "handle": "dontmatter",
-        "photo": context.read<Referencer>().returnPic()
+        "photo": "WD" //context.read<Referencer>().returnPic()
       },
       "post": dontroller.text,
     };
