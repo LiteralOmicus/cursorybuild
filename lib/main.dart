@@ -17,7 +17,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_cache/just_audio_cache.dart';
 import 'xsxspile.dart' as forEducation;
 import 'extralesson.dart' as extra;
-//import 'package:bangerulell/firebase_options.dart';
+import 'package:bangerulell/firebase_options.dart';
 
 
 
@@ -1579,16 +1579,17 @@ class _MyHomePageState extends State<MyHomePage> {
             future: startUp(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                final _dump = Provider
-                    .of<Referencer>(context, listen: false)
-                    .info;
+               // final _dump = Provider.of<Referencer>(context, listen: false).info;
+                final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                 final fanalexp = assigner(context.read<Referencer>().getExp());
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
-                String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
+                List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
+                String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
+               // String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
                 //int saveuserexp = _dump["info"]["exp"];
                 // List privet = _dump["Statuses"];
-                List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
+               // List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
                 //context.read<Referencer>().setPic(icon);
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
