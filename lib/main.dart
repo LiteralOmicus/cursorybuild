@@ -1414,8 +1414,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
     Future.wait([
-      context.read<Referencer>().changi(),
-      context.read<Referencer>().getReady(),
+    //  context.read<Referencer>().changi(),
+    //  context.read<Referencer>().getReady(),
     ]
     );
     return "Done";
@@ -1582,11 +1582,11 @@ class _MyHomePageState extends State<MyHomePage> {
                // final _dump = Provider.of<Referencer>(context, listen: false).info;
                 final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
-                final fanalexp = assigner(context.read<Referencer>().getExp());
+               // final fanalexp = assigner(context.read<Referencer>().getExp());
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
-                List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
-                String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
+               // List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
+               // String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
                // String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
                 //int saveuserexp = _dump["info"]["exp"];
                 // List privet = _dump["Statuses"];
@@ -1620,14 +1620,17 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 Padding(
                                                     padding: EdgeInsets.all(
                                                         12.0),
-                                                    child: myIndicator(
-                                                        progress: (context.read<
-                                                            Referencer>()
-                                                            .getExp() / 4200),
-                                                        size: double.infinity)
-                                                  //progress:_dump["language"][saveuserLang]["users"][saveUser]["info"]["exp"] / 4400 , size: double.infinity)
-                                                ),
-
+                                                    child: Container(
+        // Assuming myIndicator is a horizontal progress bar, it might be about 20-30 pixels high.
+        height: 30.0, // Adjust this height to match your custom myIndicator's height
+        width: double.infinity, // Matches the size: double.infinity property
+        decoration: BoxDecoration(
+            color: Colors.blue.withOpacity(0.5), // Use a color to see its bounds
+            borderRadius: BorderRadius.circular(4.0),
+        ),
+        // You can add Text here if you want to verify the data is loading
+        child: Center(child: Text("Progress Bar Placeholder", style: TextStyle(fontSize: 12))),
+    )
                                                 Padding(
                                                   padding: EdgeInsets.all(12.0),
                                                   child:
@@ -1637,13 +1640,13 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     width: screenWidth / 2.1,
                                                     color: Colors.white,
                                                     child:
-                                                    MyCard(handle: saveuserName,
-                                                        exp: fanalexp,
-                                                        useasImage: [
-                                                          boxTheme[int.parse(
-                                                              icon[0])],
-                                                          icon[1]
-                                                        ]),
+                                                   Center(
+            child: Text(
+                "MyCard Placeholder",
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
+            )
+        ),
                                                   ),
 
                                                   //   ]
