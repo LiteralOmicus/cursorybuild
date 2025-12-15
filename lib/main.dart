@@ -17,7 +17,7 @@ import 'package:just_audio/just_audio.dart';
 import 'package:just_audio_cache/just_audio_cache.dart';
 import 'xsxspile.dart' as forEducation;
 import 'extralesson.dart' as extra;
-import 'package:bangerulell/firebase_options.dart';
+import 'package:kangarule/firebase_options.dart';
 
 
 
