@@ -970,9 +970,9 @@ class MyCard extends StatelessWidget {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 //unawaited(MobileAds.instance.initialize());
-//await Firebase.initializeApp(
-   //options: DefaultFirebaseOptions.currentPlatform,
-//);
+await Firebase.initializeApp(
+   options: DefaultFirebaseOptions.currentPlatform,
+);
 
 
 //try{
