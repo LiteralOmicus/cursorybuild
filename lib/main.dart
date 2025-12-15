@@ -1580,7 +1580,8 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                // final _dump = Provider.of<Referencer>(context, listen: false).info;
-                final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
+                final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
+                //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                 final fanalexp = assigner(context.read<Referencer>().getExp());
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
