@@ -1028,7 +1028,7 @@ class HelloFlutterApp extends StatelessWidget {
           title: 'Flutter Demo',
           theme: Provider.of<ThemeProvider>(context, listen: true).currentTheme,
           //CHANGERU
-          home: myHomePage()
+          home: MyHomePage()
           )
             // Your app's main content and routing starts here
             // Example:
