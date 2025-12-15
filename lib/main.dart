@@ -1631,6 +1631,7 @@ class _MyHomePageState extends State<MyHomePage> {
         // You can add Text here if you want to verify the data is loading
         child: Center(child: Text("Progress Bar Placeholder", style: TextStyle(fontSize: 12))),
     )
+                                                  ),
                                                 Padding(
                                                   padding: EdgeInsets.all(12.0),
                                                   child:
