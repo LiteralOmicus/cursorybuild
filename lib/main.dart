@@ -1414,8 +1414,8 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
     Future.wait([
-    //  context.read<Referencer>().changi(),
-      //context.read<Referencer>().getReady(),
+      context.read<Referencer>().changi(),
+      context.read<Referencer>().getReady(),
     ]
     );
     return "Done";
