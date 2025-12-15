@@ -1413,11 +1413,13 @@ class MyHomePage extends StatefulWidget {
 }
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
-    Future.wait([
-    //  context.read<Referencer>().changi(),
-    //  context.read<Referencer>().getReady(),
-    ]
-    );
+    // 1. Read the Referencer instance
+    final referencer = context.read<Referencer>();
+
+    // 2. Run the initialization logic (anonSet/changi/getReady)
+    // We use anonSet() if the user is not logged in or for initial setup.
+    // Ensure anonSet() is defined as `Future<void> anonSet() async { ... }` in Referencer.
+    await referencer.anonSet();
     return "Done";
     // context.read<Referencer>().getReady();
     //await Future(() {});
@@ -1437,13 +1439,13 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   late TextEditingController dontroller;
-  late String fanalexp;
-
-  late Map _dump;
+  //late String fanalexp;
+//late
+  Map _dump = {};
   String saveuserName = "";
   List privet = [];
   Map allStati = {};
-  late List icon;
+ // late List icon;
   late List aLessons;
 
 //List icon = context.read<Referencer>().returnPic();
@@ -1576,11 +1578,12 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         body:
         FutureBuilder(
-            future: startUp(),
+            future: startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                // final _dump = Provider.of<Referencer>(context, listen: false).info;
-                final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
+                //CAUSE FOR CONCERN ADD THIS BACCIN
+                //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                // final fanalexp = assigner(context.read<Referencer>().getExp());
                 //final fanalexp = assigner(_dump["info"]["exp"]);
@@ -1594,6 +1597,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 //context.read<Referencer>().setPic(icon);
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
+                //CAUSE FOR CONCERN GET THIS WORKING
                 List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
