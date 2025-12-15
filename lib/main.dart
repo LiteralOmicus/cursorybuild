@@ -1414,12 +1414,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
     // 1. Read the Referencer instance
-    final referencer = context.read<Referencer>();
+  //  final referencer = context.read<Referencer>();
 
     // 2. Run the initialization logic (anonSet/changi/getReady)
     // We use anonSet() if the user is not logged in or for initial setup.
     // Ensure anonSet() is defined as `Future<void> anonSet() async { ... }` in Referencer.
-    await referencer.anonSet();
+   // await referencer.anonSet();
     return "Done";
     // context.read<Referencer>().getReady();
     //await Future(() {});
@@ -1446,7 +1446,10 @@ class _MyHomePageState extends State<MyHomePage> {
   List privet = [];
   Map allStati = {};
  // late List icon;
-  late List aLessons;
+ // late List aLessons;
+ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
+  
+
 
 //List icon = context.read<Referencer>().returnPic();
 
@@ -1598,7 +1601,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
                 //CAUSE FOR CONCERN GET THIS WORKING
-                List aLessons = _dump["lessons"] ?? [];
+               // List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
