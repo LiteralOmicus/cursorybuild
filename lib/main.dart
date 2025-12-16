@@ -1678,9 +1678,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                               child: const Text('All Lessons'),
                                             )
                                         ),
-                                      ]
-                                  ),
-
+                                    
                                     Container(
                                       // alignment: Alignment.topRight,
                                       height: screenHeight / 3,
@@ -1716,6 +1714,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                       ),
                                     ),
+  ]
+                                  ),
 
 
                                   ]
