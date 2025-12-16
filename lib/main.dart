@@ -1439,7 +1439,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   late TextEditingController dontroller;
-  late String fanalexp;
+  late double fanalexp;
 //late
   Map _dump = {};
   String saveuserName = "";
@@ -1592,9 +1592,10 @@ class _MyHomePageState extends State<MyHomePage> {
                //final fanalexp = assigner(context.read<Referencer>().getExp());
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
+                  //CAUSE 4 CONCERN rawValue shud be String
                 fanalexp = 10.0;
                 } else {
-                fanalexp = assigner(rawValue as num) ?? 10.0;
+                fanalexp = assigner(rawValue) ?? 10.0;
                 }
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
@@ -1635,7 +1636,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     padding: EdgeInsets.all(
                                                         12.0),
                                                     child: myIndicator(
-                                                        progress: fanalexp / 4200, //(context.read<Referencer>().getExp() / 4200),
+                                                        progress: fanalexp / 4200.0, //(context.read<Referencer>().getExp() / 4200),
                                                         size: double.infinity)
                                                   //progress:_dump["language"][saveuserLang]["users"][saveUser]["info"]["exp"] / 4400 , size: double.infinity)
                                                   ),
