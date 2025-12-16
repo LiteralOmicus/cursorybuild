@@ -1595,7 +1595,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   //CAUSE 4 CONCERN rawValue shud be String
                 fanalexp = 10.0;
                 } else {
-                fanalexp = rawValue ?? 10.0;
+                fanalexp = (rawValue ?? 10.0).toDouble();
                 }
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
