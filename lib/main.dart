@@ -1439,14 +1439,15 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   late TextEditingController dontroller;
-  //late String fanalexp;
+  late String fanalexp;
 //late
   Map _dump = {};
   String saveuserName = "";
   List privet = [];
   Map allStati = {};
- // late List icon;
+ late List icon;
  // late List aLessons;
+  //CAUSE FOR CONCERN
  final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
   
 
@@ -1588,15 +1589,21 @@ class _MyHomePageState extends State<MyHomePage> {
                 //CAUSE FOR CONCERN ADD THIS BACCIN
                 //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
-               // final fanalexp = assigner(context.read<Referencer>().getExp());
+               //final fanalexp = assigner(context.read<Referencer>().getExp());
+                final rawValue = context.read<Referencer>().getExp();
+                if (rawValue == null || rawValue is! num) {
+                fanalexp = 10.0;
+                } else {
+                fanalexp = assigner(rawValue as num) ?? 10.0;
+                }
                 //final fanalexp = assigner(_dump["info"]["exp"]);
                 //final icon = context.read<Referencer>().returnPic();
                // List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
                // String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
-               // String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
+                String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
                 //int saveuserexp = _dump["info"]["exp"];
                 // List privet = _dump["Statuses"];
-               // List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
+               List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
                 //context.read<Referencer>().setPic(icon);
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
@@ -1627,17 +1634,10 @@ class _MyHomePageState extends State<MyHomePage> {
                                                 Padding(
                                                     padding: EdgeInsets.all(
                                                         12.0),
-                                                    child: Container(
-        // Assuming myIndicator is a horizontal progress bar, it might be about 20-30 pixels high.
-        height: 30.0, // Adjust this height to match your custom myIndicator's height
-        width: double.infinity, // Matches the size: double.infinity property
-        decoration: BoxDecoration(
-            color: Colors.blue.withOpacity(0.5), // Use a color to see its bounds
-            borderRadius: BorderRadius.circular(4.0),
-        ),
-        // You can add Text here if you want to verify the data is loading
-        child: Center(child: Text("Progress Bar Placeholder", style: TextStyle(fontSize: 12))),
-    )
+                                                    child: myIndicator(
+                                                        progress: fanalexp / 4200, //(context.read<Referencer>().getExp() / 4200),
+                                                        size: double.infinity)
+                                                  //progress:_dump["language"][saveuserLang]["users"][saveUser]["info"]["exp"] / 4400 , size: double.infinity)
                                                   ),
                                                 Padding(
                                                   padding: EdgeInsets.all(12.0),
