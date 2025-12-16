@@ -1648,8 +1648,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     color: Colors.white,
                                                     child:
                                                    Center(
-            child: MyCard(
-                                                        exp: assigner(fanalexp),                             
+            child: MyCard(exp: assigner(fanalexp) )                         
         ),
                                                   ),
 
