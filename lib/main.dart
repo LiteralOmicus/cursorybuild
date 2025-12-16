@@ -907,13 +907,13 @@ class _ProgressIndicatorExampleState extends State<ProgressIndicatorExample>
 
 class MyCard extends StatelessWidget {
   const MyCard({super.key,
-    required this.handle,
+   // required this.handle,
     required this.exp,
-    required this.useasImage,
+   // required this.useasImage,
   });
-  final String handle;
+  //final String handle;
   final String exp;
-  final List useasImage;
+  //final List useasImage;
 
   @override
   Widget build(BuildContext context) {
@@ -927,11 +927,8 @@ class MyCard extends StatelessWidget {
               children: [
                 Expanded(child:
                 ListTile(
-                  leading:  _UserImage(picture: context.read<Referencer>().returnPic()),
-                  title:Text(handle,
-                    style: TextStyle(fontSize:
-                    AdaptiveTextSize().getadaptiveTextSize(context, 16)), ),
-                  subtitle: Text(exp,
+                 // leading:  _UserImage(picture: context.read<Referencer>().returnPic()),
+                  title: Text(exp,
                     style:TextStyle(fontSize:
                     AdaptiveTextSize().getadaptiveTextSize(context, 16)), ),
                 )
@@ -969,6 +966,7 @@ class MyCard extends StatelessWidget {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  //CAUSE 4 CONCERN IM  STILL SEEING ADS
 //unawaited(MobileAds.instance.initialize());
 await Firebase.initializeApp(
    options: DefaultFirebaseOptions.currentPlatform,
@@ -1650,11 +1648,8 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     color: Colors.white,
                                                     child:
                                                    Center(
-            child: Text(
-                "MyCard Placeholder",
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)
-            )
+            child: MyCard(
+                                                        exp: assigner(fanalexp),                             
         ),
                                                   ),
 
