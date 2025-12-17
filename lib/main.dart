@@ -527,7 +527,7 @@ class Referencer extends ChangeNotifier {
     print([NB]);
     hold.add([0, "$content"]);
     NB[seekthis]["saved"] = hold;
-   // set_Notebook();
+    set_Notebook();
   }
 
   void changeColor(int colorkeeper, int x, String seekthis) {
