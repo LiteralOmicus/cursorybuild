@@ -166,7 +166,7 @@ class _StateMgmtState extends State<StateMgmt> {
   // TODO: Replace this with your own interstitial ad unit ID for production
   // Use test IDs during development!
 //  String get _adUnitId {
-  //    return 'ca-app-pub-3940256099942544/1033173712'; // Test Android Interstitial}
+  //    return 'ca-app-pub-3940256099942544/4411468910'; // Test Android Interstitial}
 
   @override
   void initState() {
@@ -258,7 +258,7 @@ class Referencer extends ChangeNotifier {
   bool _showContinueButton = false; // Private field for showing continue button
 
   // TODO: Replace with your actual interstitial ad unit ID
-  final String _adUnitId = 'ca-app-pub-3940256099942544/1033173712'; // Test ad unit ID
+  final String _adUnitId = 'ca-app-pub-3940256099942544/4411468910'; // Test ad unit ID
 
   // Public getters to access the state from widgets
   bool get isAdLoaded => _isAdLoaded;
@@ -3558,6 +3558,7 @@ class MySettings extends StatefulWidget {
 }
 
 class _MySettings extends State<MySettings> {
+  bool isOnlyWelcome = NB.length == 1 && NB.containsKey("Welcome");
   @override
   void initState() {
     super.initState();
@@ -3656,7 +3657,31 @@ class _MySettings extends State<MySettings> {
             async {
 
 
-        //context.read<Referencer>().set_Notebook(); lemmas?
+        context.read<Referencer>().set_Notebook();// lemmas?
+    //NB
+              if (isOnlyWelcome) {
+    print("Notebook is already in the default Welcome state.");
+  } else {
+    // ELSE: Reset NB to have ONLY the Welcome key
+    NB = {
+      "Welcome": {
+        "saved": [
+          [
+            0,
+            "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+          ],
+          [
+            0,
+            "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+          ],
+          [
+            0,
+            "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+          ]
+        ]
+      }
+    }
+    };
               final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
               if (anonMine == false) {
                 await FirebaseAuth.instance.signOut();
