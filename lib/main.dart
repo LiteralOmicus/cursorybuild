@@ -600,7 +600,7 @@ class Referencer extends ChangeNotifier {
    // setPic(info["info"]["photo"]);
     info["info"]["photo"] = ["4", "UP"];
     _isLoading = false;
-    openNotebook();
+    //openNotebook();
     anonTag = false;
     notifyListeners(); // Notify UI that loading has finished
   }
