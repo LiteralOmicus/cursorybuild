@@ -226,10 +226,20 @@ class _StateMgmtState extends State<StateMgmt> {
                       // Make the SizedBox take the full available width
                       child: ElevatedButton(
                         onPressed: () {
-                         // startedAd //model.showContinueButton
+                         if (startedAd == false) { //model.showContinueButton
                          //     ?
-                          model._showInterstitialAd();
+                          model._showInterstitialAd(
+                            onAdDismissed: () {
+   Navigator.of(context).push(
+                             MaterialPageRoute(
+                                 builder: (context) => widget.Child
+                              )
+                         );
+    }
+                          );
+                           startedAd = true;
                           //    :
+                         }
                         //  Navigator.of(context).push(
                          //     MaterialPageRoute(
                          //         builder: (context) => widget.Child
