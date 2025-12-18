@@ -226,15 +226,15 @@ class _StateMgmtState extends State<StateMgmt> {
                       // Make the SizedBox take the full available width
                       child: ElevatedButton(
                         onPressed: () {
-                          startedAd //model.showContinueButton
-                              ?
+                         // startedAd //model.showContinueButton
+                         //     ?
                           model._showInterstitialAd()
-                              :
-                          Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (context) => widget.Child
-                              )
-                          );
+                          //    :
+                        //  Navigator.of(context).push(
+                         //     MaterialPageRoute(
+                         //         builder: (context) => widget.Child
+                         //     )
+                       //   );
                         },
                         child: const Text('Continue'),
                       ),
@@ -533,7 +533,7 @@ class Referencer extends ChangeNotifier {
     print([NB]);
     hold.add([0, "$content"]);
     NB[seekthis]["saved"] = hold;
-    set_Notebook();
+   // set_Notebook();
   }
 
   void changeColor(int colorkeeper, int x, String seekthis) {
