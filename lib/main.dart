@@ -28,21 +28,16 @@ List<T> flatten<T>(List<dynamic> list) => [for (var sublist in list) ...sublist]
 
 // Define the filename for your JSON data
 const String _jsonFileName = 'findmyNotebook.json';
-Map<String, dynamic> NB = {
-  "Welcome":
+Map<String, dynamic> NB = {  "Welcome":
   {
     "saved"
         : [
       [
-        0, "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+        0, "This is proof first NB load is messing up my set"
       ],
-      [
-        0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
-      ],
-      [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
-      ]
     ]
   }
+
 };
 // Helper function to get the local file path
 Future<File> _getLocalFile() async {
@@ -606,6 +601,20 @@ class Referencer extends ChangeNotifier {
     if (loadedData != null) {
         NB = loadedData;
     } else {
+      NB = {  "Welcome":
+  {
+    "saved"
+        : [
+      [
+        0, "This is your my problem! Loaded file is null! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+      ],
+      [
+        0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+      ],
+      [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+      ]
+    ]
+  }
   // Initialize default if file was missing/empty
      // set_Notebook(); 
       //wayClear();
@@ -3689,6 +3698,8 @@ class _MySettings extends State<MySettings> {
     print("Notebook is already in the default Welcome state.");
   } else {
     // ELSE: Reset NB to have ONLY the Welcome key
+                //CAUSE FOR CONCERN THIS SHOULDN'T MATTER
+                //BECAUSE RELOGIN SHOULD TRIGGER NB BEING FILLED
     NB = {
       "Welcome": {
         "saved": [
