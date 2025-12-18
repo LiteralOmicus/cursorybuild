@@ -618,7 +618,7 @@ class Referencer extends ChangeNotifier {
   // Initialize default if file was missing/empty
      // set_Notebook(); 
       //wayClear();
-    }
+    };
     anonTag = false;
     notifyListeners(); // Notify UI that loading has finished
   }
