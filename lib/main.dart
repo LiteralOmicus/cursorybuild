@@ -2999,6 +2999,8 @@ class _MyNotebookState extends State<MyNotebookState> {
 
 
   void getDat(Map wholenote) {
+    quiccfix.clear(); // Empties the list []
+    exposee.clear();  // Empties the map {}
     for (var i in wholenote.keys) {
       //this makes the num 0 and the title 1
       if (wholenote[i]["saved"].isEmpty) {
