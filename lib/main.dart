@@ -598,6 +598,7 @@ class Referencer extends ChangeNotifier {
     //openNotebook();
     //await NB = loadNestedJsonFromFile();
     var loadedData = await loadNestedJsonFromFile();
+      //CAUSE 4 CONCERN anontag
     if (loadedData != null) {
         NB = loadedData;
     } else {
@@ -657,6 +658,24 @@ class Referencer extends ChangeNotifier {
         data['lemmas'] = {0:0};
         Lemx = data['lemmas'] as Map;
       };
+       NB = {
+      "Welcome": {
+        "saved": [
+          [
+            0,
+            "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+          ],
+          [
+            0,
+            "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+          ],
+          [
+            0,
+            "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+          ]
+        ]
+      }
+    };
       _isLoading = false;
       //openNotebook();
 
@@ -673,7 +692,9 @@ class Referencer extends ChangeNotifier {
 
   void set_Notebook() {
     print(NB);
+    if (anonTag == false) {
     saveNestedJsonToFile(NB);
+    }
 
     //check to make asure colors are updating
   }
@@ -2120,6 +2141,7 @@ class _MyRome extends State<MyRomePage> {
   late String _seeker;
   late List _fun;
   Map _dump = {};
+ // final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
 
 
 
@@ -3692,31 +3714,7 @@ class _MySettings extends State<MySettings> {
 
         context.read<Referencer>().set_Notebook();// lemmas?
     //NB
-              if (isOnlyWelcome) {
-    print("Notebook is already in the default Welcome state.");
-  } else {
-    // ELSE: Reset NB to have ONLY the Welcome key
-                //CAUSE FOR CONCERN THIS SHOULDN'T MATTER
-                //BECAUSE RELOGIN SHOULD TRIGGER NB BEING FILLED
-    NB = {
-      "Welcome": {
-        "saved": [
-          [
-            0,
-            "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
-          ],
-          [
-            0,
-            "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
-          ],
-          [
-            0,
-            "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
-          ]
-        ]
-      }
-    };
-    }
+            
               final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
               if (anonMine == false) {
                 await FirebaseAuth.instance.signOut();
