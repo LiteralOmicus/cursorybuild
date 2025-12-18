@@ -2143,7 +2143,7 @@ class _MyRome extends State<MyRomePage> {
   @override
   void initState() {
     super.initState();
-    context.read<Referencer>().openNotebook();
+    //context.read<Referencer>().openNotebook();
     String saveUser = context.read<Referencer>().getUser();
     context.read<Referencer>().wayClear(widget.seeker);
     _fun = widget.fun;
