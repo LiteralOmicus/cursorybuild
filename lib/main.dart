@@ -228,7 +228,7 @@ class _StateMgmtState extends State<StateMgmt> {
                         onPressed: () {
                           startedAd //model.showContinueButton
                               ?
-                          model._showInterstitialAd
+                          model._showInterstitialAd()
                               :
                           Navigator.of(context).push(
                               MaterialPageRoute(
@@ -368,6 +368,7 @@ class Referencer extends ChangeNotifier {
           debugPrint('InterstitialAd loaded.');
           // Keep a reference to the ad so you can show it later.
           _interstitialAd = ad;
+          notifyListeners();
         },
         // Called when an ad request failed.
         onAdFailedToLoad: (LoadAdError error) {
@@ -379,7 +380,7 @@ class Referencer extends ChangeNotifier {
 
   Referencer() {
     debugPrint('Referencer initialized, loading ad...');
-  //  _loadInterstitialAd(); // Initiate ad loading when the model is created
+    _loadInterstitialAd(); // Initiate ad loading when the model is created
   }
 
   // Shows the loaded interstitial ad
@@ -387,7 +388,7 @@ class Referencer extends ChangeNotifier {
     if (_interstitialAd == null) {
       debugPrint('Warning: attempt to show interstitial before loaded.');
       // Optionally load another ad here if it's null
-      //_loadInterstitialAd();
+      _loadInterstitialAd();
       return;
     }
 
