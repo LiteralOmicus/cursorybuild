@@ -3680,8 +3680,8 @@ class _MySettings extends State<MySettings> {
           ]
         ]
       }
-    }
     };
+    }
               final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
               if (anonMine == false) {
                 await FirebaseAuth.instance.signOut();
