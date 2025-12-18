@@ -394,11 +394,12 @@ class Referencer extends ChangeNotifier {
   }
 
   // Shows the loaded interstitial ad
-  void _showInterstitialAd() {
+  void _showInterstitialAd({required VoidCallback onAdDismissed}) {
     if (_interstitialAd == null) {
       debugPrint('Warning: attempt to show interstitial before loaded.');
       // Optionally load another ad here if it's null
       _loadInterstitialAd();
+      onAdDismissed();
       return;
     }
 
@@ -418,6 +419,7 @@ class Referencer extends ChangeNotifier {
         ad.dispose();
         // Optionally load another ad here
         _loadInterstitialAd();
+        onAdDismissed();
       },
       // Called when the ad dismissed full screen content.
       onAdDismissedFullScreenContent: (InterstitialAd ad) {
@@ -426,6 +428,7 @@ class Referencer extends ChangeNotifier {
         ad.dispose();
         // Optionally load another ad here for the next time
         _loadInterstitialAd();
+        onAdDismissed();
       },
       // Called when a click is recorded for an ad.
       onAdClicked: (InterstitialAd ad) {
