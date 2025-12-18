@@ -228,7 +228,7 @@ class _StateMgmtState extends State<StateMgmt> {
                         onPressed: () {
                          // startedAd //model.showContinueButton
                          //     ?
-                          model._showInterstitialAd()
+                          model._showInterstitialAd();
                           //    :
                         //  Navigator.of(context).push(
                          //     MaterialPageRoute(
