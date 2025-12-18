@@ -601,6 +601,15 @@ class Referencer extends ChangeNotifier {
     info["info"]["photo"] = ["4", "UP"];
     _isLoading = false;
     //openNotebook();
+    //await NB = loadNestedJsonFromFile();
+    var loadedData = await loadNestedJsonFromFile();
+    if (loadedData != null) {
+        NB = loadedData;
+    } else {
+  // Initialize default if file was missing/empty
+     // set_Notebook(); 
+      //wayClear();
+    }
     anonTag = false;
     notifyListeners(); // Notify UI that loading has finished
   }
