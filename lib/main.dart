@@ -483,9 +483,14 @@ class Referencer extends ChangeNotifier {
 //this is importNT
   //and it needs to be added to production app
   //because it will mess up new users
-  void openNotebook() {
+  //CAUSE 4 CONCERN
+  Future<void> openNotebook() async {
+    //rata = loadNestedJsonFromFile();
+    Map<String, dynamic>? rata = await loadNestedJsonFromFile();
+    info["Notebook"] = rata;
     if (info["Notebook"] != null) {
       Notebook = info["Notebook"];
+      NB = info["Notebook"];
     }
     else {
        Notebook = {
@@ -585,7 +590,7 @@ class Referencer extends ChangeNotifier {
    // setPic(info["info"]["photo"]);
     info["info"]["photo"] = ["4", "UP"];
     _isLoading = false;
-    //openNotebook();
+    openNotebook();
     anonTag = false;
     notifyListeners(); // Notify UI that loading has finished
   }
@@ -2128,7 +2133,7 @@ class _MyRome extends State<MyRomePage> {
   @override
   void initState() {
     super.initState();
-    //context.read<Referencer>().openNotebook();
+    context.read<Referencer>().openNotebook();
     String saveUser = context.read<Referencer>().getUser();
     context.read<Referencer>().wayClear(widget.seeker);
     _fun = widget.fun;
