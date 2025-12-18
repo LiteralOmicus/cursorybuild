@@ -498,13 +498,9 @@ class Referencer extends ChangeNotifier {
   //and it needs to be added to production app
   //because it will mess up new users
   //CAUSE 4 CONCERN
-  Future<void> openNotebook() async {
-    //rata = loadNestedJsonFromFile();
-    Map<String, dynamic>? rata = await loadNestedJsonFromFile();
-    info["Notebook"] = rata;
+  void openNotebook() {
     if (info["Notebook"] != null) {
       Notebook = info["Notebook"];
-      NB = info["Notebook"];
     }
     else {
        Notebook = {
@@ -527,7 +523,7 @@ class Referencer extends ChangeNotifier {
     }
   }
 
-
+  
   void wayClear(String seekthis) {
     print(NB[seekthis]);
     if (NB[seekthis] ==
