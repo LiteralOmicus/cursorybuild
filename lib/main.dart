@@ -3054,7 +3054,13 @@ class _MyNotebookState extends State<MyNotebookState> {
   @override
   void initState() {
     super.initState();
+    _initData();
 
+  }
+  Future<void> _initData() async {
+    // 1. Load the data
+    NB = await loadNestedJsonFromFile();
+  
   }
   // List bender = sender.keys.toList();
   // List lender = sender.values.toList();
