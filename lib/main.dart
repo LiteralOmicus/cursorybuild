@@ -624,7 +624,7 @@ class Referencer extends ChangeNotifier {
     );
         }
 
-  Future<void> anonSet() async {
+  Future<void> anonSet(myValue) async {
     _isLoading = true;
     notifyListeners();
       final data =
@@ -640,7 +640,7 @@ class Referencer extends ChangeNotifier {
       //"Notebook": {"None":0},
       //   }
     };
-      anonTag = true;
+      anonTag = myValue;
       //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
       info = data; //['info'];
       //alessons
@@ -1333,7 +1333,7 @@ class SignInState extends State<SignIn> {
                             // Both text controllers are empty
                             // Put your code here that should run when both are empty
 
-                            context.read<Referencer>().anonSet();
+                            context.read<Referencer>().anonSet(true);
                             Navigator.of(context).push(
                                 MaterialPageRoute(
                                     builder: (context) => MyHomePage()
@@ -3064,7 +3064,7 @@ class _MyNotebookState extends State<MyNotebookState> {
     "saved"
         : [
       [
-        0, "This is proof first NB load is messing up my set"
+        0, "This is proof that load Nested JSON from file isn't working"
       ],
     ]
   }
@@ -3708,6 +3708,7 @@ class _MySettings extends State<MySettings> {
             ),
             IconButton(
               onPressed: () {
+                //setanon
                 context.read<ThemeProvider>().switchTheme();
               },
               icon: Icon(Icons.sunny_snowing),
@@ -3734,6 +3735,10 @@ class _MySettings extends State<MySettings> {
               final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
               if (anonMine == false) {
                 await FirebaseAuth.instance.signOut();
+              }
+              else {
+                Provider.of<Referencer>(context, listen: false).anonSet(false);
+
               }
         {Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => SignIn())
