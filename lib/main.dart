@@ -3059,7 +3059,7 @@ class _MyNotebookState extends State<MyNotebookState> {
   }
   Future<void> _initData() async {
     // 1. Load the data
-    NB = await loadNestedJsonFromFile() {  "Welcome":
+    NB = await loadNestedJsonFromFile() ?? {  "Welcome":
   {
     "saved"
         : [
