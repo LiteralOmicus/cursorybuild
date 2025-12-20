@@ -606,7 +606,7 @@ class Referencer extends ChangeNotifier {
       }
       //CAUSE 4 CONCERN anontag
     if (loadedData != null) {
-        NB = loadedData;
+        NB = loadedData!;
     } else {
       NB = {  "Welcome":
   {
