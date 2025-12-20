@@ -3028,7 +3028,6 @@ class _MyNotebookState extends State<MyNotebookState> {
   Map exposee = {};
   List quiccfix = [];
   Map _dump = {};
-  final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
   //Map wholenote = {};
   bool _isAdLoaded = false;
   // We might not even need to store the ad instance locally if Referencer holds it,
@@ -3060,6 +3059,7 @@ class _MyNotebookState extends State<MyNotebookState> {
   }
   Future<void> _initData() async {
     // 1. Load the data
+    final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
     if (anonMine == false) {
     NB = await loadNestedJsonFromFile() ?? {  "Welcome":
   {
