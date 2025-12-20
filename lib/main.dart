@@ -261,6 +261,7 @@ class Referencer extends ChangeNotifier {
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
   bool _showContinueButton = false; // Private field for showing continue button
+  Map<String, dynamic>? loadedData;
 
   // TODO: Replace with your actual interstitial ad unit ID
   final String _adUnitId = 'ca-app-pub-3940256099942544/4411468910'; // Test ad unit ID
