@@ -3737,13 +3737,14 @@ class _MySettings extends State<MySettings> {
     //NB
             
               final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
-              if (anonMine == false) {
+            //  if (anonMine == false) {
+              //  await FirebaseAuth.instance.signOut();
+            //  }
+            //  else {
+                Provider.of<Referencer>(context, listen: false).anonSet(true);
                 await FirebaseAuth.instance.signOut();
-              }
-              else {
-                Provider.of<Referencer>(context, listen: false).anonSet(false);
 
-              }
+            //  }
         {Navigator.of(context).push(MaterialPageRoute(
         builder: (context) => SignIn())
         );
