@@ -583,6 +583,7 @@ class Referencer extends ChangeNotifier {
     final data = Map.from(snapshot.value as Map);
     //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
     info = data; //['info'];
+    anonTag = false;
     //alessons
     try {
       Lemx = data['lemmas'];
@@ -624,7 +625,6 @@ class Referencer extends ChangeNotifier {
   }
     };
     }
-    anonTag = false;
     notifyListeners(); // Notify UI that loading has finished
   }
     );
