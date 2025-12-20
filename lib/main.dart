@@ -597,7 +597,12 @@ class Referencer extends ChangeNotifier {
     _isLoading = false;
     //openNotebook();
     //await NB = loadNestedJsonFromFile();
+    if (anonTag == false) {
     var loadedData = await loadNestedJsonFromFile();
+    }
+      else {
+        var loadedData = null;
+      }
       //CAUSE 4 CONCERN anontag
     if (loadedData != null) {
         NB = loadedData;
