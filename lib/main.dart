@@ -39,68 +39,53 @@ Map<String, dynamic> NB = {  "Welcome":
   }
 
 };
-// Helper function to get the local file path
-Future<File> _getLocalFile() async {
-  // Get the application documents directory. This is a persistent location.
+// 1. Helper to get the correct file based on WHO is logged in
+Future<File> _getLocalFile(String userId) async {
   final directory = await getApplicationDocumentsDirectory();
-  // Create a File object pointing to the desired file path
-  return File('${directory.path}/$_jsonFileName');
+  
+  // Creates a unique file per user: "user123_findmyNotebook.json"
+  // OR for guests: "guest_findmyNotebook.json"
+  return File('${directory.path}/${userId}_$_jsonFileName');
 }
 
-// Function to save nested JSON data to the file
-Future<void> saveNestedJsonToFile(Map<String, dynamic> data) async {
+// 2. Updated Save: Now accepts a userId
+Future<void> saveNestedJsonToFile(Map<String, dynamic> data, String userId) async {
   try {
-    // Get the file reference
-    final file = await _getLocalFile();
+    // Pass the userId to get the correct file
+    final file = await _getLocalFile(userId);
 
-    // Convert the Dart Map to a JSON string
     String jsonString = jsonEncode(data);
-
-    // Write the JSON string to the file
     await file.writeAsString(jsonString);
 
-    print('Nested JSON data saved to ${_jsonFileName}');
+    print('Saved notebook for user ($userId) to ${file.path}');
   } catch (e) {
-    // Handle any errors during saving (e.g., permission issues, encoding errors)
-    print('Error saving nested JSON data: $e');
+    print('Error saving data for user ($userId): $e');
   }
 }
 
-// Function to load nested JSON data from the file
-Future<Map<String, dynamic>?> loadNestedJsonFromFile() async {
+// 3. Updated Load: Now accepts a userId
+Future<Map<String, dynamic>?> loadNestedJsonFromFile(String userId) async {
   try {
-    // Get the file reference
-    final file = await _getLocalFile();
+    // Pass the userId to get the correct file
+    final file = await _getLocalFile(userId);
 
-    // Check if the file exists
-    bool fileExists = await file.exists();
-
-    if (fileExists) {
-      // Read the content of the file as a string
+    if (await file.exists()) {
       String jsonString = await file.readAsString();
 
-      if (jsonString.isEmpty) {
-        print('Nested JSON file is empty.');
-        return null; // Return null if the file is empty
-      }
+      if (jsonString.isEmpty) return null;
 
-      // Decode the JSON string back into a Dart Map
       Map<String, dynamic> data = jsonDecode(jsonString);
-
-      print('Nested JSON data loaded from ${_jsonFileName}');
+      print('Loaded notebook for user ($userId)');
       return data;
     } else {
-      // File does not exist, which is expected on the first run or after deletion
-      print('Nested JSON file not found: ${_jsonFileName}');
+      print('No notebook found for user ($userId). Creating new one...');
       return null;
     }
   } catch (e) {
-    // Handle any errors during loading (e.g., permission issues, decoding errors)
-    print('Error loading nested JSON data: $e');
-    return null; // Return null in case of errors
+    print('Error loading data for user ($userId): $e');
+    return null;
   }
 }
-
 
 
 ThemeData GreenLight = ThemeData(
@@ -313,6 +298,18 @@ class Referencer extends ChangeNotifier {
 
   BannerAd? get bannerAd => _bannerAd;
   bool get isBAdLoaded => _isAdLoaded;
+  String? uid;
+  //CAUSE FOR CONCERN
+
+  // 2. This is the function you requested.
+  void setUser(String newUid) {
+    uid = newUid;
+    
+    // Optional: Call this only if the UI needs to rebuild 
+    // immediately after setting the ID. If you are just setting 
+    // it to use inside 'changi' right after, you don't need this.
+    notifyListeners(); 
+  }
 
   // Method to load the banner ad
 // Method to load the banner ad
@@ -562,12 +559,7 @@ class Referencer extends ChangeNotifier {
   }
 
   String getUser() {
-    return saveUser;
-  }
-
-  void setUser(String x) {
-    saveUser = x;
-    notifyListeners();
+    return uid;
   }
 
   //void setUser(String uuid ) {
@@ -598,7 +590,7 @@ class Referencer extends ChangeNotifier {
     info["info"]["photo"] = ["4", "UP"];
     //openNotebook();
     //await NB = loadNestedJsonFromFile();
-    loadedData = await loadNestedJsonFromFile();
+    loadedData = await loadNestedJsonFromFile(uid);
       //CAUSE 4 CONCERN anontag
     if (loadedData != null) {
         NB = loadedData!;
@@ -702,7 +694,7 @@ class Referencer extends ChangeNotifier {
   void set_Notebook() {
     print(NB);
     if (anonTag == false) {
-    saveNestedJsonToFile(NB);
+    saveNestedJsonToFile(NB, uid);
     }
 
     //check to make asure colors are updating
@@ -2988,14 +2980,15 @@ class _MyNotebookState extends State<MyNotebookState> {
   @override
   void initState() {
     super.initState();
-    _initData();
+   // _initData();
 
   }
   Future<void> _initData() async {
+    //BIG QUESTION DO i NEED A DOUBLE CHECK ANYMORE?
     // 1. Load the data
     final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
     if (anonMine == false) {
-    NB = await loadNestedJsonFromFile() ?? {  "Welcome":
+    NB = {  "Welcome":
   {
     "saved"
         : [
