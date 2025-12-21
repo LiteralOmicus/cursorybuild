@@ -1226,12 +1226,65 @@ class SignInState extends State<SignIn> {
                           child: Padding(
                               padding: //EdgeInsets.all(32.0),
                               EdgeInsets.all(localHeight * .007),
-                              child: const Text("Create user", textScaleFactor: 2.5)
+                              child: const Text("Create user", textScaleFactor: 1.8)
                           ),
-                         onPressed: () async {},
-                            )
-                        ),
- 
+                         onPressed: () async {
+                            if (_active == false) {
+                              setState(() => _active = true);
+                            }
+                            else {
+                              if (passwordController.text.trim() ==
+                                  confirmController.text.trim() &&
+                                  usernameController.text.length != 0) {
+                                try {
+                                  UserCredential userCredential = await FirebaseAuth
+                                      .instance.createUserWithEmailAndPassword(
+                                    email: emailController.text.trim(),
+                                    password: passwordController.text.trim(),
+                                  );
+                                  if (FirebaseAuth.instance.currentUser != null) {
+                                      context.read<Referencer>().setUser(FirebaseAuth
+                                         .instance.currentUser!.uid);
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              QuizPage(
+                                                  handle: usernameController.text)
+                                      ),
+                                    );
+                                  }
+                                } on FirebaseAuthException catch (e) {
+                                  if (e.code == 'weak-password') {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text('The password provided is too weak.')));
+
+                                  } else if (e.code == 'email-already-in-use') {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text("The account already exists for that email.")));
+
+                                  }
+                                }
+                              }
+                              else if (passwordController.text.trim() !=
+                                  confirmController.text.trim() &&
+                                  usernameController.text.length != 0) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Passwords do not match.")));
+                              }
+                              else if (passwordController.text.trim() ==
+                                  confirmController.text.trim() &&
+                                  usernameController.text.length == 0) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text("Please enter a username.")));
+
+                              }
+                              // ScaffoldMessenger.of(context).showSnackBar(
+                              //  const SnackBar(content: Text("TODO: Create user with email/password")));
+                            }
+                          }
+                          )
+                      ),
+
                       Expanded(
                           child: ElevatedButton(
                           style: style,
@@ -1275,7 +1328,7 @@ class SignInState extends State<SignIn> {
                         style: style,
                         child:Padding(
                             padding:   EdgeInsets.all(localHeight * .007),
-                            child: Text("Submit", textScaleFactor: 2.5)),
+                            child: Text("Submit", textScaleFactor: 1.8)),
                         onPressed: () async {
                            // 1. Anonymous / Empty Check
   if (emailController.text.isEmpty && passwordController.text.isEmpty) {
