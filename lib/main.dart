@@ -298,7 +298,7 @@ class Referencer extends ChangeNotifier {
 
   BannerAd? get bannerAd => _bannerAd;
   bool get isBAdLoaded => _isAdLoaded;
-  String? uid;
+  String uid = "";
   //CAUSE FOR CONCERN
 
   // 2. This is the function you requested.
@@ -308,7 +308,7 @@ class Referencer extends ChangeNotifier {
     // Optional: Call this only if the UI needs to rebuild 
     // immediately after setting the ID. If you are just setting 
     // it to use inside 'changi' right after, you don't need this.
-    notifyListeners(); 
+   // notifyListeners(); 
   }
 
   // Method to load the banner ad
@@ -559,7 +559,7 @@ class Referencer extends ChangeNotifier {
   }
 
   String getUser() {
-    return uid;
+    return uid ?? "";
   }
 
   //void setUser(String uuid ) {
