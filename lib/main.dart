@@ -1279,7 +1279,7 @@ class SignInState extends State<SignIn> {
                         onPressed: () async {
                            // 1. Anonymous / Empty Check
   if (emailController.text.isEmpty && passwordController.text.isEmpty) {
-    context.read<Referencer>().anonSet(true);
+    await context.read<Referencer>().anonSet(true);
     Navigator.of(context).push(
       MaterialPageRoute(builder: (context) => MyHomePage())
     );
