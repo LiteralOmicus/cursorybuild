@@ -1228,52 +1228,10 @@ class SignInState extends State<SignIn> {
                               EdgeInsets.all(localHeight * .007),
                               child: const Text("Create user", textScaleFactor: 2.5)
                           ),
-                         onPressed: () async {
-  // 1. Anonymous / Empty Check
-  if (emailController.text.isEmpty && passwordController.text.isEmpty) {
-    context.read<Referencer>().anonSet(true);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => MyHomePage())
-    );
-    return; // STOP here
-  }
-
-  // 2. Real Login
-  try {
-    // A. Wait for Sign In (No .then, No .listen)
-    final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-      email: emailController.text.trim(), 
-      password: passwordController.text.trim()
-    );
-
-    // B. Check if it worked
-    if (userCredential.user != null) {
-      if (!mounted) return;
-
-      final ref = context.read<Referencer>();
-      ref.setUser(userCredential.user!.uid);
-
-      // C. NOW we can safely await because we are in the main 'async' block
-      await ref.changi(); 
-
-      // D. Navigate only after changi finishes
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => MyHomePage())
-        );
-      }
-    }
-  } catch (e) {
-    print(e);
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Invalid login!"))
-      );
-    }
-  }
-},
-                            ),
+                         onPressed: () async {},
+                            )
                         ),
+ 
                       Expanded(
                           child: ElevatedButton(
                           style: style,
@@ -1319,74 +1277,51 @@ class SignInState extends State<SignIn> {
                             padding:   EdgeInsets.all(localHeight * .007),
                             child: Text("Submit", textScaleFactor: 2.5)),
                         onPressed: () async {
-                          if (emailController.text.isEmpty && passwordController.text.isEmpty) {
-                            // Both text controllers are empty
-                            // Put your code here that should run when both are empty
+                           // 1. Anonymous / Empty Check
+  if (emailController.text.isEmpty && passwordController.text.isEmpty) {
+    context.read<Referencer>().anonSet(true);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
+    return; // STOP here
+  }
 
-                            context.read<Referencer>().anonSet(true);
-                            Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => MyHomePage()
-                                )
-                            );
-                          }
-//CHANGI THIS BACCC
-                              try {
-                            final user = await FirebaseAuth.instance.signInWithEmailAndPassword(
-                                email: emailController.text.trim(), password: passwordController.text.trim()).then((value) {
-    FirebaseAuth.instance
-        .authStateChanges()
-        .listen((User? user) {
-    if (user == null) {
-    print('User is currently signed out!');
-    } else {
-    print('User is signed in!');
-    if (FirebaseAuth.instance.currentUser != null) {
-    context.read<Referencer>().setUser(FirebaseAuth
-      .instance.currentUser!.uid);
-    //  if (user != null) {
-    //Navigator.pushNamed(context, 'home_screen');
-      //context.read<Referencer>().novarlemmaSet({});
-      await context.read<Referencer>().changi();
-      if (!context.mounted) return;
-      Navigator.of(context).push(
-          MaterialPageRoute(
-              builder: (context) => MyHomePage()
-          )
+  // 2. Real Login
+  try {
+    // A. Wait for Sign In (No .then, No .listen)
+    final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(), 
+      password: passwordController.text.trim()
+    );
+
+    // B. Check if it worked
+    if (userCredential.user != null) {
+      if (!mounted) return;
+
+      final ref = context.read<Referencer>();
+      ref.setUser(userCredential.user!.uid);
+
+      // C. NOW we can safely await because we are in the main 'async' block
+      await ref.changi(); 
+
+      // D. Navigate only after changi finishes
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => MyHomePage())
+        );
+      }
+    }
+  } catch (e) {
+    print(e);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid login!"))
       );
-    // context.read<Referencer>().changs();
-    // while(Dunn == false) {
-    //   if (Dunn != true) {
-    //    gateKeep(Provider
-    //       .of<Referencer>(
-    //       context, listen: false)
-    //            .info);
-
-    //    }
-    //  else if (Dunn == true) {
-    //break;
-    // }
-
-
-    // }
-    }//maybe
-    }});
-                            }
-                            );
-
-                          }
-
-
-                          catch (e)
-                          {
-                            print(e);
-                            ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Invalid login!"))
-                            );
-                          }
-                        },
-                          )
-                      ),
+    }
+  }
+},
+                            ),
+                        ),
                     ]
                 )
             )
