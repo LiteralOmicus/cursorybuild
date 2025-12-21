@@ -1228,63 +1228,52 @@ class SignInState extends State<SignIn> {
                               EdgeInsets.all(localHeight * .007),
                               child: const Text("Create user", textScaleFactor: 2.5)
                           ),
-                          onPressed: () async {
-                            if (_active == false) {
-                              setState(() => _active = true);
-                            }
-                            else {
-                              if (passwordController.text.trim() ==
-                                  confirmController.text.trim() &&
-                                  usernameController.text.length != 0) {
-                                try {
-                                  UserCredential userCredential = await FirebaseAuth
-                                      .instance.createUserWithEmailAndPassword(
-                                    email: emailController.text.trim(),
-                                    password: passwordController.text.trim(),
-                                  );
-                                  if (FirebaseAuth.instance.currentUser != null) {
-                                      context.read<Referencer>().setUser(FirebaseAuth
-                                         .instance.currentUser!.uid);
-                                    Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              QuizPage(
-                                                  handle: usernameController.text)
-                                      ),
-                                    );
-                                  }
-                                } on FirebaseAuthException catch (e) {
-                                  if (e.code == 'weak-password') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('The password provided is too weak.')));
+                         onPressed: () async {
+  // 1. Anonymous / Empty Check
+  if (emailController.text.isEmpty && passwordController.text.isEmpty) {
+    context.read<Referencer>().anonSet(true);
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
+    return; // STOP here
+  }
 
-                                  } else if (e.code == 'email-already-in-use') {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("The account already exists for that email.")));
+  // 2. Real Login
+  try {
+    // A. Wait for Sign In (No .then, No .listen)
+    final userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
+      email: emailController.text.trim(), 
+      password: passwordController.text.trim()
+    );
 
-                                  }
-                                }
-                              }
-                              else if (passwordController.text.trim() !=
-                                  confirmController.text.trim() &&
-                                  usernameController.text.length != 0) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Passwords do not match.")));
-                              }
-                              else if (passwordController.text.trim() ==
-                                  confirmController.text.trim() &&
-                                  usernameController.text.length == 0) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Please enter a username.")));
+    // B. Check if it worked
+    if (userCredential.user != null) {
+      if (!mounted) return;
 
-                              }
-                              // ScaffoldMessenger.of(context).showSnackBar(
-                              //  const SnackBar(content: Text("TODO: Create user with email/password")));
-                            }
-                          }
-                          )
-                      ),
+      final ref = context.read<Referencer>();
+      ref.setUser(userCredential.user!.uid);
 
+      // C. NOW we can safely await because we are in the main 'async' block
+      await ref.changi(); 
+
+      // D. Navigate only after changi finishes
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (context) => MyHomePage())
+        );
+      }
+    }
+  } catch (e) {
+    print(e);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid login!"))
+      );
+    }
+  }
+},
+                            ),
+                        ),
                       Expanded(
                           child: ElevatedButton(
                           style: style,
