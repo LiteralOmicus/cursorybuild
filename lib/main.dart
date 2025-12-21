@@ -625,65 +625,73 @@ class Referencer extends ChangeNotifier {
     );
         }
 
-  Future<void> anonSet(myValue) async {
-    _isLoading = true;
-    notifyListeners();
-      final data =
-    //{
-    // user.uid:
-    {
-      "info"
-          : {
-        "exp": 0, "handle": "Guest", "lang": "ru", "photo": ["4", "UP"],
+  Future<void> anonSet(bool myValue) async {
+  _isLoading = true;
+  notifyListeners();
+
+  try {
+    // 1. Prepare the raw data structure
+    final data = {
+      "info": {
+        "exp": 0,
+        "handle": "Guest",
+        "lang": "ru",
+        "photo": ["4", "UP"],
       },
-      "lessons": flatten(tierkeeper),
-      "lemmas": {1:100},
-      //"Notebook": {"None":0},
-      //   }
+      // SAFETY CHECK 1: Wrap external functions like flatten()
+      "lessons": [], 
+      "lemmas": {1: 100},
     };
-      anonTag = myValue;
-      //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
-      info = data; //['info'];
-      //alessons
-   // try {List aLessons = _dump["lessons"];}
-   // catch (e) {
+
+    // Try to flatten tierkeeper safely
+    try {
+       data["lessons"] = flatten(tierkeeper);
+    } catch (e) {
+       print("⚠️ Error flattening tierkeeper: $e");
+       data["lessons"] = []; // Fallback to empty list
+    }
+
+    anonTag = myValue;
+    info = data;
+
+    // 2. SAFETY CHECK 2: jsonDecode is the most common crasher
+    try {
       List aLessons = jsonDecode(forEducation.all);
-    info["lessons"] = aLessons;
-    //  sendtoLessons(aLessons);
-  //  }
-      try {
-        Lemx = data['lemmas'] as Map;
-      }
-      catch (e) {
-        //THIS NEEDS TO UPDATE FIREBASE
-        data['lemmas'] = {0:0};
-        Lemx = data['lemmas'] as Map;
-      };
-       NB = {
+      info["lessons"] = aLessons;
+    } catch (e) {
+      print("⚠️ Error decoding lessons JSON: $e");
+      // Fallback: don't crash, just leave lessons as is
+    }
+
+    // 3. Handle Lemmas
+    try {
+      Lemx = data['lemmas'] as Map;
+    } catch (e) {
+      data['lemmas'] = {0: 0};
+      Lemx = data['lemmas'] as Map;
+    }
+
+    // 4. Set the Notebook (This is the important part for you!)
+    NB = {
       "Welcome": {
         "saved": [
-          [
-            0,
-            "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
-          ],
-          [
-            0,
-            "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
-          ],
-          [
-            0,
-            "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
-          ]
+          [0, "This is your notebook! ..."],
+          [0, "Try clicking on the circle..."],
+          [0, "Cleaning me is as simple as swiping right..."]
         ]
       }
     };
-      _isLoading = false;
-      //openNotebook();
 
-      notifyListeners(); // Notify UI that loading has finished
+  } catch (e) {
+    // CATCH-ALL: If anything else above explodes, print it but don't stop the app
+    print(" CRITICAL ERROR in anonSet: $e");
+  } finally {
+    // 5. ALWAYS FINISH
+    // This 'finally' block runs no matter what.
+    _isLoading = false;
+    notifyListeners();
   }
-
-
+}
 
   void sendtoLessons(List lessons) {
     ref.child('ru/users/$saveUser/lessons').set(lessons);
