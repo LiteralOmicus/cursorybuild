@@ -596,7 +596,6 @@ class Referencer extends ChangeNotifier {
       //CAUSE FOR CONCERN
    // setPic(info["info"]["photo"]);
     info["info"]["photo"] = ["4", "UP"];
-    _isLoading = false;
     //openNotebook();
     //await NB = loadNestedJsonFromFile();
     loadedData = await loadNestedJsonFromFile();
@@ -620,6 +619,7 @@ class Referencer extends ChangeNotifier {
   }
     };
     }
+    _isLoading = false;
     notifyListeners(); // Notify UI that loading has finished
   }
     );
@@ -1358,7 +1358,8 @@ class SignInState extends State<SignIn> {
     //  if (user != null) {
     //Navigator.pushNamed(context, 'home_screen');
       //context.read<Referencer>().novarlemmaSet({});
-      context.read<Referencer>().changi();
+      await context.read<Referencer>().changi();
+      if (!context.mounted) return;
       Navigator.of(context).push(
           MaterialPageRoute(
               builder: (context) => MyHomePage()
