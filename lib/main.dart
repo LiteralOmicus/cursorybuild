@@ -28,16 +28,21 @@ List<T> flatten<T>(List<dynamic> list) => [for (var sublist in list) ...sublist]
 
 // Define the filename for your JSON data
 const String _jsonFileName = 'findmyNotebook.json';
-Map<String, dynamic> NB = {  "Welcome":
+Map<String, dynamic> NB =  {
+  "Welcome":
   {
     "saved"
         : [
       [
-        0, "This is proof first NB load is messing up my set"
+        0, "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
       ],
+      [
+        0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+      ],
+      [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+      ]
     ]
   }
-
 };
 // 1. Helper to get the correct file based on WHO is logged in
 Future<File> _getLocalFile(String userId) async {
@@ -595,12 +600,13 @@ class Referencer extends ChangeNotifier {
     if (loadedData != null) {
         NB = loadedData!;
     } else {
-      NB = {  "Welcome":
+      NB =  {
+  "Welcome":
   {
     "saved"
         : [
       [
-        0, "This is your my problem! Loaded file is null! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+        0, "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
       ],
       [
         0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
@@ -609,7 +615,7 @@ class Referencer extends ChangeNotifier {
       ]
     ]
   }
-    };
+};
     }
     _isLoading = false;
     notifyListeners(); // Notify UI that loading has finished
@@ -664,16 +670,22 @@ class Referencer extends ChangeNotifier {
     }
 
     // 4. Set the Notebook (This is the important part for you!)
-    NB = {
-      "Welcome": {
-        "saved": [
-          [0, "This is your notebook! ..."],
-          [0, "Try clicking on the circle..."],
-          [0, "Cleaning me is as simple as swiping right..."]
-        ]
-      }
-    };
-
+    NB =  {
+  "Welcome":
+  {
+    "saved"
+        : [
+      [
+        0, "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
+      ],
+      [
+        0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+      ],
+      [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+      ]
+    ]
+  }
+};
   } catch (e) {
     // CATCH-ALL: If anything else above explodes, print it but don't stop the app
     print(" CRITICAL ERROR in anonSet: $e");
@@ -3041,16 +3053,21 @@ class _MyNotebookState extends State<MyNotebookState> {
     // 1. Load the data
     final anonMine = Provider.of<Referencer>(context, listen: false).anonTag;
     if (anonMine == false) {
-    NB = {  "Welcome":
+    NB =  {
+  "Welcome":
   {
     "saved"
         : [
       [
-        0, "This is proof that load Nested JSON from file isn't working"
+        0, "This is your notebook! You can add to me by going to your lessons (available from the Home page) and clicking save to Notebook"
       ],
+      [
+        0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
+      ],
+      [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
+      ]
     ]
   }
-
 };
     }
   
