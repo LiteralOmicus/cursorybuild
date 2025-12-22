@@ -1,6 +1,5 @@
 # Uncomment this line to define a global platform for your project
 platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
-inhibit_all_warnings!
 # Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
 # Ensure these match if you intend for your app to target iOS 18.0 as its minimum.
 #install! 'cocoapods',
@@ -69,6 +68,8 @@ post_install do |installer|
     ]
 
     target.build_configurations.each do |config|
+      config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
       
       # 🛑 CRITICAL FIX: Add a guard clause here to prevent the 'undefined method' error.
       if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
