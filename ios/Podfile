@@ -68,9 +68,7 @@ post_install do |installer|
     ]
 
     target.build_configurations.each do |config|
-      config.build_settings['GCC_TREAT_WARNINGS_AS_ERRORS'] = 'NO'
-      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      
+
       # 🛑 CRITICAL FIX: Add a guard clause here to prevent the 'undefined method' error.
       if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
         # FIX A: RESOURCE BUNDLES (This handles targets like *_privacy bundles)
