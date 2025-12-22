@@ -1185,8 +1185,8 @@ class SignInState extends State<SignIn> {
                       Expanded(
                   child: TextField(
                         controller: emailController,
-                        maxLength: 30,
-                        maxLines: 3,
+                        maxLength: 45,
+                        maxLines: 1,
                         onSubmitted: (String value) {if(value.isNotEmpty && value != null){
                           TextInputAction.next;
 
@@ -1222,7 +1222,7 @@ class SignInState extends State<SignIn> {
                           child: Visibility(
                         visible : _active,
                         child: TextField(
-                          maxLength: 15,
+                          maxLength: 45,
                           controller: usernameController,
                           decoration: InputDecoration(
                             labelText: "Choose username",
