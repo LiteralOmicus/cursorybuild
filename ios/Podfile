@@ -1,5 +1,6 @@
 # Uncomment this line to define a global platform for your project
 platform :ios, '18.0' # Set your minimum iOS deployment target here (e.g., '13.0', '14.0', '15.0')
+inhibit_all_warnings!
 # Note: Your platform is set to 18.0, but IPHONEOS_DEPLOYMENT_TARGET is 14.0 below.
 # Ensure these match if you intend for your app to target iOS 18.0 as its minimum.
 #install! 'cocoapods',
