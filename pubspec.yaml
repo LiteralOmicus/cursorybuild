@@ -135,7 +135,7 @@ flutter_native_splash:
   # OR
   # background_image: "assets/background.jpg" # Use a background image
 
-  image: "assets/pics/face.jpg" # Path to your splash image (e.g., logo)
+  image: "assets/pics/isthis.png" # Path to your splash image (e.g., logo)
 
   # Optional: Configure for dark mode
   # color_dark: "#042a49"
