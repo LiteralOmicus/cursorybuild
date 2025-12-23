@@ -1639,7 +1639,8 @@ class _MyHomePageState extends State<MyHomePage> {
                //final fanalexp = assigner(context.read<Referencer>().getExp());
                 final Map<String, dynamic> _dump = 
     (Provider.of<Referencer>(context, listen: false).info as Map<String, dynamic>?) ?? {};
-                final rawValue = context.read<Referencer>().getExp();
+               // final rawValue = context.read<Referencer>().getExp();
+                final rawValue = Provider.of<Referencer>(context, listen: false).getExp();
                 if (rawValue == null || rawValue is! num) {
                   //CAUSE 4 CONCERN rawValue shud be String
                 fanalexp = 10.0;
