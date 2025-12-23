@@ -576,7 +576,7 @@ class Referencer extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    ref.child('ru/users/$saveUser').get().then((snapshot) async {
+    ref.child('ru/users/$uid').get().then((snapshot) async {
     final data = Map.from(snapshot.value as Map);
     //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
     info = data; //['info'];
