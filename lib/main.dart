@@ -1678,7 +1678,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
                 //CAUSE FOR CONCERN GET THIS WORKING
-               List aLessons = _dump["lessons"] ?? [];
+             //  List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
