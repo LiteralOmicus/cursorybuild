@@ -581,6 +581,12 @@ class Referencer extends ChangeNotifier {
     //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
     info = data; //['info'];
     anonTag = false;
+    try {
+        info["lessons"];
+      //if this works and user doesn't have lessons it will be empty
+    } catch (e) {
+       info["lessons"] = flatten(tierkeeper);
+    }
     //alessons
     try {
       Lemx = data['lemmas'];
@@ -1487,9 +1493,9 @@ class _MyHomePageState extends State<MyHomePage> {
   List privet = [];
   Map allStati = {};
  late List icon;
- // late List aLessons;
+ late List aLessons;
   //CAUSE FOR CONCERN
- final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
+// final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
   
 
 
@@ -1631,6 +1637,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                //final fanalexp = assigner(context.read<Referencer>().getExp());
+                final Map<String, dynamic> _dump = 
+    (Provider.of<Referencer>(context, listen: false).info as Map<String, dynamic>?) ?? {};
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                   //CAUSE 4 CONCERN rawValue shud be String
@@ -1650,7 +1658,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
                 //CAUSE FOR CONCERN GET THIS WORKING
-               // List aLessons = _dump["lessons"] ?? [];
+               List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
