@@ -1637,13 +1637,6 @@ class _MyHomePageState extends State<MyHomePage> {
             future: startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-               // final _dump = Provider.of<Referencer>(context, listen: false).info;
-                //CAUSE FOR CONCERN ADD THIS BACCIN
-                //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
-                //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
-               //final fanalexp = assigner(context.read<Referencer>().getExp());
-               // final Map<String, dynamic> _dump = 
-   // (Provider.of<Referencer>(context, listen: false).info as Map<String, dynamic>?) ?? 
                 //anonblack
                 final referencer = context.watch<Referencer>(); 
                 final Map<String, dynamic> _dump = (referencer.info as Map<String, dynamic>?) ?? {
@@ -1656,29 +1649,10 @@ class _MyHomePageState extends State<MyHomePage> {
       "lemmas": {1: 100},
                 };
               final aLessons = ["test"];
-               // final rawValue = context.read<Referencer>().getExp();
-               // final rawValue = Provider.of<Referencer>(context, listen: false).getExp();
-                final rawValue = referencer.getExp();
-                if (rawValue == null || rawValue is! num) {
-                  //CAUSE 4 CONCERN rawValue shud be String
-                fanalexp = 10.0;
-                } else {
-                fanalexp = (rawValue ?? 10.0).toDouble();
-                }
-                //final fanalexp = assigner(_dump["info"]["exp"]);
-                //final icon = context.read<Referencer>().returnPic();
-               // List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
-               // String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
+               fanalexp = 10.0;
                 String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
-                //int saveuserexp = _dump["info"]["exp"];
-                // List privet = _dump["Statuses"];
                 //ANONBLACK
                List icon = _dump["info"]?["photo"] ??  ["4", "UP"]; //_dump["info"]["photo"];
-                //context.read<Referencer>().setPic(icon);
-                //final icon = context.read<Referencer>().returnPic();
-                //but comments need to be streamed in realtime
-                //CAUSE FOR CONCERN GET THIS WORKING
-             //  List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
