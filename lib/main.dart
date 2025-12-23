@@ -1659,7 +1659,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
                 //int saveuserexp = _dump["info"]["exp"];
                 // List privet = _dump["Statuses"];
-               List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
+                #ANONBLACK
+               List icon = _dump["info"]?["photo"] ??  ["4", "UP"]; //_dump["info"]["photo"];
                 //context.read<Referencer>().setPic(icon);
                 //final icon = context.read<Referencer>().returnPic();
                 //but comments need to be streamed in realtime
