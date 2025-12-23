@@ -1651,10 +1651,11 @@ class _MyHomePageState extends State<MyHomePage> {
         "exp": 0,
         "handle": "Guest",
         "lang": "ru",
-        "photo": ["4", "UP"],
+        "photo": ["4", "UP"]
+      },
       // SAFETY CHECK 1: Wrap external functions like flatten()
       "lemmas": {1: 100},
-       data["lessons"] = flatten(tierkeeper)
+       data["lessons"]: []
         }
                 };
                // final rawValue = context.read<Referencer>().getExp();
