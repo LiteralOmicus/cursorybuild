@@ -1653,9 +1653,9 @@ class _MyHomePageState extends State<MyHomePage> {
         "lang": "ru",
         "photo": ["4", "UP"]
       },
+                  //alessons = []
       // SAFETY CHECK 1: Wrap external functions like flatten()
       "lemmas": {1: 100},
-       data["lessons"]: []
         }
                 };
                // final rawValue = context.read<Referencer>().getExp();
