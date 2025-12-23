@@ -1460,18 +1460,22 @@ class MyHomePage extends StatefulWidget {
 }
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
-    // 1. Read the Referencer instance
-  //  final referencer = context.read<Referencer>();
+  final referencer = Provider.of<Referencer>(context, listen: false);
+  final user = FirebaseAuth.instance.currentUser;
 
-    // 2. Run the initialization logic (anonSet/changi/getReady)
-    // We use anonSet() if the user is not logged in or for initial setup.
-    // Ensure anonSet() is defined as `Future<void> anonSet() async { ... }` in Referencer.
-   // await referencer.anonSet();
-    return "Done";
-    // context.read<Referencer>().getReady();
-    //await Future(() {});
-    //too
-    //Cool = true;
+  // 1. SYNC: If a real user is logged in, force Referencer to use THEIR ID.
+  // (Without this, Referencer uses the default 'anontag' and loads blank data)
+  if (user != null && !user.isAnonymous) {
+     // Assuming 'anontag' is the variable you use for the DB path
+     referencer.saveUser = user.uid; 
+  }
+
+  // 2. FETCH: Now that the tag is correct, load the data into 'info'
+  if (referencer.info.isEmpty) {
+    await referencer.anonSet();
+  }
+
+  return "Done";
   }
 
 
