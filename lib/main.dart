@@ -1472,7 +1472,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // 2. FETCH: Now that the tag is correct, load the data into 'info'
   if (referencer.info.isEmpty) {
-    await referencer.anonSet();
+    //CAUSE FOR CONCERN
+    await referencer.anonSet(true);
   }
 
   return "Done";
