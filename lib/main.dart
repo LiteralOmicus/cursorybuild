@@ -1643,7 +1643,10 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                //final fanalexp = assigner(context.read<Referencer>().getExp());
                // final Map<String, dynamic> _dump = 
-   // (Provider.of<Referencer>(context, listen: false).info as Map<String, dynamic>?) ?? {
+   // (Provider.of<Referencer>(context, listen: false).info as Map<String, dynamic>?) ?? 
+                //anonblack
+                final referencer = context.watch<Referencer>(); 
+                final Map<String, dynamic> _dump = (referencer.info as Map<String, dynamic>?) ?? {
       "info": {
         "exp": 0,
         "handle": "Guest",
@@ -1653,9 +1656,7 @@ class _MyHomePageState extends State<MyHomePage> {
       "lemmas": {1: 100},
        data["lessons"] = flatten(tierkeeper)
         }
-                //anonblack
-                final referencer = context.watch<Referencer>(); 
-                final Map<String, dynamic> _dump = (referencer.info as Map<String, dynamic>?) ?? {};
+                };
                // final rawValue = context.read<Referencer>().getExp();
                // final rawValue = Provider.of<Referencer>(context, listen: false).getExp();
                 final rawValue = referencer.getExp();
