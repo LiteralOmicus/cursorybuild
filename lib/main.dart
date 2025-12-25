@@ -576,17 +576,11 @@ class Referencer extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    ref.child('ru/users/$uid').get().then((snapshot) async {
+    ref.child('ru/users/$saveUser').get().then((snapshot) async {
     final data = Map.from(snapshot.value as Map);
     //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
     info = data; //['info'];
     anonTag = false;
-    try {
-        info["lessons"];
-      //if this works and user doesn't have lessons it will be empty
-    } catch (e) {
-       info["lessons"] = flatten(tierkeeper);
-    }
     //alessons
     try {
       Lemx = data['lemmas'];
@@ -1404,7 +1398,7 @@ class SignInState extends State<SignIn> {
 }
 final Map lessonmaker = jsonDecode(forEducation.all);
 List tierkeeper = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']];
-final batten = flatten(tierkeeper);
+
 List tier = tierkeeper[0];
 
 String assigner(grade) {
@@ -1459,25 +1453,19 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 class _MyHomePageState extends State<MyHomePage> {
- // late Future<String> _loadingFuture;
   Future<String> startUp() async {
-  final referencer = Provider.of<Referencer>(context, listen: false);
-  final user = FirebaseAuth.instance.currentUser;
+    // 1. Read the Referencer instance
+  //  final referencer = context.read<Referencer>();
 
-  // 1. SYNC: If a real user is logged in, force Referencer to use THEIR ID.
-  // (Without this, Referencer uses the default 'anontag' and loads blank data)
-  if (user != null && !user.isAnonymous) {
-     // Assuming 'anontag' is the variable you use for the DB path
-     referencer.saveUser = user.uid; 
-  }
-
-  // 2. FETCH: Now that the tag is correct, load the data into 'info'
-  if (referencer.info.isEmpty) {
-    //CAUSE FOR CONCERN
-    await referencer.anonSet(true);
-  }
-
-  return "Done";
+    // 2. Run the initialization logic (anonSet/changi/getReady)
+    // We use anonSet() if the user is not logged in or for initial setup.
+    // Ensure anonSet() is defined as `Future<void> anonSet() async { ... }` in Referencer.
+   // await referencer.anonSet();
+    return "Done";
+    // context.read<Referencer>().getReady();
+    //await Future(() {});
+    //too
+    //Cool = true;
   }
 
 
@@ -1492,16 +1480,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   late TextEditingController dontroller;
-  double fanalexp = 10.0;
+  late double fanalexp;
 //late
   Map _dump = {};
   String saveuserName = "";
   List privet = [];
   Map allStati = {};
-// late List icon;
-// late List aLessons;
+ late List icon;
+ // late List aLessons;
   //CAUSE FOR CONCERN
-final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
+ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
   
 
 
@@ -1530,7 +1518,6 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
     super.initState();
     //context.read<Referencer>().getReady();
     //fanalexp = assigner(context.read<Referencer>().getExp());
-   // _loadingFuture = startUp();
     quiccfunk();
     dontroller = TextEditingController();
   }
@@ -1636,13 +1623,34 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
         ),
         body:
         FutureBuilder(
-            future: startUp(), // _loadingFuture,  //startUp(), //onLaunch(),
+            future: startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-                //anonblack
-               fanalexp = 10.0;
+               // final _dump = Provider.of<Referencer>(context, listen: false).info;
+                //CAUSE FOR CONCERN ADD THIS BACCIN
+                //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
+                //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
+               //final fanalexp = assigner(context.read<Referencer>().getExp());
+                final rawValue = context.read<Referencer>().getExp();
+                if (rawValue == null || rawValue is! num) {
+                  //CAUSE 4 CONCERN rawValue shud be String
+                fanalexp = 10.0;
+                } else {
+                fanalexp = (rawValue ?? 10.0).toDouble();
+                }
+                //final fanalexp = assigner(_dump["info"]["exp"]);
+                //final icon = context.read<Referencer>().returnPic();
+               // List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
+               // String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
                 String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
-          
+                //int saveuserexp = _dump["info"]["exp"];
+                // List privet = _dump["Statuses"];
+               List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
+                //context.read<Referencer>().setPic(icon);
+                //final icon = context.read<Referencer>().returnPic();
+                //but comments need to be streamed in realtime
+                //CAUSE FOR CONCERN GET THIS WORKING
+               // List aLessons = _dump["lessons"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
