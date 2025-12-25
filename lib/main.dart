@@ -1404,7 +1404,7 @@ class SignInState extends State<SignIn> {
 }
 final Map lessonmaker = jsonDecode(forEducation.all);
 List tierkeeper = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']];
-
+final batten = flatten(tierkeeper);
 List tier = tierkeeper[0];
 
 String assigner(grade) {
@@ -1497,10 +1497,10 @@ class _MyHomePageState extends State<MyHomePage> {
   String saveuserName = "";
   List privet = [];
   Map allStati = {};
- late List icon;
+// late List icon;
  late List aLessons;
   //CAUSE FOR CONCERN
-// final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
+final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
   
 
 
@@ -1648,11 +1648,11 @@ class _MyHomePageState extends State<MyHomePage> {
       },         
       "lemmas": {1: 100},
                 };
-              final aLessons = ["test"];
+            //  final aLessons = ["test"];
                fanalexp = 10.0;
                 String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
                 //ANONBLACK
-               List icon = _dump["info"]?["photo"] ??  ["4", "UP"]; //_dump["info"]["photo"];
+              // List icon = _dump["info"]?["photo"] ??  ["4", "UP"]; //_dump["info"]["photo"];
                 return
                   Scrollbar(
                       trackVisibility: true,
