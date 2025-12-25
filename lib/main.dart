@@ -1492,7 +1492,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
 
   late TextEditingController dontroller;
-  late double fanalexp;
+  double fanalexp = 10.0;
 //late
   Map _dump = {};
   String saveuserName = "";
@@ -1636,25 +1636,13 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
         ),
         body:
         FutureBuilder(
-            future: onLaunch(), // _loadingFuture,  //startUp(), //onLaunch(),
+            future: startUp(), // _loadingFuture,  //startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 //anonblack
-                final referencer = context.watch<Referencer>(); 
-                final Map<String, dynamic> _dump = (referencer.info as Map<String, dynamic>?) ?? {
-      "info": {
-        "exp": 0,
-        "handle": "Guest",
-        "lang": "ru",
-        "photo": ["4", "UP"]
-      },         
-      "lemmas": {1: 100},
-                };
-            //  final aLessons = ["test"];
                fanalexp = 10.0;
                 String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
-                //ANONBLACK
-              // List icon = _dump["info"]?["photo"] ??  ["4", "UP"]; //_dump["info"]["photo"];
+          
                 return
                   Scrollbar(
                       trackVisibility: true,
