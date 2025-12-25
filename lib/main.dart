@@ -700,7 +700,7 @@ class Referencer extends ChangeNotifier {
   void sendtoLessons(List lessons) {
     ref.child('ru/users/$saveUser/lessons').set(lessons);
     info["lessons"] = lessons;
-    //notifyListeners();
+    notifyListeners();
   }
 
   void set_Notebook() {
