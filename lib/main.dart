@@ -1636,7 +1636,7 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
         ),
         body:
         FutureBuilder(
-            future: onLaunch() // _loadingFuture,  //startUp(), //onLaunch(),
+            future: onLaunch(), // _loadingFuture,  //startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 //anonblack
