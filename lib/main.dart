@@ -1459,6 +1459,7 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 class _MyHomePageState extends State<MyHomePage> {
+  late Future<String> _loadingFuture;
   Future<String> startUp() async {
   final referencer = Provider.of<Referencer>(context, listen: false);
   final user = FirebaseAuth.instance.currentUser;
@@ -1529,6 +1530,7 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
     super.initState();
     //context.read<Referencer>().getReady();
     //fanalexp = assigner(context.read<Referencer>().getExp());
+    _loadingFuture = startUp();
     quiccfunk();
     dontroller = TextEditingController();
   }
@@ -1634,7 +1636,7 @@ final List aLessons = flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronoun
         ),
         body:
         FutureBuilder(
-            future: startUp(), //onLaunch(),
+            future: _loadingFuture,  //startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 //anonblack
