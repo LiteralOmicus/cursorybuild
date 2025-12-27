@@ -1520,7 +1520,9 @@ class _MyHomePageState extends State<MyHomePage> {
     //context.read<Referencer>().getReady();
     //fanalexp = assigner(context.read<Referencer>().getExp());
   //ANONBLACK
-    final aLessons = context.read<Referencer>().info["lessons"];
+   // final aLessons = context.read<Referencer>().info["lessons"];
+    final rawLessons = context.read<Referencer>().info["lessons"];
+    final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
     quiccfunk();
     dontroller = TextEditingController();
   }
