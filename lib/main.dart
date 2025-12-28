@@ -1275,12 +1275,16 @@ class SignInState extends State<SignIn> {
         ],
       );
       
-      // Note: For full Firebase Auth support, you need to create an OAuthCredential 
-      // using the 'nonce' and 'identityToken'. If you just need the ID for now:
-      print("Apple ID: ${credential.userIdentifier}");
-      
-      // For now, let's pretend it worked to test the UI
-      // In production, you MUST finish the Firebase Auth handshake here.
+     final OAuthCredential credential = OAuthProvider("apple.com").credential(
+      idToken: appleCredential.identityToken,
+      accessToken: appleCredential.authorizationCode,
+    );
+
+    // 3. ACTUAL SIGN IN
+    await FirebaseAuth.instance.signInWithCredential(credential);
+
+    // 4. NOW this will work
+    _onLoginSuccess();
       
     } catch (e) {
       print("Apple Error: $e");
