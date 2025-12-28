@@ -1448,10 +1448,9 @@ class SignInState extends State<SignIn> {
                       Expanded(
                           child: ElevatedButton(
                           style: style,
+                          onPressed: () => showSocialLoginSheet(context),
                           child: Padding(
                               padding:  EdgeInsets.all(localHeight * .007),
-                              //I NEEDI CHANGI HERE
-                              onPressed: () => showSocialLoginSheet(context),
                               child: const Text("Social Login", textScaleFactor: 2.2)),
                           )
                       ),
