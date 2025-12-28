@@ -49,6 +49,17 @@
 		<string>ca-app-pub-5815053066312487~5018271779</string>
 		<key>UIStatusBarHidden</key>
 		<false/>
+		<key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.328734103172-k32uif654u5009viqb07cparlj6i0083</string>
+            </array>
+        </dict>
+    </array>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>We use the microphone to enable voice recording to allow users to interface with the Exercises functionality by inputting answers through speech to text..</string>
 	</dict>
