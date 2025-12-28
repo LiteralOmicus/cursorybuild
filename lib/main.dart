@@ -1268,7 +1268,7 @@ class SignInState extends State<SignIn> {
   // 3. APPLE LOGIC
   Future<void> _handleAppleSignIn() async {
     try {
-      final credential = await SignInWithApple.getAppleIDCredential(
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
