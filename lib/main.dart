@@ -18,6 +18,8 @@ import 'package:just_audio_cache/just_audio_cache.dart';
 import 'xsxspile.dart' as forEducation;
 import 'extralesson.dart' as extra;
 import 'package:kangarule/firebase_options.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 
 
