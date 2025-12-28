@@ -575,7 +575,21 @@ class Referencer extends ChangeNotifier {
   Future<void> changi() async {
     _isLoading = true;
     notifyListeners();
+    final currentUser = FirebaseAuth.instance.currentUser;
+    final String realUid = currentUser?.uid ?? "Guest";
 
+  // Check if we are holding data for the wrong person
+  if (saveUser != realUid) {
+    print("♻️ User Switch Detected! (Old: $saveUser -> New: $realUid)");
+    
+    // WIPE EVERYTHING to prevent the "Snapshot" bug
+    info = {}; 
+    Lemx = {};
+    NB = {}; 
+    
+    // UPDATE THE ID to the real user
+    saveUser = realUid; 
+  }
     ref.child('ru/users/$saveUser').get().then((snapshot) async {
     final data = Map.from(snapshot.value as Map);
     //THIS NEEDS A TRY ... CATCH AND THE FINALLY { SHOULD BE HERE
