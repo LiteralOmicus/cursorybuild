@@ -1489,7 +1489,7 @@ class _MyHomePageState extends State<MyHomePage> {
  late List icon;
  // late List aLessons;
   //CAUSE FOR CONCERN
- late List aLessons;
+// late List aLessons;
  //  flatten([['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']]);
   
 
@@ -1521,8 +1521,8 @@ class _MyHomePageState extends State<MyHomePage> {
     //fanalexp = assigner(context.read<Referencer>().getExp());
   //ANONBLACK
    // final aLessons = context.read<Referencer>().info["lessons"];
-    final rawLessons = context.read<Referencer>().info["lessons"];
-    final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
+ //   final rawLessons = context.read<Referencer>().info["lessons"];
+  //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
     quiccfunk();
     dontroller = TextEditingController();
   }
@@ -1636,6 +1636,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
                 //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
                //final fanalexp = assigner(context.read<Referencer>().getExp());
+               final referencer = context.watch<Referencer>();
+               final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                   //CAUSE 4 CONCERN rawValue shud be String
