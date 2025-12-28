@@ -1171,6 +1171,138 @@ class SignInState extends State<SignIn> {
 
   //bool fool = false;
 
+  void showSocialLoginSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min, // Shrink to fit content
+              children: [
+                const Text(
+                  "Sign in",
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+
+                // -------------------------
+                // OPTION A: GOOGLE
+                // -------------------------
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: Colors.black,
+                      side: const BorderSide(color: Colors.grey),
+                    ),
+                    icon: Image.asset('assets/google_logo.png', height: 24), // Add a logo asset or use Icon(Icons.login)
+                    label: const Text("Continue with Google"),
+                    onPressed: () {
+                      Navigator.pop(context); // Close the popup first
+                      _handleGoogleSignIn();  // Trigger the logic
+                    },
+                  ),
+                ),
+                
+                const SizedBox(height: 12),
+
+                // -------------------------
+                // OPTION B: APPLE (iOS Only)
+                // -------------------------
+                if (Platform.isIOS) 
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: SignInWithAppleButton(
+                      onPressed: () async {
+                        Navigator.pop(context); // Close popup
+                        _handleAppleSignIn();
+                      },
+                    ),
+                  ),
+
+                if (Platform.isIOS) const SizedBox(height: 12),
+
+                // -------------------------
+                // CANCEL BUTTON
+                // -------------------------
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text("Cancel"),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  // 2. GOOGLE LOGIC (Paste your fixed logic here)
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignIn googleSignIn = GoogleSignIn();
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+      if (googleUser == null) return;
+
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+      _onLoginSuccess(); // Helper to redirect home
+    } catch (e) {
+      print("Google Error: $e");
+    }
+  }
+
+  // 3. APPLE LOGIC
+  Future<void> _handleAppleSignIn() async {
+    try {
+      final credential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+      );
+      
+      // Note: For full Firebase Auth support, you need to create an OAuthCredential 
+      // using the 'nonce' and 'identityToken'. If you just need the ID for now:
+      print("Apple ID: ${credential.userIdentifier}");
+      
+      // For now, let's pretend it worked to test the UI
+      // In production, you MUST finish the Firebase Auth handshake here.
+      
+    } catch (e) {
+      print("Apple Error: $e");
+    }
+  }
+
+  // 4. SUCCESS HELPER
+  void _onLoginSuccess() async {
+    if (FirebaseAuth.instance.currentUser != null) {
+      context.read<Referencer>().setUser(FirebaseAuth.instance.currentUser!.uid);
+      await context.read<Referencer>().changi(); // Fetch Data
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage(key: ValueKey(FirebaseAuth.instance.currentUser?.uid))
+          ),
+        );
+      }
+    }
+  }
+
 
   @override
   void dispose() {
@@ -1319,35 +1451,8 @@ class SignInState extends State<SignIn> {
                           child: Padding(
                               padding:  EdgeInsets.all(localHeight * .007),
                               //I NEEDI CHANGI HERE
-                              child: const Text("Google Sign-in", textScaleFactor: 2.2)),
-                          onPressed: () async {
-                            GoogleAuthProvider googleProvider = GoogleAuthProvider();
-
-                            googleProvider.addScope('https://www.googleapis.com/auth/contacts.readonly');
-                            //googleProvider.setCustomParameters({ 'login_hint': 'user@example.com' });
-                            await FirebaseAuth.instance.signInWithPopup(googleProvider);
-                            try {
-                              if (FirebaseAuth.instance.currentUser != null) {
-                                   context.read<Referencer>().setUser(FirebaseAuth
-                                       .instance.currentUser!.uid);
-
-                                //context.read<Referencer>().changs();
-
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                      builder: (context) => MyHomePage()
-                                  ),
-                                );
-                              }
-                            }
-                            catch(e) {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => QuizPage(handle: "Google")
-                                ),
-                              );
-                            }
-                          }
+                              onPressed: () => showSocialLoginSheet(context),
+                              child: const Text("Social Login", textScaleFactor: 2.2)),
                           )
                       ),
 
