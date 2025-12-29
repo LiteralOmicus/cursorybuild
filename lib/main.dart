@@ -1295,7 +1295,6 @@ class SignInState extends State<SignIn> {
             builder: (context) => MyHomePage())
           );
 }
-        );
       }
     }
   }
