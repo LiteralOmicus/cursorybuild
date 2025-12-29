@@ -1077,9 +1077,6 @@ class MyCard extends StatelessWidget {
                  leading:  _UserImage(picture: context.read<Referencer>().returnPic()),
                                 title:Text(handle,
                     style: TextStyle(fontSize:
-                    AdaptiveTextSize().getadaptiveTextSize(context, 16)), )
-                  title: Text(handle,
-                    style:TextStyle(fontSize:
                     AdaptiveTextSize().getadaptiveTextSize(context, 16)), ),
                   subtitle: Text(exp,
                     style:TextStyle(fontSize:
@@ -1882,7 +1879,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     child:
                                                    Center(
             child: MyCard(handle: saveuserName,
-                                                        exp: fanalexp,
+                                                        exp: fanalexp.toString(),
                                                         useasImage: [
                                                           boxTheme[1],
                                                           "ru"
@@ -4005,7 +4002,7 @@ class _MySettings extends State<MySettings> {
                     ),
                     onPressed: () async {
   _showDeleteConfirmation(context);
-                    }
+                    },
                     child: const Text('Delete account.'),
                   ),
 
