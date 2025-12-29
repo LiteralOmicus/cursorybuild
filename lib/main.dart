@@ -332,7 +332,7 @@ class Referencer extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
  // Map socialite = {};
-  List photo = ["0", "ER"];
+  List photo = ["1", "RU"];
   List whenReady = List.empty(growable: true);
 
   //this ^^^ is for the list of status ids per user
@@ -1634,18 +1634,7 @@ class MyHomePage extends StatefulWidget {
 }
 class _MyHomePageState extends State<MyHomePage> {
   Future<String> startUp() async {
-    // 1. Read the Referencer instance
-  //  final referencer = context.read<Referencer>();
-
-    // 2. Run the initialization logic (anonSet/changi/getReady)
-    // We use anonSet() if the user is not logged in or for initial setup.
-    // Ensure anonSet() is defined as `Future<void> anonSet() async { ... }` in Referencer.
-   // await referencer.anonSet();
     return "Done";
-    // context.read<Referencer>().getReady();
-    //await Future(() {});
-    //too
-    //Cool = true;
   }
 
 
@@ -1811,33 +1800,18 @@ class _MyHomePageState extends State<MyHomePage> {
             future: startUp(), //onLaunch(),
             builder: (context, snapshot) {
               if (snapshot.hasData) {
-               // final _dump = Provider.of<Referencer>(context, listen: false).info;
-                //CAUSE FOR CONCERN ADD THIS BACCIN
-                //final Map<String, dynamic> _dump = (context.read<Referencer>().info as Map<String, dynamic>?) ?? {};
-                //final Map<String, dynamic> _dump = context.read<Referencer>().info ?? {};
-               //final fanalexp = assigner(context.read<Referencer>().getExp());
                final referencer = context.watch<Referencer>();
                final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
-                  //CAUSE 4 CONCERN rawValue shud be String
                 fanalexp = 10.0;
                 } else {
                 fanalexp = (rawValue ?? 10.0).toDouble();
                 }
-                //final fanalexp = assigner(_dump["info"]["exp"]);
-                //final icon = context.read<Referencer>().returnPic();
-               // List icon = (_dump['info'] as Map<String, dynamic>?)?['photo'] as List? ?? []; 
-               // String saveuserName = (_dump['info'] as Map<String, dynamic>?)?['handle'] as String? ?? "N/A";
-                String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
-                //int saveuserexp = _dump["info"]["exp"];
-                // List privet = _dump["Statuses"];
-               List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
-                //context.read<Referencer>().setPic(icon);
-                //final icon = context.read<Referencer>().returnPic();
-                //but comments need to be streamed in realtime
-                //CAUSE FOR CONCERN GET THIS WORKING
-               // List aLessons = _dump["lessons"] ?? [];
+               // String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
+              // List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
+      String saveuserName = referencer.info["handle"] ?? "N/A";
+      List icon = referencer.info["photo"] ?? [];
                 return
                   Scrollbar(
                       trackVisibility: true,
