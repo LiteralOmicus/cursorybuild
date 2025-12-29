@@ -846,8 +846,7 @@ Future<void> firstTime(List pic, String handle) async {
         "exp": 0, 
         "handle": handle, 
         "lang": "ru", 
-        "photo": pic, 
-        "Statuses": [0]
+        "photo": pic
       },
       "lessons": flatten(tierkeeper),
     };
@@ -860,6 +859,7 @@ Future<void> firstTime(List pic, String handle) async {
     print("Error: No user found. Cannot run firstTime setup.");
   }
 }
+
 class LoadingWithStateMgmt extends StatelessWidget {
   final bool isLoading;
   final Widget Child; //MAKE A DEFAULT FOR THIS SO WHEN THE HOME OPENS...
