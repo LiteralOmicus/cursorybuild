@@ -698,7 +698,9 @@ class Referencer extends ChangeNotifier {
         0, "Try clicking on the circle to the left of me to change my color. Don't worry about setting the text and background color, they automatically compliment each other so the text is always visible"
       ],
       [0, "Cleaning me is as simple as swiping right! Tired of seeing this tutorial? Swipe all these tiles away and when you revisit the empty topic will be gone!"
-      ]
+      ],
+          [0, "If you're using the Guest sign-in (I can tell!) your Notebook will not be available between sessions without a user account."
+          ]
     ]
   }
 };
@@ -1028,12 +1030,6 @@ class MyCard extends StatelessWidget {
                       },
                     ),
                     const SizedBox(width: 8),
-                    TextButton(
-                      child: const Text('Test'),
-                      onPressed: () {
-                        /* ... */
-                      },
-                    ),
                     const SizedBox(width: 8),
                   ],
                   //  )
@@ -1881,38 +1877,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
                                   ]
                               ),
-                                //  Column(children:
-                                // [
-                                TextField(
-                                  //add gesturedetector because the only way to get rid of keyboard
-                                  // is posting
-                                    enabled: false,
-                                    keyboardType: TextInputType.name,
-                                    //expands: true,
-                                    controller: dontroller,
-                                    onSubmitted: (String value) {
-                                      if (value.isNotEmpty && value != null) {
-                                        //I need to update with json data where this leads
-                                        clearText();
-                                      }
-                                    },
-
-                                    //make this box lookj different thab comment box
-                                    decoration: InputDecoration(
-                                      hintStyle: TextStyle(color: Colors.red),
-                                      hintText: "Put your wiki-style edits here! <Lesson> : suggestion",
-                                      filled: true,
-                                      fillColor: Colors.blueAccent,
-                                      contentPadding: EdgeInsets.all(25),
-                                      border: OutlineInputBorder(
-                                        borderSide: BorderSide(
-                                            width: double.infinity),
-
-                                      ),
-                                    )
-
-
-                                )
                               ]
                           )
                       )
@@ -3262,15 +3226,6 @@ class _MyNotebookState extends State<MyNotebookState> {
     },
     icon: const Icon(Icons.miscellaneous_services),
     ),
-    IconButton(
-    onPressed: () {
-    context.read<ThemeProvider>().switchTheme();
-    },
-    icon: Icon(Icons.sunny_snowing),
-    //I want to make an icon animation  on click
-    //so when going to different mode
-    //switches to sunny for light
-    ),
     ],
         ),
         body: SingleChildScrollView(
@@ -4102,7 +4057,6 @@ class Start extends StatelessWidget {
 
   void Purpose() async {
     await Future(() {});
-    await user?.sendEmailVerification();
   }
   @override
   Widget build(BuildContext context) {
@@ -4138,7 +4092,7 @@ class Start extends StatelessWidget {
               body:
               const Center (
                   child: Text(
-                    "Email confirmation has been sent! Check your email, and sign in.",
+                    "Intro survey completed! Sign out and your customized lesson plan will be ready when you sign in again!",
                     style: TextStyle( //Question text styling
                       color: Colors.white,
                       fontSize: 30,
