@@ -1242,7 +1242,7 @@ class SignInState extends State<SignIn> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      _onLoginSuccess(); // Helper to redirect home
+     // _onLoginSuccess(); // Helper to redirect home
     } catch (e) {
       print("Google Error: $e");
     }
@@ -1293,7 +1293,7 @@ class SignInState extends State<SignIn> {
   Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => MyHomePage())
-          ),
+          );
 }
         );
       }
