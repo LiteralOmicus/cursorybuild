@@ -1050,16 +1050,7 @@ Future<void> main() async {
   //CAUSE 4 CONCERN IM  STILL SEEING ADS
 //unawaited(MobileAds.instance.initialize());
 await Firebase.initializeApp(
-   options: Platform.isIOS ? const FirebaseOptions(
-    apiKey: "AIzaSyBU7wEfndYUbBD9jIsXW-ZCW_dcpoJqyBY",            
-    appId: "1:328734103172:ios:e739787c9c12acbca894d1",               
-    messagingSenderId: "328734103172",// Copy from plist: GCM_SENDER_ID
-    projectId: "production-ab9c8",       // Copy from plist: PROJECT_ID
-    
-    // Crucial for Auth:
-    iosClientId: "328734103172-k32uif654u5009viqb07cparlj6i0083.apps.googleusercontent.com",      // Copy from plist: CLIENT_ID
-    iosBundleId: "com.literalomicus.kangarule",      // Copy from plist: BUNDLE_ID
-  ) : null,
+   options: DefaultFirebaseOptions.currentPlatform,
 );
 
 
@@ -1180,8 +1171,8 @@ class SignInState extends State<SignIn> {
 
   //bool fool = false;
 
-  Future<UserCredential?> showSocialLoginSheet(BuildContext context) async {
-    return await showModalBottomSheet<UserCredential>(
+  void showSocialLoginSheet(BuildContext context) {
+    showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1214,7 +1205,7 @@ class SignInState extends State<SignIn> {
                     icon: Image.asset('assets/google_logo.png', height: 24), // Add a logo asset or use Icon(Icons.login)
                     label: const Text("Continue with Google"),
                     onPressed: () {
-                      //Navigator.pop(context); // Close the popup first
+                      Navigator.pop(context); // Close the popup first
                       _handleGoogleSignIn();  // Trigger the logic
                     },
                   ),
@@ -1268,10 +1259,7 @@ class SignInState extends State<SignIn> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      if (context.mounted) {
-      Navigator.pop(context); 
-    }
-      //_onLoginSuccess(); // Helper to redirect home
+      _onLoginSuccess(); // Helper to redirect home
     } catch (e) {
       print("Google Error: $e");
     }
@@ -1294,11 +1282,9 @@ class SignInState extends State<SignIn> {
 
     // 3. ACTUAL SIGN IN
     await FirebaseAuth.instance.signInWithCredential(credential);
-    if (context.mounted) {
-      Navigator.pop(context); 
-    }
+
     // 4. NOW this will work
-  //  _onLoginSuccess();
+    _onLoginSuccess();
       
     } catch (e) {
       print("Apple Error: $e");
@@ -1306,6 +1292,20 @@ class SignInState extends State<SignIn> {
   }
 
   // 4. SUCCESS HELPER
+  void _onLoginSuccess() async {
+    if (FirebaseAuth.instance.currentUser != null) {
+      context.read<Referencer>().setUser(FirebaseAuth.instance.currentUser!.uid);
+      await context.read<Referencer>().changi(); // Fetch Data
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage(key: ValueKey(FirebaseAuth.instance.currentUser?.uid))
+          ),
+        );
+      }
+    }
+  }
 
 
   @override
@@ -1452,43 +1452,7 @@ class SignInState extends State<SignIn> {
                       Expanded(
                           child: ElevatedButton(
                           style: style,
-                          onPressed: () async {
-      // 1. Show the sheet and WAIT for a result
-      UserCredential? userCred = await showSocialLoginSheet(context);
-
-      // 2. If null, they cancelled or failed. Stop here.
-      if (userCred == null || userCred.user == null) {
-        print("Login cancelled");
-        return;
-      }
-
-      // 3. NOW run your logic (New vs Returning)
-      if (userCred.additionalUserInfo?.isNewUser == true) {
-        // === NEW USER ===
-        print("New User Detected");
-        context.read<Referencer>().setUser(userCred.user!.uid);
-
-        String handle = userCred.user?.displayName ?? "Traveler";
-        
-        if (context.mounted) {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => QuizPage(handle: handle),
-            ),
-          );
-        }
-      } else {
-        // === RETURNING USER ===
-        print("Returning User");
-        context.read<Referencer>().setUser(userCred.user!.uid);
-        await context.read<Referencer>().changi();
-        Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => MyHomePage())
-    );
-        // Helper to redirect home (or just Navigator.pushReplacement...)
-     //   _onLoginSuccess(); 
-      }
-    },
+                          onPressed: () => showSocialLoginSheet(context),
                           child: Padding(
                               padding:  EdgeInsets.all(localHeight * .007),
                               child: const Text("Social Login", textScaleFactor: 2.2)),
