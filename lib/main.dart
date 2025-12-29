@@ -1295,7 +1295,7 @@ class SignInState extends State<SignIn> {
     // 3. ACTUAL SIGN IN
     await FirebaseAuth.instance.signInWithCredential(credential);
     if (context.mounted) {
-      Navigator.pop(context, userCredential); 
+      Navigator.pop(context); 
     }
     // 4. NOW this will work
   //  _onLoginSuccess();
@@ -1306,20 +1306,6 @@ class SignInState extends State<SignIn> {
   }
 
   // 4. SUCCESS HELPER
-  void _onLoginSuccess() async {
-    if (FirebaseAuth.instance.currentUser != null) {
-      context.read<Referencer>().setUser(FirebaseAuth.instance.currentUser!.uid);
-      await context.read<Referencer>().changi(); // Fetch Data
-      
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MyHomePage()
-          ),
-        );
-      }
-    }
-  }
 
 
   @override
