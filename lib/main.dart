@@ -1214,7 +1214,7 @@ class SignInState extends State<SignIn> {
                     icon: Image.asset('assets/google_logo.png', height: 24), // Add a logo asset or use Icon(Icons.login)
                     label: const Text("Continue with Google"),
                     onPressed: () {
-                      Navigator.pop(context); // Close the popup first
+                      //Navigator.pop(context); // Close the popup first
                       _handleGoogleSignIn();  // Trigger the logic
                     },
                   ),
@@ -1268,7 +1268,10 @@ class SignInState extends State<SignIn> {
       );
 
       await FirebaseAuth.instance.signInWithCredential(credential);
-      _onLoginSuccess(); // Helper to redirect home
+      if (context.mounted) {
+      Navigator.pop(context, userCredential); 
+    }
+      //_onLoginSuccess(); // Helper to redirect home
     } catch (e) {
       print("Google Error: $e");
     }
@@ -1291,9 +1294,11 @@ class SignInState extends State<SignIn> {
 
     // 3. ACTUAL SIGN IN
     await FirebaseAuth.instance.signInWithCredential(credential);
-
+    if (context.mounted) {
+      Navigator.pop(context, userCredential); 
+    }
     // 4. NOW this will work
-    _onLoginSuccess();
+  //  _onLoginSuccess();
       
     } catch (e) {
       print("Apple Error: $e");
