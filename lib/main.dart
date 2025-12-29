@@ -1269,7 +1269,7 @@ class SignInState extends State<SignIn> {
 
       await FirebaseAuth.instance.signInWithCredential(credential);
       if (context.mounted) {
-      Navigator.pop(context, userCredential); 
+      Navigator.pop(context); 
     }
       //_onLoginSuccess(); // Helper to redirect home
     } catch (e) {
@@ -1496,9 +1496,11 @@ class SignInState extends State<SignIn> {
         print("Returning User");
         context.read<Referencer>().setUser(userCred.user!.uid);
         await context.read<Referencer>().changi();
-        
+         MaterialPageRoute(
+              builder: (context) => MyHomePage()),
+            ),
         // Helper to redirect home (or just Navigator.pushReplacement...)
-        _onLoginSuccess(); 
+     //   _onLoginSuccess(); 
       }
     },
                           child: Padding(
