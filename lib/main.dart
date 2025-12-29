@@ -1482,9 +1482,9 @@ class SignInState extends State<SignIn> {
         print("Returning User");
         context.read<Referencer>().setUser(userCred.user!.uid);
         await context.read<Referencer>().changi();
-         MaterialPageRoute(
-              builder: (context) => MyHomePage(),
-            ),
+        Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
         // Helper to redirect home (or just Navigator.pushReplacement...)
      //   _onLoginSuccess(); 
       }
