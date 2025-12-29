@@ -1050,7 +1050,16 @@ Future<void> main() async {
   //CAUSE 4 CONCERN IM  STILL SEEING ADS
 //unawaited(MobileAds.instance.initialize());
 await Firebase.initializeApp(
-   options: DefaultFirebaseOptions.currentPlatform,
+   options: Platform.isIOS ? const FirebaseOptions(
+    apiKey: "AIzaSyBU7wEfndYUbBD9jIsXW-ZCW_dcpoJqyBY",            
+    appId: "1:328734103172:ios:e739787c9c12acbca894d1",               
+    messagingSenderId: "328734103172",// Copy from plist: GCM_SENDER_ID
+    projectId: "production-ab9c8",       // Copy from plist: PROJECT_ID
+    
+    // Crucial for Auth:
+    iosClientId: "328734103172-k32uif654u5009viqb07cparlj6i0083.apps.googleusercontent.com",      // Copy from plist: CLIENT_ID
+    iosBundleId: "com.literalomicus.kangarule",      // Copy from plist: BUNDLE_ID
+  ) : null,
 );
 
 
