@@ -1180,8 +1180,8 @@ class SignInState extends State<SignIn> {
 
   //bool fool = false;
 
-  void showSocialLoginSheet(BuildContext context) {
-    showModalBottomSheet(
+  Future<UserCredential?> showSocialLoginSheet(BuildContext context) async {
+    return await showModalBottomSheet<UserCredential>(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -1309,7 +1309,7 @@ class SignInState extends State<SignIn> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => MyHomePage(key: ValueKey(FirebaseAuth.instance.currentUser?.uid))
+            builder: (context) => MyHomePage()
           ),
         );
       }
@@ -1461,7 +1461,41 @@ class SignInState extends State<SignIn> {
                       Expanded(
                           child: ElevatedButton(
                           style: style,
-                          onPressed: () => showSocialLoginSheet(context),
+                          onPressed: () async {
+      // 1. Show the sheet and WAIT for a result
+      UserCredential? userCred = await showSocialLoginSheet(context);
+
+      // 2. If null, they cancelled or failed. Stop here.
+      if (userCred == null || userCred.user == null) {
+        print("Login cancelled");
+        return;
+      }
+
+      // 3. NOW run your logic (New vs Returning)
+      if (userCred.additionalUserInfo?.isNewUser == true) {
+        // === NEW USER ===
+        print("New User Detected");
+        context.read<Referencer>().setUser(userCred.user!.uid);
+
+        String handle = userCred.user?.displayName ?? "Traveler";
+        
+        if (context.mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => QuizPage(handle: handle),
+            ),
+          );
+        }
+      } else {
+        // === RETURNING USER ===
+        print("Returning User");
+        context.read<Referencer>().setUser(userCred.user!.uid);
+        await context.read<Referencer>().changi();
+        
+        // Helper to redirect home (or just Navigator.pushReplacement...)
+        _onLoginSuccess(); 
+      }
+    },
                           child: Padding(
                               padding:  EdgeInsets.all(localHeight * .007),
                               child: const Text("Social Login", textScaleFactor: 2.2)),
