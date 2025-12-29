@@ -1851,7 +1851,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     child:
                                                    Center(
             child: MyCard(handle: saveuserName,
-                                                        exp: fanalexp.toString(),
+                                                        exp: assigner(fanalexp.toInt()),
                                                         useasImage: [
                                                           boxTheme[1],
                                                           "ru"
