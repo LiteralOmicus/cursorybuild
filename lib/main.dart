@@ -4159,7 +4159,7 @@ class _MySettings extends State<MySettings> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: const [
-              Text(PPlong,
+              Text(ppLong,
                 style: TextStyle(fontSize: 14), // Adjust font size as needed
               ),
             ],
