@@ -3792,29 +3792,22 @@ class _MySettings extends State<MySettings> {
             style: TextButton.styleFrom(foregroundColor: Colors.red),
             child: const Text('Delete'),
             onPressed: () async {
-              // 1. Close the dialog immediately so it doesn't get stuck
-              Navigator.of(context).pop();
+              final user = FirebaseAuth.instance.currentUser; // Get the current user
 
-              // 2. Run the actual delete logic
-              final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      try {
+        // --- Call your Referencer method first if needed ---
+        // If deleteMe() needs to run BEFORE Firebase deletion
+        context.read<Referencer>().deleteMe(); // Call your method
 
-              if (user != null) {
-                try {
-                  // Custom database cleanup
-                  context.read<Referencer>().deleteMe();
+        // --- Then delete the Firebase user ---
+        await user.delete(); // Await the asynchronous deletion
 
-                  // Firebase Auth deletion
-                  await user.delete();
-
-                  debugPrint('User account deleted.');
-                  
-                  // Navigate to Sign In
-                  if (context.mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(builder: (context) => SignIn()),
-                      (Route<dynamic> route) => false, // Remove all previous routes
-                    );
-                  }
+        // Account successfully deleted
+        debugPrint('User account deleted.');
+        Navigator.of(context).push(MaterialPageRoute(
+            builder: (context) => SignIn())
+        );
 
                 } on FirebaseAuthException catch (e) {
                   debugPrint('Error deleting user: ${e.code}');
