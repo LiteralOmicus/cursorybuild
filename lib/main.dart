@@ -859,6 +859,7 @@ Future<void> firstTime(List pic, String handle) async {
     print("Error: No user found. Cannot run firstTime setup.");
   }
 }
+}
 
 class LoadingWithStateMgmt extends StatelessWidget {
   final bool isLoading;
