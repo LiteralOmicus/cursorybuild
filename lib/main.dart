@@ -835,33 +835,30 @@ class Referencer extends ChangeNotifier {
     return Lemx;
   }
 
-  void firstTime(List pic, String handle) {
-    FirebaseAuth.instance
-        .authStateChanges()
-        .listen((User? user) {
-      if (user != null) {
-        Map grabit=
-        //{
-        // user.uid:
-        {
-          "info"
-              : {
-            "exp": 0, "handle": handle, "lang": "ru", "photo": pic, "Statuses": [0]
-          },
-          "lessons": flatten(tierkeeper),
-          //"Notebook": {"None":0},
-          //   }
-        };
-        ref.child('ru/users').update({user.uid: grabit});
-      };
-    }
+Future<void> firstTime(List pic, String handle) async {
+  // 1. Get the current user directly (no listener!)
+  final User? user = FirebaseAuth.instance.currentUser;
 
-    );
+  if (user != null) {
+    // 2. Construct your data map exactly as before
+    Map grabit = {
+      "info": {
+        "exp": 0, 
+        "handle": handle, 
+        "lang": "ru", 
+        "photo": pic, 
+        "Statuses": [0]
+      },
+      "lessons": flatten(tierkeeper),
+    };
 
+    // 3. Update the database immediately
+    // Using 'await' here ensures the data is saved before the app moves on
+    await ref.child('ru/users').update({user.uid: grabit});
+    
+  } else {
+    print("Error: No user found. Cannot run firstTime setup.");
   }
-
-
-
 }
 class LoadingWithStateMgmt extends StatelessWidget {
   final bool isLoading;
