@@ -4144,58 +4144,68 @@ class _FirstPageState extends State<FirstPage> {
 }
 
 
-class Start extends StatelessWidget {
-  late String handle;
-  late final user;
-  Start({super.key, required this.handle});
+class Start extends StatefulWidget {
+  final String handle;
 
-  void Purpose() async {
-    await Future(() {});
+  const Start({super.key, required this.handle});
+
+  @override
+  State<Start> createState() => _StartState();
+}
+
+class _StartState extends State<Start> {
+  
+  @override
+  void initState() {
+    super.initState();
+    // This runs EXACTLY ONE TIME when the widget is first loaded.
+    // It will not run again on rebuilds.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<Referencer>().firstTime(
+        ["4", widget.handle.substring(2)], 
+        widget.handle
+      );
+    });
   }
+
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<User>();
-    Purpose;
-    //oh i get handle from the start page
-    //how do I get it over here?
-    //still need to make a lsut to fill in pic
-    context.read<Referencer>().firstTime(["4", handle.substring(2)], handle);
-    return
-      MaterialApp(
-          theme: ThemeData.light().copyWith(
-              scaffoldBackgroundColor: Colors.black
+    // build is now safe! It only draws UI.
+    return MaterialApp(
+      theme: ThemeData.light().copyWith(scaffoldBackgroundColor: Colors.black),
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back, color: Colors.black),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              
+              if (mounted) {
+                // DESTROY this widget so it can't run again
+                Navigator.of(context).pushAndRemoveUntil(
+                  MaterialPageRoute(builder: (context) => SignIn()),
+                  (Route<dynamic> route) => false, // This removes all history
+                );
+              }
+            },
           ),
-          debugShowCheckedModeBanner: false,
-          home:
-          Scaffold(
-            // drawer: NavDrawer(),
-            //change this out
-            //ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              appBar: AppBar(
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back, color: Colors.black),
-                  onPressed: () async {
-                    await FirebaseAuth.instance.signOut();
-                    {Navigator.of(context).push(MaterialPageRoute(
-                        builder: (context) => SignIn())
-                    );
-                    }
-                  },
-                ),
+        ),
+        body: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Text(
+              "Intro survey completed! Sign out and your customized lesson plan will be ready when you sign in again!",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
               ),
-              body:
-              const Center (
-                  child: Text(
-                    "Intro survey completed! Sign out and your customized lesson plan will be ready when you sign in again!",
-                    style: TextStyle( //Question text styling
-                      color: Colors.white,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  )
-              )
-          )
-      );
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
