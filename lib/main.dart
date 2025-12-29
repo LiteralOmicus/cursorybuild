@@ -1193,25 +1193,8 @@ class SignInState extends State<SignIn> {
                 // -------------------------
                 // OPTION A: GOOGLE
                 // -------------------------
-                SizedBox(
-                  width: double.infinity,
-                  height: 50,
-                  child: ElevatedButton.icon(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: Colors.black,
-                      side: const BorderSide(color: Colors.grey),
-                    ),
-                    icon: Image.asset('assets/google_logo.png', height: 24), // Add a logo asset or use Icon(Icons.login)
-                    label: const Text("Continue with Google"),
-                    onPressed: () {
-                      Navigator.pop(context); // Close the popup first
-                      _handleGoogleSignIn();  // Trigger the logic
-                    },
-                  ),
-                ),
                 
-                const SizedBox(height: 12),
+               // const SizedBox(height: 12),
 
                 // -------------------------
                 // OPTION B: APPLE (iOS Only)
@@ -1281,10 +1264,10 @@ class SignInState extends State<SignIn> {
     );
 
     // 3. ACTUAL SIGN IN
-    await FirebaseAuth.instance.signInWithCredential(credential);
-
+  //  await FirebaseAuth.instance.signInWithCredential(credential);
+    UserCredential userCredential = await FirebaseAuth.instance.signInWithCredential(credential);
     // 4. NOW this will work
-    _onLoginSuccess();
+    _onLoginSuccess(userCredential);
       
     } catch (e) {
       print("Apple Error: $e");
@@ -1292,16 +1275,26 @@ class SignInState extends State<SignIn> {
   }
 
   // 4. SUCCESS HELPER
-  void _onLoginSuccess() async {
+  Future<void> _onLoginSuccess(UserCredential uc) async {
     if (FirebaseAuth.instance.currentUser != null) {
       context.read<Referencer>().setUser(FirebaseAuth.instance.currentUser!.uid);
-      await context.read<Referencer>().changi(); // Fetch Data
       
       if (mounted) {
-        Navigator.of(context).pushReplacement(
+        if (uc.additionalUserInfo?.isNewUser == true) {
+   Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              QuizPage(
+                                                  handle: "apple")
+                                      ),
+                                    );
+} else {
+  await context.read<Referencer>().changi(); 
+  Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => MyHomePage(key: ValueKey(FirebaseAuth.instance.currentUser?.uid))
+            builder: (context) => MyHomePage())
           ),
+}
         );
       }
     }
