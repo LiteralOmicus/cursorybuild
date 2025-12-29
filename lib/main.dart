@@ -4338,6 +4338,17 @@ class _MySettings extends State<MySettings> {
             child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  OutlinedButton(
+                      style: TextButton.styleFrom(
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.all(16.0),
+                        textStyle: const TextStyle(fontSize: 20),
+                      ),
+                      onPressed: () {
+    _showPrivacyPolicy(context);
+  },
+                      child: const Text('Report a problem.')
+                  ),
     OutlinedButton(
             child: const Text('Sign Out'),
     onPressed:   ()
