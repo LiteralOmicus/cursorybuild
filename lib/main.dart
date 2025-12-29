@@ -247,6 +247,70 @@ class _StateMgmtState extends State<StateMgmt> {
 
   }
 }
+Future<void> _showReportDialog(BuildContext context) async {
+  // Controller to retrieve the text the user types
+  final TextEditingController reportController = TextEditingController();
+
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // User must tap a button to close
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Submit Report'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              const Text('Please describe the issue or feedback:'),
+              const SizedBox(height: 10),
+              TextField(
+                controller: reportController,
+                maxLines: 4, // Makes the box taller for detailed input
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Type here...',
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          // CANCEL BUTTON
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Just close the dialog
+            },
+          ),
+          // SUBMIT BUTTON
+          ElevatedButton(
+            child: const Text('Submit'),
+            onPressed: () {
+              String userMessage = reportController.text;
+              
+              if (userMessage.isNotEmpty) {
+                // TODO: Add your Firebase logic here
+                print("User reported: $userMessage");
+                
+                // Example: Write to Firestore for the 'Trigger Email' extension
+                /*
+                FirebaseFirestore.instance.collection('mail').add({
+                  'to': 'support@kangarule.com',
+                  'message': {
+                    'subject': 'New User Report',
+                    'text': userMessage,
+                  },
+                });
+                */
+              }
+
+              Navigator.of(context).pop(); // Close the dialog
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
 DatabaseReference ref = FirebaseDatabase.instance.ref('language');
 class Referencer extends ChangeNotifier {
@@ -990,13 +1054,13 @@ class _ProgressIndicatorExampleState extends State<ProgressIndicatorExample>
 
 class MyCard extends StatelessWidget {
   const MyCard({super.key,
-   // required this.handle,
+    required this.handle,
     required this.exp,
-   // required this.useasImage,
+   required this.useasImage,
   });
-  //final String handle;
+  final String handle;
   final String exp;
-  //final List useasImage;
+  final List useasImage;
 
   @override
   Widget build(BuildContext context) {
@@ -1010,10 +1074,17 @@ class MyCard extends StatelessWidget {
               children: [
                 Expanded(child:
                 ListTile(
-                 // leading:  _UserImage(picture: context.read<Referencer>().returnPic()),
-                  title: Text(exp,
+                 leading:  _UserImage(picture: context.read<Referencer>().returnPic()),
+                                title:Text(handle,
+                    style: TextStyle(fontSize:
+                    AdaptiveTextSize().getadaptiveTextSize(context, 16)), )
+                  title: Text(handle,
                     style:TextStyle(fontSize:
                     AdaptiveTextSize().getadaptiveTextSize(context, 16)), ),
+                  subtitle: Text(exp,
+                    style:TextStyle(fontSize:
+                    AdaptiveTextSize().getadaptiveTextSize(context, 16)), ),
+                
                 )
                 ),
 
@@ -1810,7 +1881,12 @@ class _MyHomePageState extends State<MyHomePage> {
                                                     color: Colors.white,
                                                     child:
                                                    Center(
-            child: MyCard(exp: assigner(fanalexp) )                         
+            child: MyCard(handle: saveuserName,
+                                                        exp: fanalexp,
+                                                        useasImage: [
+                                                          boxTheme[1],
+                                                          "ru"
+                                                        ]),                       
         ),
                                                   ),
 
@@ -3713,6 +3789,85 @@ class _MySettings extends State<MySettings> {
     super.initState();
   }
 
+  Future<void> _showDeleteConfirmation(BuildContext context) async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // User must tap a button to close
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text('Delete Account'),
+        content: const SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text('Are you sure you want to delete your account?'),
+              SizedBox(height: 10),
+              Text(
+                'This action is permanent and cannot be undone.',
+                style: TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+              ),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          // CANCEL BUTTON
+          TextButton(
+            child: const Text('Cancel'),
+            onPressed: () {
+              Navigator.of(context).pop(); // Just close the dialog
+            },
+          ),
+          // DELETE BUTTON
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+            onPressed: () async {
+              // 1. Close the dialog immediately so it doesn't get stuck
+              Navigator.of(context).pop();
+
+              // 2. Run the actual delete logic
+              final user = FirebaseAuth.instance.currentUser;
+
+              if (user != null) {
+                try {
+                  // Custom database cleanup
+                  context.read<Referencer>().deleteMe();
+
+                  // Firebase Auth deletion
+                  await user.delete();
+
+                  debugPrint('User account deleted.');
+                  
+                  // Navigate to Sign In
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(builder: (context) => SignIn()),
+                      (Route<dynamic> route) => false, // Remove all previous routes
+                    );
+                  }
+
+                } on FirebaseAuthException catch (e) {
+                  debugPrint('Error deleting user: ${e.code}');
+                  
+                  // Handle "Recent Login Required" error (common for deletions)
+                  if (e.code == 'requires-recent-login') {
+                     if (context.mounted) {
+                       _showErrorDialog(context, "Security Alert", "For security, please sign out and sign in again before deleting your account.");
+                     }
+                  } else {
+                     if (context.mounted) {
+                       _showErrorDialog(context, "Error", "Could not delete account. ${e.message}");
+                     }
+                  }
+                }
+              }
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
+
   void _showErrorDialog(BuildContext context, String title, String message) {
     showDialog(
         context: context,
@@ -3837,7 +3992,9 @@ class _MySettings extends State<MySettings> {
                         padding: const EdgeInsets.all(16.0),
                         textStyle: const TextStyle(fontSize: 20),
                       ),
-                      onPressed: () {},
+                      onPressed: () {
+    _showReportDialog(context);
+  },
                       child: const Text('Report a problem.')
                   ),
                   OutlinedButton(
@@ -3847,33 +4004,8 @@ class _MySettings extends State<MySettings> {
                       textStyle: const TextStyle(fontSize: 20),
                     ),
                     onPressed: () async {
-    final user = FirebaseAuth.instance.currentUser; // Get the current user
-
-    if (user != null) {
-      try {
-        // --- Call your Referencer method first if needed ---
-        // If deleteMe() needs to run BEFORE Firebase deletion
-        context.read<Referencer>().deleteMe(); // Call your method
-
-        // --- Then delete the Firebase user ---
-        await user.delete(); // Await the asynchronous deletion
-
-        // Account successfully deleted
-        debugPrint('User account deleted.');
-        Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => SignIn())
-        );
-
-        // You might navigate the user back to a sign-up/sign-in page here
-        // Navigator.of(context).pushReplacementNamed('/signup');
-
-      } on FirebaseAuthException catch (e) {
-        // --- Handle Firebase Authentication errors and show alert ---
-        debugPrint('Error deleting user: ${e.code}');
-        String errorMessage = 'An error occurred while deleting your account. Please try again.';
-      };
-    }
-    },
+  _showDeleteConfirmation(context);
+                    }
                     child: const Text('Delete account.'),
                   ),
 
