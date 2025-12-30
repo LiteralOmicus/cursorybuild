@@ -4347,7 +4347,7 @@ class _MySettings extends State<MySettings> {
                       onPressed: () {
     _showPrivacyPolicy(context);
   },
-                      child: const Text('Report a problem.')
+                      child: const Text('Privacy Policy')
                   ),
     OutlinedButton(
             child: const Text('Sign Out'),
