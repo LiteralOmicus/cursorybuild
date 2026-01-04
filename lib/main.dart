@@ -4339,18 +4339,15 @@ class _MySettings extends State<MySettings> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   OutlinedButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.all(16.0),
-                        textStyle: const TextStyle(fontSize: 20),
-                      ),
                       onPressed: () {
     _showPrivacyPolicy(context);
   },
-                      child: const Text('Privacy Policy')
+                      child: const Text('Privacy Policy',
+                                       style: Theme.of(context).textTheme.labelLarge)
                   ),
     OutlinedButton(
-            child: const Text('Sign Out'),
+            child: const Text('Sign Out',
+                             style: Theme.of(context).textTheme.labelLarge),
     onPressed:   ()
             async {
 
@@ -4380,26 +4377,18 @@ class _MySettings extends State<MySettings> {
                   
 
                   OutlinedButton(
-                      style: TextButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.all(16.0),
-                        textStyle: const TextStyle(fontSize: 20),
-                      ),
                       onPressed: () {
     _showReportDialog(context);
   },
-                      child: const Text('Report a problem.')
+                      child: const Text('Report a problem.',
+                                       style: Theme.of(context).textTheme.labelLarge)
                   ),
                   OutlinedButton(
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.all(16.0),
-                      textStyle: const TextStyle(fontSize: 20),
-                    ),
                     onPressed: () async {
   _showDeleteConfirmation(context);
                     },
-                    child: const Text('Delete account.'),
+                    child: const Text('Delete account.',
+                                     style: Theme.of(context).textTheme.labelLarge),
                   ),
 
                 ]
