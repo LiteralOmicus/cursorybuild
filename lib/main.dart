@@ -4342,11 +4342,11 @@ class _MySettings extends State<MySettings> {
                       onPressed: () {
     _showPrivacyPolicy(context);
   },
-                      child: const Text('Privacy Policy',
+                      child: Text('Privacy Policy',
                                        style: Theme.of(context).textTheme.labelLarge)
                   ),
     OutlinedButton(
-            child: const Text('Sign Out',
+            child: Text('Sign Out',
                              style: Theme.of(context).textTheme.labelLarge),
     onPressed:   ()
             async {
@@ -4380,14 +4380,14 @@ class _MySettings extends State<MySettings> {
                       onPressed: () {
     _showReportDialog(context);
   },
-                      child: const Text('Report a problem.',
+                      child: Text('Report a problem.',
                                        style: Theme.of(context).textTheme.labelLarge)
                   ),
                   OutlinedButton(
                     onPressed: () async {
   _showDeleteConfirmation(context);
                     },
-                    child: const Text('Delete account.',
+                    child: Text('Delete account.',
                                      style: Theme.of(context).textTheme.labelLarge),
                   ),
 
@@ -4497,6 +4497,7 @@ class _FirstPageState extends State<FirstPage> {
   var _questions = [
     //A list of dictionaries which represent the question, possible answers
     //and the correct answer.
+   //CAUSE FOR CONCERN NEEDS TEXTBOX HERE NOW
     {
       'questionText': 'What language are you learning?',
       'answers': ['russian'],
