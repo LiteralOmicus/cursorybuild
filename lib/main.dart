@@ -2166,10 +2166,10 @@ class _MyHomePageState extends State<MyHomePage> {
             IconButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MySettings())
-                  ),
-                );
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
               },
               icon: const Icon(Icons.miscellaneous_services),
             ),
@@ -2766,10 +2766,10 @@ class _MyRome extends State<MyRomePage> {
                         IconButton(
                           onPressed: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MySettings())
-                              ),
-                            );
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
                           },
                           icon: const Icon(Icons.miscellaneous_services),
                         ),
@@ -3210,10 +3210,10 @@ class _ExercisesState extends State<Exercises> {
                   IconButton(
                     onPressed: () {
                       Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MySettings())
-                        ),
-                      );
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
                     },
                     icon: const Icon(Icons.miscellaneous_services),
                   ),
@@ -3655,10 +3655,10 @@ class _MyNotebookState extends State<MyNotebookState> {
     IconButton(
     onPressed: () {
     Navigator.of(context).push(
-    MaterialPageRoute(
-    builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MySettings())
-    ),
-    );
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
     },
     icon: const Icon(Icons.miscellaneous_services),
     ),
@@ -4314,10 +4314,10 @@ class _MySettings extends State<MySettings> {
             IconButton(
               onPressed: () {
                 Navigator.of(context).push(
-                  MaterialPageRoute(
-                      builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MySettings())
-                  ),
-                );
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
               },
               icon: const Icon(Icons.miscellaneous_services),
             ),
