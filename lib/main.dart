@@ -544,7 +544,7 @@ class _StateMgmtState extends State<StateMgmt> {
   // TODO: Replace this with your own interstitial ad unit ID for production
   // Use test IDs during development!
 //  String get _adUnitId {
-  //    return 'ca-app-pub-3940256099942544/4411468910'; // Test Android Interstitial}
+  //    return 'ca-app-pub-5815053066312487/1427329368'; // Test Android Interstitial}
 
   @override
   void initState() {
@@ -711,7 +711,7 @@ class Referencer extends ChangeNotifier {
   Map<String, dynamic>? loadedData;
 
   // TODO: Replace with your actual interstitial ad unit ID
-  final String _adUnitId = 'ca-app-pub-3940256099942544/4411468910'; // Test ad unit ID
+  final String _adUnitId = 'ca-app-pub-5815053066312487/1427329368'; // Test ad unit ID
 
   // Public getters to access the state from widgets
   bool get isAdLoaded => _isAdLoaded;
@@ -790,7 +790,7 @@ class Referencer extends ChangeNotifier {
     // Get the appropriate ad unit ID based on the platform
     String adUnitId;
     try {
-      adUnitId = 'ca-app-pub-3940256099942544/4411468910'; // Assuming AdHelper can get platform or you pass it
+      adUnitId = 'ca-app-pub-5815053066312487/9845182927'; // Assuming AdHelper can get platform or you pass it
     } catch (e) {
       debugPrint('Referencer: Failed to get ad unit ID: $e');
       // Call the failure callback directly if ad unit ID can't be determined
@@ -3395,7 +3395,7 @@ class _BannerAdPageState extends State<BannerAdPage> {
     // Get the appropriate ad unit ID based on the platform
     String adUnitId;
 
-      adUnitId = 'ca-app-pub-3940256099942544/2435281174';
+      adUnitId = 'ca-app-pub-5815053066312487/9845182927';
 
 
 
