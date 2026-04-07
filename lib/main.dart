@@ -2190,6 +2190,7 @@ class _MyHomePageState extends State<MyHomePage> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                final referencer = context.watch<Referencer>();
+               //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
@@ -2309,7 +2310,30 @@ class _MyHomePageState extends State<MyHomePage> {
                                     ),
   ]
                                   ),
-
+//gakked out
+                                                     Expanded(
+  child: Container(
+    color: Colors.blueAccent,
+    // Use conditionals to swap out the entire child of the Container
+    child: //_isLoading 
+    //  ? const Center(
+      //    child: CircularProgressIndicator(color: Colors.white),
+    //    ) 
+    //  : _showPlusSign 
+       //   ? 
+   Center(
+              child: IconButton(
+                icon: const Icon(Icons.add, size: 48.0, color: Colors.white),
+                onPressed: () {
+                  // Handle what happens when they tap the plus sign
+                  print("Plus sign tapped!");
+                },
+              ),
+            )
+         
+            ),
+  ),
+)
 
                                   ]
                               ),
