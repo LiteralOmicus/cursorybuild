@@ -2314,24 +2314,38 @@ class _MyHomePageState extends State<MyHomePage> {
                                                      Expanded(
   child: Container(
     color: Colors.blueAccent,
-    // Use conditionals to swap out the entire child of the Container
-    child: //_isLoading 
-    //  ? const Center(
-      //    child: CircularProgressIndicator(color: Colors.white),
-    //    ) 
-    //  : _showPlusSign 
-       //   ? 
-   Center(
-              child: IconButton(
-                icon: const Icon(Icons.add, size: 48.0, color: Colors.white),
-                onPressed: () {
-                  // Handle what happens when they tap the plus sign
-                  print("Plus sign tapped!");
-                },
-              ),
-            )
+   child: ListView.builder(
+              itemCount: Lemx.length,
+              itemBuilder: (context, index) {
+                // Ensure the lemma is treated as a String
+                String currentLemma = Lemx[index].toString();
+                
+                return CheckboxListTile(
+                  title: Text(
+                    currentLemma,
+                    style: const TextStyle(color: Colors.white), 
+                  ),
+                  // Look up the state in our Map, default to false if not found
+                  value: checkedLemmas[currentLemma] ?? false,
+                  
+                  // Forces the checkmark to the LEFT side (as a header/leading)
+                  controlAffinity: ListTileControlAffinity.leading, 
+                  
+                  // Checkmark styling
+                  checkColor: Colors.blueAccent,
+                  activeColor: Colors.white,
+                  side: const BorderSide(color: Colors.white), 
+
+                  onChanged: (bool? newValue) {
+                    // Update the state so the checkmark visibly toggles
+                    setState(() {
+                      checkedLemmas[currentLemma] = newValue ?? false;
+                    });
+                  },
+                );
+              },
          
-            //no paren and comma here apparently
+          
   ),
 )
 
