@@ -2039,7 +2039,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   late TextEditingController dontroller;
   late double fanalexp;
- late List lemmyx;
+ Map<String, bool> checkedLemmas = {};
+ late Map<dynamic, dynamic> lemmyx;
 //late
   Map _dump = {};
   String saveuserName = "";
@@ -2084,7 +2085,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
     quiccfunk();
     dontroller = TextEditingController();
-   final List lemmyx = context.read<Referencer>().getLemma();
+   final Map<dynamic, dynamic> lemmyx = context.read<Referencer>().getLemma();
   }
 
   @override
@@ -2320,7 +2321,7 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: lemmyx.length,
               itemBuilder: (context, index) {
                 // Ensure the lemma is treated as a String
-                String currentLemma = lemmyx[index].toString();
+                String currentLemma = lemmyx.keys.elementAt(index).toString();
                 
                 return CheckboxListTile(
                   title: Text(
