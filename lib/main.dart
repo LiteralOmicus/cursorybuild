@@ -2318,10 +2318,18 @@ class _MyHomePageState extends State<MyHomePage> {
 //gakked out
                                                    //  Expanded(
 //  child: 
-                                                 //    Container(
+                                                     Container(
                                                      
-   // color: Colors.blueAccent,
- //  child: 
+    color: Colors.blueAccent,
+  child: IconButton(
+                icon: const Icon(Icons.add, size: 48.0, color: Colors.white),
+                onPressed: () {
+                  // Handle what happens when they tap the plus sign
+                  print("Plus sign tapped!");
+                },
+              ),
+            )
+                                                      ),
                                   ]
                               ),
                               ]
