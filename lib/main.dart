@@ -2195,7 +2195,8 @@ class _MyHomePageState extends State<MyHomePage> {
                final referencer = context.watch<Referencer>();
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
-               final Map<dynamic, dynamic> lemmyx = context.read<Referencer>().getLemma();
+               final Map<dynamic, dynamic> lemmyx = {"atl" : 3, "bna" : 5, "koa" : 1};
+                //context.read<Referencer>().getLemma();
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
