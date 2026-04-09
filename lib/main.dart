@@ -2318,18 +2318,43 @@ class _MyHomePageState extends State<MyHomePage> {
 //gakked out
                                                    //  Expanded(
 //  child: 
+                                                     Flexible(
                                                      Container(
-                                                     
-    color: Colors.blueAccent,
-  child: IconButton(
-                icon: const Icon(Icons.add, size: 48.0, color: Colors.white),
-                onPressed: () {
-                  // Handle what happens when they tap the plus sign
-                  print("Plus sign tapped!");
-                },
-              ),
-        
-                                                      ),
+                                      // alignment: Alignment.topRight,
+                                    //  height: screenHeight / 3,
+                                    //  width: screenWidth / 2.2,
+                                      child: MyApp( //active: _active,
+                                        //onChanged: _handleTapboxChanged,
+                                        onSelected: (Routes) {
+                                          _moveState(context, Sentences);
+                                        },
+                                        //(customer) { _moveState(context);
+
+                                        //   },
+                                        items: List<ListTile>.generate(
+                                            tier.length,
+                                                (i) =>
+                                            tier[i] != null
+                                                ? ListTile(title:
+                                            Text('${tier[i]}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20),),
+                                                minVerticalPadding: 12,
+                                                onTap: () {
+                                                  _moveState(
+                                                      context, Routes[i]);
+                                                }
+                                            )
+                                                : ListTile(
+                                                title:
+                                                Text('Sender')
+                                            )
+                                        ),
+
+                                      ),
+                                                      )
+                                    ),
                                   ]
                               ),
                               ]
