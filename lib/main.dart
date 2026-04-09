@@ -2221,7 +2221,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                  // crossAxisAlignment: CrossAxisAlignment.center,
                                Wrap( 
                                   alignment: WrapAlignment.spaceBetween, 
-                                  crossAxisAlignment: WrapCrossAxisAlignment.center, 
+                                  crossAxisAlignment: WrapCrossAlignment.center, 
                                   children: <Widget>[Column(
                                       mainAxisAlignment: MainAxisAlignment
                                           .center,
