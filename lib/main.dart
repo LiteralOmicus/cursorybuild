@@ -2327,49 +2327,43 @@ class _MyHomePageState extends State<MyHomePage> {
                                        alignment: Alignment.topRight,
                                       height: screenHeight / 3,
                                       width: screenWidth / 2.2,
-                                      child: MyApp( //active: _active,
-                                        //onChanged: _handleTapboxChanged,
-                                        onSelected: (Routes) {
-                                          _moveState(context, Sentences);
-                                        },
-                                        //(customer) { _moveState(context);
+                                      child: ListView.builder( 
+    itemCount: tier.length,
+    itemBuilder: (context, i) {
+      
+      // Handle the null "Sender" case from your original code
+      if (tier[i] == null) {
+        return const ListTile(title: Text('Sender'));
+      }
 
-                                        //   },
-                                        items: List<ListTile>.generate( // <--- CRITICAL: Change List<ListTile> to List<Widget>
-  tier.length,
-  (i) => tier[i] != null
-      ? CheckboxListTile(
-          title: Text(
-            '${tier[i]}',
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-            ),
+      // Now you can use CheckboxListTile freely!
+      return CheckboxListTile(
+        title: Text(
+          '${tier[i]}',
+          style: const TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,
           ),
-          
-          // CheckboxListTile uses 'contentPadding' instead of 'minVerticalPadding'
-          contentPadding: const EdgeInsets.symmetric(vertical: 6.0),
-          
-          // Look up the state in a Map (defaults to false)
-          value: checkedLemmas[tier[i].toString()] ?? false, 
-          
-          // onChanged handles the tap for the entire tile
-          onChanged: (bool? newValue) {
-            // 1. Toggle the checkmark visually
-            setState(() {
-              checkedLemmas[tier[i].toString()] = newValue ?? false;
-            });
-            
-            // 2. Keep your original navigation logic
-            _moveState(context, Routes[i]); 
-          },
-        )
-      : const ListTile(
-          title: Text('Sender'),
         ),
-),
-
-                                      ),
+        
+        // Moves the checkbox to the left side
+        controlAffinity: ListTileControlAffinity.leading, 
+        
+        // Look up the state in your map
+        value: checkedTiers[tier[i].toString()] ?? false, 
+        
+        onChanged: (bool? newValue) {
+          // 1. Visually toggle the checkmark
+          setState(() {
+            checkedTiers[tier[i].toString()] = newValue ?? false;
+          });
+          
+          // 2. Run your original navigation logic
+          _moveState(context, Routes[i]); 
+        },
+      );
+    },
+  ),
                                                  //     )
                                     ),
                                   ]
