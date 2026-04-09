@@ -2321,11 +2321,12 @@ class _MyHomePageState extends State<MyHomePage> {
 //gakked out
                                                    //  Expanded(
 //  child: 
-                                                     Flexible(
-                                                     child: Container(
-                                      // alignment: Alignment.topRight,
-                                    //  height: screenHeight / 3,
-                                    //  width: screenWidth / 2.2,
+                                                 //    Flexible(
+                                                  //   child: 
+                                                     Container(
+                                       alignment: Alignment.topRight,
+                                      height: screenHeight / 3,
+                                      width: screenWidth / 2.2,
                                       child: MyApp( //active: _active,
                                         //onChanged: _handleTapboxChanged,
                                         onSelected: (Routes) {
@@ -2356,7 +2357,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         ),
 
                                       ),
-                                                      )
+                                                 //     )
                                     ),
                                   ]
                               ),
