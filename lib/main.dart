@@ -2316,9 +2316,9 @@ class _MyHomePageState extends State<MyHomePage> {
   ]
                                   ),
 //gakked out
-                                                     Expanded(
-//  child: Container(
-//    color: Colors.blueAccent,
+                                                   //  Expanded(
+  child: Container(
+    color: Colors.blueAccent,
    child: ListView.builder(
               itemCount: lemmyx.length,
               itemBuilder: (context, index) {
