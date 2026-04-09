@@ -2085,7 +2085,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
     quiccfunk();
     dontroller = TextEditingController();
-   final Map<dynamic, dynamic> lemmyx = context.read<Referencer>().getLemma();
+   
   }
 
   @override
@@ -2195,6 +2195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                final referencer = context.watch<Referencer>();
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
+               final Map<dynamic, dynamic> lemmyx = context.read<Referencer>().getLemma();
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
