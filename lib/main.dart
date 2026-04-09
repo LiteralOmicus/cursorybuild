@@ -2319,7 +2319,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                                    //  Expanded(
 //  child: 
                                                      Flexible(
-                                                     Container(
+                                                     child: Container(
                                       // alignment: Alignment.topRight,
                                     //  height: screenHeight / 3,
                                     //  width: screenWidth / 2.2,
