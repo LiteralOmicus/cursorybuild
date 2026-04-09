@@ -2214,11 +2214,14 @@ class _MyHomePageState extends State<MyHomePage> {
                       thickness: 12.0,
                       child: SingleChildScrollView(
                           child: Column(
-                              children: [Row(
+                              children: [
+                               //Row(
                                 //mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment
-                                      .spaceBetween,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                 // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                 // crossAxisAlignment: CrossAxisAlignment.center,
+                               Wrap( 
+                                  alignment: WrapAlignment.spaceBetween, 
+                                  crossAxisAlignment: WrapCrossAxisAlignment.center, 
                                   children: <Widget>[Column(
                                       mainAxisAlignment: MainAxisAlignment
                                           .center,
