@@ -2350,12 +2350,12 @@ class _MyHomePageState extends State<MyHomePage> {
         controlAffinity: ListTileControlAffinity.leading, 
         
         // Look up the state in your map
-        value: checkedTiers[tier[i].toString()] ?? false, 
+        value: checkedLemmas[tier[i].toString()] ?? false, 
         
         onChanged: (bool? newValue) {
           // 1. Visually toggle the checkmark
           setState(() {
-            checkedTiers[tier[i].toString()] = newValue ?? false;
+            checkedLemmas[tier[i].toString()] = newValue ?? false;
           });
           
           // 2. Run your original navigation logic
