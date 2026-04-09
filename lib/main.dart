@@ -2318,40 +2318,10 @@ class _MyHomePageState extends State<MyHomePage> {
 //gakked out
                                                    //  Expanded(
 //  child: 
-                                                     Container(
-    color: Colors.blueAccent,
-   child: MyApp( //active: _active,
-                                        //onChanged: _handleTapboxChanged,
-                                        onSelected: (Routes) {
-                                          _moveState(context, Sentences);
-                                        },
-                                        //(customer) { _moveState(context);
-
-                                        //   },
-                                        items: List<ListTile>.generate(
-                                            tier.length,
-                                                (i) =>
-                                            tier[i] != null
-                                                ? ListTile(title:
-                                            Text('${tier[i]}',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20),),
-                                                minVerticalPadding: 12,
-                                                onTap: () {
-                                                  _moveState(
-                                                      context, Routes[i]);
-                                                }
-                                            )
-                                                : ListTile(
-                                                title:
-                                                Text('Sender')
-                                            )
-                                        ),
-
-                                      ),
-)
-
+                                                 //    Container(
+                                                     
+   // color: Colors.blueAccent,
+ //  child: 
                                   ]
                               ),
                               ]
