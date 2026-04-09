@@ -2320,39 +2320,36 @@ class _MyHomePageState extends State<MyHomePage> {
 //  child: 
                                                      Container(
     color: Colors.blueAccent,
-   child: ListView.builder(
-              itemCount: lemmyx.length,
-              itemBuilder: (context, index) {
-                // Ensure the lemma is treated as a String
-                String currentLemma = lemmyx.keys.elementAt(index).toString();
-                
-                return CheckboxListTile(
-                  title: Text(
-                    currentLemma,
-                    style: const TextStyle(color: Colors.white), 
-                  ),
-                  // Look up the state in our Map, default to false if not found
-                  value: checkedLemmas[currentLemma] ?? false,
-                  
-                  // Forces the checkmark to the LEFT side (as a header/leading)
-                  controlAffinity: ListTileControlAffinity.leading, 
-                  
-                  // Checkmark styling
-                  checkColor: Colors.blueAccent,
-                  activeColor: Colors.white,
-                  side: const BorderSide(color: Colors.white), 
+   child: MyApp( //active: _active,
+                                        //onChanged: _handleTapboxChanged,
+                                        onSelected: (Routes) {
+                                          _moveState(context, Sentences);
+                                        },
+                                        //(customer) { _moveState(context);
 
-                  onChanged: (bool? newValue) {
-                    // Update the state so the checkmark visibly toggles
-                    setState(() {
-                      checkedLemmas[currentLemma] = newValue ?? false;
-                    });
-                  },
-                );
-              },
-         
-          //FOR EXPANDED? 
-  ),
+                                        //   },
+                                        items: List<ListTile>.generate(
+                                            tier.length,
+                                                (i) =>
+                                            tier[i] != null
+                                                ? ListTile(title:
+                                            Text('${tier[i]}',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 20),),
+                                                minVerticalPadding: 12,
+                                                onTap: () {
+                                                  _moveState(
+                                                      context, Routes[i]);
+                                                }
+                                            )
+                                                : ListTile(
+                                                title:
+                                                Text('Sender')
+                                            )
+                                        ),
+
+                                      ),
 )
 
                                   ]
