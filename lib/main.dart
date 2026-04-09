@@ -2335,7 +2335,7 @@ class _MyHomePageState extends State<MyHomePage> {
                                         //(customer) { _moveState(context);
 
                                         //   },
-                                        items: List<Widget>.generate( // <--- CRITICAL: Change List<ListTile> to List<Widget>
+                                        items: List<ListTile>.generate( // <--- CRITICAL: Change List<ListTile> to List<Widget>
   tier.length,
   (i) => tier[i] != null
       ? CheckboxListTile(
