@@ -2335,26 +2335,39 @@ class _MyHomePageState extends State<MyHomePage> {
                                         //(customer) { _moveState(context);
 
                                         //   },
-                                        items: List<ListTile>.generate(
-                                            tier.length,
-                                                (i) =>
-                                            tier[i] != null
-                                                ? ListTile(title:
-                                            Text('${tier[i]}',
-                                              style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 20),),
-                                                minVerticalPadding: 12,
-                                                onTap: () {
-                                                  _moveState(
-                                                      context, Routes[i]);
-                                                }
-                                            )
-                                                : ListTile(
-                                                title:
-                                                Text('Sender')
-                                            )
-                                        ),
+                                        items: List<Widget>.generate( // <--- CRITICAL: Change List<ListTile> to List<Widget>
+  tier.length,
+  (i) => tier[i] != null
+      ? CheckboxListTile(
+          title: Text(
+            '${tier[i]}',
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+            ),
+          ),
+          
+          // CheckboxListTile uses 'contentPadding' instead of 'minVerticalPadding'
+          contentPadding: const EdgeInsets.symmetric(vertical: 6.0),
+          
+          // Look up the state in a Map (defaults to false)
+          value: checkedLemmas[tier[i].toString()] ?? false, 
+          
+          // onChanged handles the tap for the entire tile
+          onChanged: (bool? newValue) {
+            // 1. Toggle the checkmark visually
+            setState(() {
+              checkedLemmas[tier[i].toString()] = newValue ?? false;
+            });
+            
+            // 2. Keep your original navigation logic
+            _moveState(context, Routes[i]); 
+          },
+        )
+      : const ListTile(
+          title: Text('Sender'),
+        ),
+),
 
                                       ),
                                                  //     )
