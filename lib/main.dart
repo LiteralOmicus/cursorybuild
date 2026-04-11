@@ -2194,9 +2194,9 @@ class _MyHomePageState extends State<MyHomePage> {
               if (snapshot.hasData) {
                final referencer = context.watch<Referencer>();
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
-               final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
+               List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
+               //If you need aLessons to permanently change when the user does something, you have to send that new data back to your Referencer class
                final List lemmyx =["atl","bna","koa"];
-                //context.read<Referencer>().getLemma();
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
@@ -2356,10 +2356,11 @@ class _MyHomePageState extends State<MyHomePage> {
           // 1. Visually toggle the checkmark
           setState(() {
             checkedLemmas[lemmyx[i].toString()] = newValue ?? false;
+           context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
           });
           
           // 2. Run your original navigation logic
-          _moveState(context, Routes[i]); 
+          //_moveState(context, Routes[i]); 
         },
       );
     },
