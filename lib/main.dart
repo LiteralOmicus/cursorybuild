@@ -2195,7 +2195,7 @@ class _MyHomePageState extends State<MyHomePage> {
                final referencer = context.watch<Referencer>();
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                final List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
-               final Map<dynamic, dynamic> lemmyx = {"atl" : 3, "bna" : 5, "koa" : 1};
+               final List lemmyx =["atl","bna","koa"];
                 //context.read<Referencer>().getLemma();
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
@@ -2328,18 +2328,18 @@ class _MyHomePageState extends State<MyHomePage> {
                                       height: screenHeight / 3,
                                       width: screenWidth / 2.2,
                                       child: ListView.builder( 
-    itemCount: tier.length,
+    itemCount: lemmyx.length,
     itemBuilder: (context, i) {
       
       // Handle the null "Sender" case from your original code
-      if (tier[i] == null) {
+      if (lemmyx[i] == null) {
         return const ListTile(title: Text('Sender'));
       }
 
       // Now you can use CheckboxListTile freely!
       return CheckboxListTile(
         title: Text(
-          '${tier[i]}',
+          '${lemmyx[i]}',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -2350,12 +2350,12 @@ class _MyHomePageState extends State<MyHomePage> {
         controlAffinity: ListTileControlAffinity.leading, 
         
         // Look up the state in your map
-        value: checkedLemmas[tier[i].toString()] ?? false, 
+        value: checkedLemmas[lemmyx[i].toString()] ?? false, 
         
         onChanged: (bool? newValue) {
           // 1. Visually toggle the checkmark
           setState(() {
-            checkedLemmas[tier[i].toString()] = newValue ?? false;
+            checkedLemmas[lemmyx[i].toString()] = newValue ?? false;
           });
           
           // 2. Run your original navigation logic
