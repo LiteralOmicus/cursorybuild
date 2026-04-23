@@ -2050,6 +2050,7 @@ class _MyHomePageState extends State<MyHomePage> {
   List privet = [];
   Map allStati = {};
  late List icon;
+ String? currentlyLoadingLemma;
  // late List aLessons;
   //CAUSE FOR CONCERN
 // late List aLessons;
@@ -2117,7 +2118,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
  // 1. Add BuildContext to the parameters
-Future<void> fetchSpecificResource(BuildContext context, String resourceName) async {
+Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
  //CHANGE ARGS LATER 
  //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
   final url = Uri.https(
@@ -2147,11 +2148,11 @@ Future<void> fetchSpecificResource(BuildContext context, String resourceName) as
     //String rawJsonFile = await myStorageManager.readLocalFile(resourceName); 
     
     // 2. Decode the downloaded JSON file
-    Map<String, dynamic> downloadedLessonData = jsonDecode(rawJsonFile);
+   // Map<String, dynamic> downloadedLessonData = jsonDecode(rawJsonFile);
 
     // 3. Parse out the exact specific piece of data you need
     // (Replace 'target_key' with whatever the actual key is in your JSON)
-    var specificDataYouNeed = downloadedLessonData.keys.toList();
+    var specificDataYouNeed = lessonUrl.keys.toList();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
@@ -2438,7 +2439,7 @@ Future<void> fetchSpecificResource(BuildContext context, String resourceName) as
         // Look up the state in your map
         value: checkedLemmas[lemmyx[i].toString()] ?? false, 
         
-        onChanged: (bool? newValue) {
+        onChanged: (bool? newValue) async {
           if (newValue == true) {
             
             // Wait for the user's choice from the dialog
