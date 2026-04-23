@@ -2119,13 +2119,14 @@ class _MyHomePageState extends State<MyHomePage> {
  // 1. Add BuildContext to the parameters
 Future<void> fetchSpecificResource(BuildContext context, String resourceName) async {
  //CHANGE ARGS LATER 
+ //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
   final url = Uri.https(
-    'YOUR_CLOUD_RUN_URL.a.run.app', 
+    'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
     {
-      'user': saveUser,             
-      'lang': saveuserLang,         
-      'resource': resourceName,     
+      'user': "-",             
+      'lang': "IntroPashtx",  
+      'resource': "idiot",
     },
   );
 
@@ -2141,13 +2142,24 @@ Future<void> fetchSpecificResource(BuildContext context, String resourceName) as
     if (!context.mounted) return;
 
     if (response.statusCode == 200) {
+     final responseData = jsonDecode(response.body);
+    String lessonUrl = responseData['lesson_file'];
+    //String rawJsonFile = await myStorageManager.readLocalFile(resourceName); 
+    
+    // 2. Decode the downloaded JSON file
+    Map<String, dynamic> downloadedLessonData = jsonDecode(rawJsonFile);
+
+    // 3. Parse out the exact specific piece of data you need
+    // (Replace 'target_key' with whatever the actual key is in your JSON)
+    var specificDataYouNeed = downloadedLessonData.keys.toList();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
           backgroundColor: Colors.green, // Visual cue for success
         ),
       );
-      // ... parse your JSON and save to file ...
+      // ... parse your JSON and save to file ...------------------------------------------------------ 2151
+     return specificDataYouNeed;
     } 
     else if (response.statusCode == 400) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2427,15 +2439,71 @@ Future<void> fetchSpecificResource(BuildContext context, String resourceName) as
         value: checkedLemmas[lemmyx[i].toString()] ?? false, 
         
         onChanged: (bool? newValue) {
-          // 1. Visually toggle the checkmark
-          setState(() {
-            checkedLemmas[lemmyx[i].toString()] = newValue ?? false;
-           context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
-          });
-          
-          // 2. Run your original navigation logic
-          //_moveState(context, Routes[i]); 
-        },
+          if (newValue == true) {
+            
+            // Wait for the user's choice from the dialog
+            bool? confirmDownload = await showDialog<bool>(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Confirm Download'),
+                  content: Text('You are about to download ${lemmyx[i]}. Are you sure?'),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancel'),
+                      // Returning 'false' means they canceled
+                      onPressed: () => Navigator.of(context).pop(false), 
+                    ),
+                    TextButton(
+                      child: const Text('Confirm'),
+                      // Returning 'true' means we proceed
+                      onPressed: () => Navigator.of(context).pop(true), 
+                    ),
+                  ],
+                );
+              },
+            );
+
+            // 2. If they tapped 'Cancel' or tapped outside the box, stop right here.
+            if (confirmDownload != true) return;
+
+            // 3. They confirmed! Now we update the UI and start the download.
+            setState(() {
+              checkedLemmas.clear();
+              checkedLemmas[lemmyx[i].toString()] = true;
+              currentlyLoadingLemma = lemmyx[i].toString(); // Show hourglass
+            });
+            
+            context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
+
+            // 4. Start the backend call
+            fetchSpecificResource(context, lemmyx[i].toString()).then((parsedData) {
+               if (context.mounted) {
+                  setState(() {
+                    currentlyLoadingLemma = null; // Hide hourglass
+                  });
+                //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
+                  context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
+               }
+            }).catchError((error) {
+               if (context.mounted) {
+                  setState(() {
+                    currentlyLoadingLemma = null; // Hide hourglass on error
+                  });
+               }
+               print("Server call failed: $error");
+            });
+
+          } else {
+            // 5. If they UNCHECK the box, we don't need a popup. 
+            // Just instantly clear it.
+            setState(() {
+              checkedLemmas.remove(lemmyx[i].toString());
+              currentlyLoadingLemma = null; 
+            });
+            context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
+          }
+        }
       );
     },
   ),
