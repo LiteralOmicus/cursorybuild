@@ -20,6 +20,9 @@ import 'extralesson.dart' as extra;
 import 'package:kangarule/firebase_options.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 const String ppLong = """
@@ -2112,6 +2115,77 @@ class _MyHomePageState extends State<MyHomePage> {
     // This code runs after build ...
     //use this instead of futurebuilder
   }
+
+ // 1. Add BuildContext to the parameters
+Future<void> fetchSpecificResource(BuildContext context, String resourceName) async {
+ //CHANGE ARGS LATER 
+  final url = Uri.https(
+    'YOUR_CLOUD_RUN_URL.a.run.app', 
+    '/getLessons',                  
+    {
+      'user': saveUser,             
+      'lang': saveuserLang,         
+      'resource': resourceName,     
+    },
+  );
+
+  // Optional: Give immediate feedback that the download started
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Fetching $resourceName...")),
+  );
+
+  try {
+    final response = await http.get(url);
+
+    // 2. CRITICAL PRECAUTION: Check if the user left the screen while we were waiting!
+    if (!context.mounted) return;
+
+    if (response.statusCode == 200) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Success! Lesson downloaded."),
+          backgroundColor: Colors.green, // Visual cue for success
+        ),
+      );
+      // ... parse your JSON and save to file ...
+    } 
+    else if (response.statusCode == 400) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Error: Missing parameters."),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    }
+    else if (response.statusCode == 404) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Lesson '$resourceName' not found on the server."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+    } 
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Server crashed: Error ${response.statusCode}"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  } catch (e) {
+    // Check mounted again just in case the error took a while to throw
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Network request failed. Please check your connection."),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+}
+
 
 
   @override
