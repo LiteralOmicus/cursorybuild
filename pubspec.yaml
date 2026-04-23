@@ -62,7 +62,6 @@ dependencies:
   google_sign_in: ^6.1.0
   sign_in_with_apple: ^7.0.1
   hive_flutter: ^1.1.0
-  shared_preferences: ^2.2.3
   
   
 
