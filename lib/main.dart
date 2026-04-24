@@ -2150,7 +2150,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     //String rawJsonFile = await myStorageManager.readLocalFile(resourceName); 
     
     // 2. Decode the downloaded JSON file
-   Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse);
+   Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
 
     // 3. Parse out the exact specific piece of data you need
     // (Replace 'target_key' with whatever the actual key is in your JSON)
@@ -2190,7 +2190,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     }
   } catch (e) {
     // Check mounted again just in case the error took a while to throw
-    if (!context.mounted) return;
+    if (!context.mounted) return [];
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
