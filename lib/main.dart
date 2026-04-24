@@ -2118,6 +2118,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
  // 1. Add BuildContext to the parameters
+ //I NEED TO CHANGE RETURN TYPE IF I MOVE REFERENCER REFERENCES UP HERE
 Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
  //CHANGE ARGS LATER 
  //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
@@ -2140,19 +2141,20 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     final response = await http.get(url);
 
     // 2. CRITICAL PRECAUTION: Check if the user left the screen while we were waiting!
-    if (!context.mounted) return;
+    if (!context.mounted) return [];
 
     if (response.statusCode == 200) {
      final responseData = jsonDecode(response.body);
-    String lessonUrl = responseData['lesson_file'];
+     String lessonUrl = responseData['lesson_file'];
+     final lessonResponse = await http.get(Uri.parse(lessonUrl));
     //String rawJsonFile = await myStorageManager.readLocalFile(resourceName); 
     
     // 2. Decode the downloaded JSON file
-   // Map<String, dynamic> downloadedLessonData = jsonDecode(rawJsonFile);
+   Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse);
 
     // 3. Parse out the exact specific piece of data you need
     // (Replace 'target_key' with whatever the actual key is in your JSON)
-    var specificDataYouNeed = lessonUrl.keys.toList();
+    var specificDataYouNeed = downloadedLessonData.keys.toList();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
@@ -2197,6 +2199,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       ),
     );
   }
+ return [];
 }
 
 
