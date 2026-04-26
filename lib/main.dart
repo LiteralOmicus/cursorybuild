@@ -2151,12 +2151,19 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     
     // 2. Decode the downloaded JSON file
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
-
+   List<dynamic> topicsList = downloadedLessonData['topics'];
+   List<String> specificDataYouNeed = topicsList.map((item) {
+          
+          // 'item' represents one single dictionary in the list.
+          // We ask for the "header" value, convert it to a string, and return it.
+          return item['header'].toString();
+          
+        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
     // 3. Parse out the exact specific piece of data you need
     // (Replace 'target_key' with whatever the actual key is in your JSON)
    // var specificDataYouNeed = downloadedLessonData.keys.toList();
-   Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
-   List<String> specificDataYouNeed = topicsMap.keys.toList();
+  // Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
+  // List<String> specificDataYouNeed = topicsMap.keys.toList();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
