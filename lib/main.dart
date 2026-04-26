@@ -1503,8 +1503,7 @@ class MyCard extends StatelessWidget {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  //CAUSE 4 CONCERN IM  STILL SEEING ADS
-//unawaited(MobileAds.instance.initialize());
+  await Hive.initFlutter();
 await Firebase.initializeApp(
    options: DefaultFirebaseOptions.currentPlatform,
 );
