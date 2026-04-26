@@ -2154,7 +2154,9 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
     // 3. Parse out the exact specific piece of data you need
     // (Replace 'target_key' with whatever the actual key is in your JSON)
-    var specificDataYouNeed = downloadedLessonData.keys.toList();
+   // var specificDataYouNeed = downloadedLessonData.keys.toList();
+   Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
+   List<String> specificDataYouNeed = topicsMap.keys.toList();
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
