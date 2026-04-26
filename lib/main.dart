@@ -1967,7 +1967,7 @@ class SignInState extends State<SignIn> {
 
   }
 }
-final Map lessonmaker = jsonDecode(forEducation.all);
+dynamic Map lessonmaker = jsonDecode(forEducation.all); 
 List tierkeeper = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']];
 
 List tier = tierkeeper[0];
@@ -2154,7 +2154,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    await lessonsBox.put(resourceName, downloadedLessonData);
    List<dynamic> topicsList = downloadedLessonData['topics'];
    // 2. Create your new Map where the values are LISTS
-        Map<String, List<String>> groupedTopics = {};
+        lessonmaker = {};
 
         // 3. Loop through every item in the JSON list
         for (var item in topicsList) {
@@ -2163,13 +2163,14 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
           // If the Map already has this header (like "Tori"), add the new text to its list
           if (groupedTopics.containsKey(header)) {
-            groupedTopics[header]!.add(verbatimText);
+            lessonmaker[header]!.add(verbatimText);
           } 
           // If this is the very first time we've seen this header, create a new list for it
           else {
-            groupedTopics[header] = [verbatimText];
+            lessonmaker[header] = [verbatimText];
           }
         }
+   
    List<String> specificDataYouNeed = topicsList.map((item) {
           
           // 'item' represents one single dictionary in the list.
@@ -2182,6 +2183,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    // var specificDataYouNeed = downloadedLessonData.keys.toList();
   // Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
   // List<String> specificDataYouNeed = topicsMap.keys.toList();
+    // allLessons = 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
