@@ -2150,7 +2150,26 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     
     // 2. Decode the downloaded JSON file
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
+   var lessonsBox = await Hive.openBox('lessonsBox');
+   await lessonsBox.put(resourceName, downloadedLessonData);
    List<dynamic> topicsList = downloadedLessonData['topics'];
+   // 2. Create your new Map where the values are LISTS
+        Map<String, List<String>> groupedTopics = {};
+
+        // 3. Loop through every item in the JSON list
+        for (var item in topicsList) {
+          String header = item['header'].toString();
+          String verbatimText = item['verbatim_text'].toString();
+
+          // If the Map already has this header (like "Tori"), add the new text to its list
+          if (groupedTopics.containsKey(header)) {
+            groupedTopics[header]!.add(verbatimText);
+          } 
+          // If this is the very first time we've seen this header, create a new list for it
+          else {
+            groupedTopics[header] = [verbatimText];
+          }
+        }
    List<String> specificDataYouNeed = topicsList.map((item) {
           
           // 'item' represents one single dictionary in the list.
