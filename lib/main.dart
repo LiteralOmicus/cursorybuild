@@ -2487,7 +2487,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                     currentlyLoadingLemma = null; // Hide hourglass
                   });
                 //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
-                  context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
+                  context.read<Referencer>().sendtoLessons(parsedData);
                }
             }).catchError((error) {
                if (context.mounted) {
