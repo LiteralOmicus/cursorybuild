@@ -2135,7 +2135,7 @@ class _MyHomePageState extends State<MyHomePage> {
   
   // 2. Set the key and value. 
   // You must use the method that matches your data type:
-  await prefs.setString('lang_pref', value);
+  await prefs.setString('lang_pref', value ?? 'ru');
   
 
 }
@@ -2209,6 +2209,9 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   // Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
   // List<String> specificDataYouNeed = topicsMap.keys.toList();
     // allLessons = 
+
+
+     //THE TIMING OF THIIIIIIIIIIIIIIS MIGHT F MY REORDABLELIST
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
@@ -2302,11 +2305,21 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
               icon: const Icon(Icons.auto_stories),
             ),
             IconButton(
-              onPressed: () {
+              onPressed: () async {
+               String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
+               if (!context.mounted) return;
+               if (RQ == 'ru') {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
                 )
                 );
+               }
+               else {
+               Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentencesx()
+                                          )
+                );
+               }
               },
               icon: const Icon(Icons.local_laundry_service),
             ),
@@ -3680,6 +3693,44 @@ class _ExercisesxState extends State<Exercisesx> {
     //init should make sure it only runs once
 
   }
+ Future<void> loadVocabFromHive(String resourceName) async {
+    // 1. Open the box
+    var lessonsBox = await Hive.openBox('lessonsBox');
+
+    // 2. Pull out the entire saved JSON map for this lesson
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+
+    if (savedData != null) {
+      
+      // 3. Target the specific key. 
+      // (Note: You mentioned "pairs", but check your JSON just in case it is "sentence_pairs"!)
+      List<dynamic>? rawVocabList = savedData['pairs']; 
+
+      if (rawVocabList != null) {
+        
+        // 4. Clean it up! Convert Hive's dynamic maps into strict Dart maps.
+        // I'm assuming your JSON keys are 'english' and 'Pashto' based on your previous architecture.
+        List<Map<String, String>> cleanVocabList = rawVocabList.map((item) {
+          return {
+            'english': item['english'].toString(),
+            'Pashto': item['Pashto'].toString(), 
+          };
+        }).toList();
+
+        // SUCCESS! You now have a perfect List of Maps ready for the UI.
+        print("Successfully loaded ${cleanVocabList.length} vocab pairs!");
+        print("First word: ${cleanVocabList[0]['english']} -> ${cleanVocabList[0]['Pashto']}");
+        
+        // Now you can pass `cleanVocabList` to your ListView.builder or Flashcard widget!
+
+      } else {
+        print("Could not find the 'pairs' key in the saved data.");
+      }
+    } else {
+      print("Could not find the lesson $resourceName in Hive.");
+    }
+  }
+ //----------------------------------PROBLEM
 
 
   void openKeyboard() {
@@ -3829,17 +3880,10 @@ class _ExercisesxState extends State<Exercisesx> {
                             fit: FlexFit.tight,
                             child: Column(
                               children: [Row(
-                                  children: <Widget>[FloatingActionButton(
-                                    onPressed: () {
-
-                                         onLaunch();
-
-                                    },
-                                    child: const Icon(Icons.arrow_forward_sharp),
-                                  ),
+                                  children: <Widget>[
                                     Expanded(
                                         child: Text(
-                                          setTrip[_counter],
+                                          setTrip[_counter], //Eng
                                           textAlign: TextAlign.center,
                                           style: Theme
                                               .of(context)
