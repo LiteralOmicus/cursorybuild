@@ -2129,7 +2129,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //use this instead of futurebuilder
   }
 
- Future<void> saveMyData({required String value="ru"}) async {
+ Future<void> saveMyData({String value="ru"}) async {
   // 1. Open the storage
   final prefs = await SharedPreferences.getInstance();
   
@@ -2532,8 +2532,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
               checkedLemmas[lemmyx[i].toString()] = true;
               currentlyLoadingLemma = lemmyx[i].toString(); // Show hourglass
             });
-            saveMyData(value=currentlyLoadingLemma);
-            my_lang_pref = currentlyLoadingLemma;
+            saveMyData(value:currentlyLoadingLemma);
+            //my_lang_pref = currentlyLoadingLemma;
               
             
             context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
@@ -3614,10 +3614,7 @@ class _ExercisesState extends State<Exercises> {
 }
  class Sentencesx extends StatelessWidget {
   Sentencesx({
-    Key? key, required this.sentencestart,
-  }) : super(key: key);
-
-  late Map sentencestart;
+    Key? key,  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -3630,7 +3627,7 @@ class _ExercisesState extends State<Exercises> {
       theme: context.watch<ThemeProvider>().currentTheme,
       //ThemeData.dark().copyWith(scaffoldBackgroundColor: darkBlue),
       // context.read<SwitchThemeCubit>().state,
-      home: Exercisesx(fender: sentencestart),
+      home: Exercisesx(),
     );
     //     }
     //  );
@@ -3641,10 +3638,10 @@ class _ExercisesState extends State<Exercises> {
 class Exercisesx extends StatefulWidget {
 
   Exercisesx({
-    Key? key, required this.fender,
+    Key? key,
   }) : super(key: key);
 
-  late Map fender;
+ 
 
   @override
   State<Exercisesx> createState() => _ExercisesxState();
@@ -3660,28 +3657,22 @@ class _ExercisesxState extends State<Exercisesx> {
   //once I get exp levels and assign exp points to all lessons
   //a switch statement should determine which pool is picked
   //then it should extra.rightpool
+ //NEEDS CALL FROM HIVE HERE
  List poolList = extra.phew.keys.toList();
   //late List backupPool;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip;
-  late final AudioPlayer justaplayer;
   //late Future<bool> anonMine;
  // late bool anonMine;
   @override
   void initState() {
     super.initState();
-    justaplayer = AudioPlayer();
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
-    final sender = widget.fender;
     //final anonMine = _loadData();
-    if (sender.isNotEmpty) {
-      setTrip = pool_cull(fast_sent_sort_for_callback());
-    }
-    //this is short for testing
-    else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
+   // else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
     //print(anonMine);
     //backupPool = [...poolList].shuffle();
     //extra.phew.keys.toList().sublist(0,6);}
