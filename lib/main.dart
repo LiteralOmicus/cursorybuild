@@ -2156,7 +2156,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
 
-        // 3. Loop through every item in the JSON list
+        Map<String, List<String>> groupedTopics = {};
         for (var item in topicsList) {
           String header = item['header'].toString();
           String verbatimText = item['verbatim_text'].toString();
