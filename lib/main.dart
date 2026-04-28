@@ -3728,10 +3728,11 @@ class _ExercisesState extends State<Exercises> {
   void _handleRap() {
     clearText();
     //changes page
-    setState(() {
+   setState(() {
       _active = false;
       justonce = false;
     myFocusNode.requestFocus();
+  });
   }
 
 
