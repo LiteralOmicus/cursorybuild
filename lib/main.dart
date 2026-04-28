@@ -2129,7 +2129,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //use this instead of futurebuilder
   }
 
- Future<void> saveMyData({String value="ru"}) async {
+ Future<void> saveMyData({String? value="ru"}) async {
   // 1. Open the storage
   final prefs = await SharedPreferences.getInstance();
   
