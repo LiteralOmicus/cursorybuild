@@ -449,7 +449,7 @@ Future<String?> readLANGPREF() async {
   String safeName = prefs.getString('lang_pref') ?? 'ru';
  return safeName;
   }
-}
+
 
 // 1. Helper to get the correct file based on WHO is logged in
 Future<File> _getLocalFile(String userId) async {
@@ -3630,7 +3630,7 @@ class _ExercisesState extends State<Exercises> {
       theme: context.watch<ThemeProvider>().currentTheme,
       //ThemeData.dark().copyWith(scaffoldBackgroundColor: darkBlue),
       // context.read<SwitchThemeCubit>().state,
-      home: Exercises(fender: sentencestart),
+      home: Exercisesx(fender: sentencestart),
     );
     //     }
     //  );
@@ -3638,19 +3638,19 @@ class _ExercisesState extends State<Exercises> {
 }
 
 
-class Exercises extends StatefulWidget {
+class Exercisesx extends StatefulWidget {
 
-  Exercises({
+  Exercisesx({
     Key? key, required this.fender,
   }) : super(key: key);
 
   late Map fender;
 
   @override
-  State<Exercises> createState() => _ExercisesState();
+  State<Exercisesx> createState() => _ExercisesxState();
 }
 
-class _ExercisesState extends State<Exercises> {
+class _ExercisesxState extends State<Exercisesx> {
   int _counter = 0;
   bool justonce = false;
   bool _active = false;
