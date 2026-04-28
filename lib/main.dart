@@ -3611,7 +3611,7 @@ class _ExercisesState extends State<Exercises> {
     }
   }
 
-
+}
  class Sentencesx extends StatelessWidget {
   Sentencesx({
     Key? key, required this.sentencestart,
