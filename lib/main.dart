@@ -440,6 +440,17 @@ Map<String, dynamic> NB =  {
     ]
   }
 };
+Future<String?> readLANGPREF() async {
+  //my_lang_pref
+  final prefs = await SharedPreferences.getInstance();
+  
+  // 2. Read the value using the exact same key.
+//  String? savedName = prefs.getString('lang_pref');
+  String safeName = prefs.getString('lang_pref') ?? 'ru';
+ return safeName;
+  }
+}
+
 // 1. Helper to get the correct file based on WHO is logged in
 Future<File> _getLocalFile(String userId) async {
   final directory = await getApplicationDocumentsDirectory();
@@ -747,6 +758,8 @@ class Referencer extends ChangeNotifier {
 
   late Map Notebook;
   Map Lemx = {};
+// String my_lang_pref = 'ru';
+ //I think HAVING THIS HERE WILL RESET EVERY LAUNCH BUT I CAN KEEP IT HERE IN CASE
 
   // late int exp;
 
@@ -2116,6 +2129,18 @@ class _MyHomePageState extends State<MyHomePage> {
     //use this instead of futurebuilder
   }
 
+ Future<void> saveMyData({required String value="ru"}) async {
+  // 1. Open the storage
+  final prefs = await SharedPreferences.getInstance();
+  
+  // 2. Set the key and value. 
+  // You must use the method that matches your data type:
+  await prefs.setString('lang_pref', value);
+  
+
+}
+
+
  // 1. Add BuildContext to the parameters
  //I NEED TO CHANGE RETURN TYPE IF I MOVE REFERENCER REFERENCES UP HERE
 Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
@@ -2502,10 +2527,14 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
             // 3. They confirmed! Now we update the UI and start the download.
             setState(() {
+              
               checkedLemmas.clear();
               checkedLemmas[lemmyx[i].toString()] = true;
               currentlyLoadingLemma = lemmyx[i].toString(); // Show hourglass
             });
+            saveMyData(value=currentlyLoadingLemma);
+            my_lang_pref = currentlyLoadingLemma;
+              
             
             context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
 
@@ -3582,6 +3611,324 @@ class _ExercisesState extends State<Exercises> {
     }
   }
 
+
+ class Sentencesx extends StatelessWidget {
+  Sentencesx({
+    Key? key, required this.sentencestart,
+  }) : super(key: key);
+
+  late Map sentencestart;
+
+  @override
+  Widget build(BuildContext context) {
+    // return Consumer<ThemeProvider>(
+    //     builder: (context, ThemeProvider themeprovider, child)
+    //    {
+    return MaterialApp(
+      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
+      theme: context.watch<ThemeProvider>().currentTheme,
+      //ThemeData.dark().copyWith(scaffoldBackgroundColor: darkBlue),
+      // context.read<SwitchThemeCubit>().state,
+      home: Exercises(fender: sentencestart),
+    );
+    //     }
+    //  );
+  }
+}
+
+
+class Exercises extends StatefulWidget {
+
+  Exercises({
+    Key? key, required this.fender,
+  }) : super(key: key);
+
+  late Map fender;
+
+  @override
+  State<Exercises> createState() => _ExercisesState();
+}
+
+class _ExercisesState extends State<Exercises> {
+  int _counter = 0;
+  bool justonce = false;
+  bool _active = false;
+  //I will need to write sender to database
+  Map sender = {};
+
+  //once I get exp levels and assign exp points to all lessons
+  //a switch statement should determine which pool is picked
+  //then it should extra.rightpool
+ List poolList = extra.phew.keys.toList();
+  //late List backupPool;
+  late TextEditingController _controller;
+  late FocusNode myFocusNode;
+  late List setTrip;
+  late final AudioPlayer justaplayer;
+  //late Future<bool> anonMine;
+ // late bool anonMine;
+  @override
+  void initState() {
+    super.initState();
+    justaplayer = AudioPlayer();
+    _controller = TextEditingController();
+    myFocusNode = FocusNode();
+    _counter = 0;
+    final sender = widget.fender;
+    //final anonMine = _loadData();
+    if (sender.isNotEmpty) {
+      setTrip = pool_cull(fast_sent_sort_for_callback());
+    }
+    //this is short for testing
+    else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
+    //print(anonMine);
+    //backupPool = [...poolList].shuffle();
+    //extra.phew.keys.toList().sublist(0,6);}
+    // linklink = islandreffy();
+    //init should make sure it only runs once
+
+  }
+
+
+  void openKeyboard() {
+    FocusScope.of(context).requestFocus(myFocusNode);
+  }
+
+
+  void clearText() {
+    _controller.clear();
+  }
+
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    myFocusNode.dispose();
+    super.dispose();
+  }
+
+
+
+  void _handleTap() {
+    clearText();
+    myFocusNode.requestFocus();
+  }
+
+  
+  void _handleTapboxChanged(bool newValue) {
+   // envelope(setTrip[_counter], extra.phew[setTrip[_counter]]["translation"],extra.phew[setTrip[_counter]]['code'], _controller.text );
+    // envelope(extra.phew[setTrip[_counter]],extra.phew[setTrip[_counter]]["translation"],  extra.phew[setTrip[_counter]]['code'], _controller.text);
+    setState(() {
+      //submits value
+      _active = newValue;
+    });
+  }
+
+  void _handleRap() {
+    clearText();
+    //changes page
+    setState(() {
+      _active = false;
+      justonce = false;
+    myFocusNode.requestFocus();
+  }
+
+
+
+  Future<void> onLaunch() async {
+   //THIS MIHT B PROBLEM
+   await Future(() {}); // <-- Dummy await
+  }
+
+ 
+
+
+  @override
+  Widget build(BuildContext context) {
+    try {
+      return
+        GestureDetector(
+            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+            child: Scaffold(
+              appBar: AppBar(
+                actions: [
+                  IconButton(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
+                          ),
+                        );
+                      },
+                      icon: Text(
+                          '🏠', // Home emoji
+                          style: TextStyle(
+                            fontSize: 24, // Adjust size to look like an icon
+                            color: Colors.white, // Adjust color
+                          )
+                      )
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyNotebook())
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.auto_stories),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
+                      )
+                      );
+                    },
+                    icon: const Icon(Icons.local_laundry_service),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(context).push(
+  MaterialPageRoute(
+    builder: (context) => const MySettings(), // <--- Direct navigation
+  ),
+);
+                    },
+                    icon: const Icon(Icons.miscellaneous_services),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      context.read<ThemeProvider>().switchTheme();
+                    },
+                    icon: Icon(Icons.sunny_snowing),
+                  ),
+                ],
+              ),
+              body: Center(
+                  child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Flexible(
+                            flex: 1,
+                            fit: FlexFit.tight,
+                            child: Container(
+                              decoration: BoxDecoration
+                                (
+                                color: Colors.black,
+                                border: Border.all(),),
+                              height: 100,
+                              width: MediaQuery
+                                  .of(context)
+                                  .size
+                                  .width,
+                              child: GestureDetector(
+                                onDoubleTap: _handleRap,
+                                child: Image.asset('assets/pics/movetopics.jpg',
+                                    fit: BoxFit.contain),
+
+                              ),
+                            )
+                        ),
+                        Flexible(
+                            flex: 1,
+                            fit: FlexFit.tight,
+                            child: Column(
+                              children: [Row(
+                                  children: <Widget>[FloatingActionButton(
+                                    onPressed: () {
+
+                                         onLaunch();
+
+                                    },
+                                    child: const Icon(Icons.arrow_forward_sharp),
+                                  ),
+                                    Expanded(
+                                        child: Text(
+                                          setTrip[_counter],
+                                          textAlign: TextAlign.center,
+                                          style: Theme
+                                              .of(context)
+                                              .textTheme
+                                              .headlineMedium,
+                                          softWrap: true,
+                                          maxLines: 3,
+                                        )
+                                    ),
+                                  ]
+                              ),
+
+                                Visibility(
+                                    visible: _active,
+                                    child: Text(extra.phew[setTrip[_counter]]["translation"])
+                                ),
+                                Container(
+                                    child: Padding(
+                                        padding: const EdgeInsets.all(10.0),
+                                        child: TextField(
+                                            keyboardType: TextInputType.name,
+                                            autofocus: true,
+                                            focusNode: myFocusNode,
+
+                                            controller: _controller,
+                                            onSubmitted: (String value) {
+                                              if (value.isNotEmpty &&
+                                                  value != null) {
+                                                _handleTapboxChanged(true);
+                                              }
+                                            },
+//tis
+                                            //needs a safe area
+                                            decoration: InputDecoration(
+                                              hintStyle: const TextStyle(
+                                                  color: Colors.red),
+                                              hintText: "Enter your answer",
+                                              filled: true,
+                                              fillColor: Colors.blueAccent,
+                                              border: OutlineInputBorder(
+                                                borderSide: BorderSide.none,
+                                                borderRadius: BorderRadius
+                                                    .circular(50),
+
+                                              ),
+                                            )
+                                        )
+                                    )
+                                )
+
+
+                              ],
+                            )
+                        ),
+
+                      ]
+                  )
+              ), //gesturedetector
+            )
+        );
+    }
+
+    catch(e) {
+      print(e);
+      return Center(
+          child: Container(
+              decoration: BoxDecoration
+                (
+                color: Colors.black,
+                border: Border.all(),
+              ),
+              height:MediaQuery.of(context).size.width,
+              width: MediaQuery.of(context).size.width,
+              child: Image.asset('assets/pics/movetopics.png',
+                  fit: BoxFit.contain)
+          )
+      );
+    }
+  }
+
+ 
 }
 class BannerAdPage extends StatefulWidget {
   // Main content widget to display above the ad
