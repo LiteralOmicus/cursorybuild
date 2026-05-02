@@ -2176,7 +2176,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     // 2. Decode the downloaded JSON file
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
    var lessonsBox = await Hive.openBox('lessonsBox');
-   await lessonsBox.put(resourceName, downloadedLessonData);
+   await lessonsBox.put('pashto', downloadedLessonData);
    List<dynamic> topicsList = downloadedLessonData['topics'];
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
@@ -3678,12 +3678,27 @@ class _ExercisesxState extends State<Exercisesx> {
   late List setTrip;
   //late Future<bool> anonMine;
  // late bool anonMine;
+
+ List<Map<String, String>>? myVocabList;
+
+
+  Future<void> _fetchVocab() async {
+    // 3. Grab the data from your Hive function
+    var data = await loadVocabFromHive("IntroPashtx");
+    
+    // 4. Put the data into the variable and redraw the screen!
+    setState(() {
+      myVocabList = data;
+    });
+  }
+ 
   @override
   void initState() {
     super.initState();
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
+   _fetchVocab();
     //final anonMine = _loadData();
    // else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
     //print(anonMine);
@@ -3706,7 +3721,8 @@ class _ExercisesxState extends State<Exercisesx> {
       return rawVocabList.map((item) {
         return {
           'english': item['english'].toString(),
-          'Pashto': item['Pashto'].toString(), 
+         //HAS TO BE LANGUAGE AGNOSTIC
+          'target': item['Pashto'].toString(), 
         };
       }).toList();
     } 
@@ -3863,7 +3879,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                   children: <Widget>[
                                     Expanded(
                                         child: Text(
-                                          setTrip[_counter], //Eng
+                                          myVocabList['english'][_counter], //Eng
                                           textAlign: TextAlign.center,
                                           style: Theme
                                               .of(context)
@@ -3878,7 +3894,8 @@ class _ExercisesxState extends State<Exercisesx> {
 
                                 Visibility(
                                     visible: _active,
-                                    child: Text(extra.phew[setTrip[_counter]]["translation"])
+                                 //HAS RTO BE LANGUAGE AGNOSTIC
+                                    child: Text(myVocabList['target'][_counter])
                                 ),
                                 Container(
                                     child: Padding(
