@@ -3693,46 +3693,26 @@ class _ExercisesxState extends State<Exercisesx> {
     //init should make sure it only runs once
 
   }
- Future<void> loadVocabFromHive(String resourceName) async {
-    // 1. Open the box
+ 
+// Make sure it returns the List!
+  Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-
-    // 2. Pull out the entire saved JSON map for this lesson
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null) {
+    if (savedData != null && savedData['vocab'] != null && savedData['vocab']['pairs'] != null) {
+      List<dynamic> rawVocabList = savedData['vocab']['pairs']; 
       
-      // 3. Target the specific key. 
-      // (Note: You mentioned "pairs", but check your JSON just in case it is "sentence_pairs"!)
-      List<dynamic>? rawVocabList = savedData['pairs']; 
-
-      if (rawVocabList != null) {
-        
-        // 4. Clean it up! Convert Hive's dynamic maps into strict Dart maps.
-        // I'm assuming your JSON keys are 'english' and 'Pashto' based on your previous architecture.
-        List<Map<String, String>> cleanVocabList = rawVocabList.map((item) {
-          return {
-            'english': item['english'].toString(),
-            'Pashto': item['Pashto'].toString(), 
-          };
-        }).toList();
-
-        // SUCCESS! You now have a perfect List of Maps ready for the UI.
-        print("Successfully loaded ${cleanVocabList.length} vocab pairs!");
-        print("First word: ${cleanVocabList[0]['english']} -> ${cleanVocabList[0]['Pashto']}");
-        
-        // Now you can pass `cleanVocabList` to your ListView.builder or Flashcard widget!
-
-      } else {
-        print("Could not find the 'pairs' key in the saved data.");
-      }
-    } else {
-      print("Could not find the lesson $resourceName in Hive.");
-    }
+      // Clean it up and RETURN it
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'Pashto': item['Pashto'].toString(), 
+        };
+      }).toList();
+    } 
+    
+    return []; // Return an empty list if nothing is found to prevent crashes
   }
- //----------------------------------PROBLEM
-
-
   void openKeyboard() {
     FocusScope.of(context).requestFocus(myFocusNode);
   }
