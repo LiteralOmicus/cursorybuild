@@ -2147,6 +2147,28 @@ class _MyHomePageState extends State<MyHomePage> {
 Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
  //CHANGE ARGS LATER 
  //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
+ var lessonsBox = await Hive.openBox('lessonsBox');
+  
+  if (lessonsBox.containsKey('pashto')) {
+    // We found it in Hive! 
+    
+    // Safety check because opening the box took a split second
+    if (!context.mounted) return []; 
+    
+    // Show the success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Completed! Loaded from device storage."),
+        backgroundColor: Colors.green, // Optional: make it look like a success!
+      ),
+    );
+    
+    // THE EJECT BUTTON
+    // Stop the function right here so the network call below never happens.
+    // Note: If the screen calling this function expects the actual List<String> 
+    // to be returned, you will need to extract and return it here instead of [].
+    return []; 
+  }
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
@@ -2172,11 +2194,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      final responseData = jsonDecode(response.body);
      String lessonUrl = responseData['lesson_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
-    //String rawJsonFile = await myStorageManager.readLocalFile(resourceName); 
-    
-    // 2. Decode the downloaded JSON file
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
-   var lessonsBox = await Hive.openBox('lessonsBox');
+   //var lessonsBox = await Hive.openBox('lessonsBox');
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
    await lessonsBox.put('pashto', downloadedLessonData);
    List<dynamic> topicsList = downloadedLessonData['topics'];
@@ -3722,8 +3741,8 @@ class _ExercisesxState extends State<Exercisesx> {
     var lessonsBox = await Hive.openBox('lessonsBox');
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['vocab'] != null && savedData['vocab']['pairs'] != null) {
-      List<dynamic> rawVocabList = savedData['vocab']['pairs']; 
+    if (savedData != null && savedData['pairs'] != null) {
+      List<dynamic> rawVocabList = savedData['pairs']; 
       
       // Clean it up and RETURN it
       return rawVocabList.map((item) {
