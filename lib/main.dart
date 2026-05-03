@@ -2157,11 +2157,11 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    Map<dynamic, dynamic>? savedData = lessonsBox.get('pashto');
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
-  if (savedData != null && savedData['topics'] != null) {
+  if (savedData != null && savedData['topics'] != null) { 
     
     // 4. Target the topics list!
     List<dynamic> xopicslist = savedData['topics'];
-  }
+  
         for (var item in xopicslist) {
           String header = item['header'].toString();
           String verbatimText = item['verbatim_text'].toString();
@@ -2175,11 +2175,11 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
             lessonmaker[header] = [verbatimText];
           }
         }
-   
+  
    List<String> specificDataYouNeed = topicsList.map((item) {   
           return item['header'].toString();
         }).toList(); // .toList() packages the assembly line output back into a standard Dart List
-  
+  }
     // Safety check because opening the box took a split second
     if (!context.mounted) return []; 
     
@@ -3739,9 +3739,7 @@ class _ExercisesxState extends State<Exercisesx> {
     _counter = 0;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
   // _fetchVocab();
-   setState(() {
-      myVocabList = loadVocabFromHive('pashto');
-    });
+  
 
   }
  
@@ -3754,13 +3752,19 @@ class _ExercisesxState extends State<Exercisesx> {
       List<dynamic> rawVocabList = savedData['pairs']; 
       
       // Clean it up and RETURN it
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-         //HAS TO BE LANGUAGE AGNOSTIC
-          'target': item['Pashto'].toString(), 
-        };
-      }).toList();
+     // rawVocabList.map((item) {  return {  'english': item['english'].toString(),  
+     //HAS TO BE LANGUAGE AGNOSTIC
+       //   'target': item['Pashto'].toString(),   };
+    //  }).toList();
+    setState(() {
+    myVocabList = rawVocabList.map((item) {
+  return {
+    'english': item['english'].toString(),
+    // HAS TO BE LANGUAGE AGNOSTIC
+    'target': item['Pashto'].toString(), 
+  };
+}).toList();
+    });  
     } 
     
     return []; // Return an empty list if nothing is found to prevent crashes
