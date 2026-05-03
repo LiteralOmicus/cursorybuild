@@ -3884,7 +3884,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                   children: <Widget>[
                                     Expanded(
                                         child: Text(
-                                          myVocabList[_counter]['english'] ?? "MISSING", //Eng
+                                          myVocabList![_counter]['english'] ?? "MISSING", //Eng
                                           textAlign: TextAlign.center,
                                           style: Theme
                                               .of(context)
@@ -3900,7 +3900,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                 Visibility(
                                     visible: _active,
                                  //HAS RTO BE LANGUAGE AGNOSTIC
-                                    child: Text(myVocabList[_counter]['target'] ?? "MISSING")
+                                    child: Text(myVocabList![_counter]['target'] ?? "MISSING")
                                 ),
                                 Container(
                                     child: Padding(
