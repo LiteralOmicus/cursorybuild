@@ -2151,7 +2151,35 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   
   if (lessonsBox.containsKey('pashto')) {
     // We found it in Hive! 
+    lessonmaker = {};
+
+        Map<String, List<String>> groupedTopics = {};
+   Map<dynamic, dynamic>? savedData = lessonsBox.get('pashto');
+
+  // 3. Check that the data actually exists AND that the 'topics' key is inside it
+  if (savedData != null && savedData['topics'] != null) {
     
+    // 4. Target the topics list!
+    List<dynamic> xopicslist = savedData['topics'];
+  }
+        for (var item in xopicslist) {
+          String header = item['header'].toString();
+          String verbatimText = item['verbatim_text'].toString();
+
+          // If the Map already has this header (like "Tori"), add the new text to its list
+          if (groupedTopics.containsKey(header)) {
+            lessonmaker[header]!.add(verbatimText);
+          } 
+          // If this is the very first time we've seen this header, create a new list for it
+          else {
+            lessonmaker[header] = [verbatimText];
+          }
+        }
+   
+   List<String> specificDataYouNeed = topicsList.map((item) {   
+          return item['header'].toString();
+        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
+  
     // Safety check because opening the box took a split second
     if (!context.mounted) return []; 
     
@@ -2163,11 +2191,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       ),
     );
     
-    // THE EJECT BUTTON
-    // Stop the function right here so the network call below never happens.
-    // Note: If the screen calling this function expects the actual List<String> 
-    // to be returned, you will need to extract and return it here instead of [].
-    return []; 
+    
+    return specificDataYouNeed; 
   }
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
@@ -2195,6 +2220,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String lessonUrl = responseData['lesson_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
+     //---------------------------------------------------------------------------------------
+     //IF THERES ANY PROBLEM CHECC THIS
    //var lessonsBox = await Hive.openBox('lessonsBox');
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
    await lessonsBox.put('pashto', downloadedLessonData);
@@ -2217,19 +2244,10 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
           }
         }
    
-   List<String> specificDataYouNeed = topicsList.map((item) {
-          
-          // 'item' represents one single dictionary in the list.
-          // We ask for the "header" value, convert it to a string, and return it.
+   List<String> specificDataYouNeed = topicsList.map((item) {   
           return item['header'].toString();
-          
         }).toList(); // .toList() packages the assembly line output back into a standard Dart List
-    // 3. Parse out the exact specific piece of data you need
-    // (Replace 'target_key' with whatever the actual key is in your JSON)
-   // var specificDataYouNeed = downloadedLessonData.keys.toList();
-  // Map<String, dynamic> topicsMap = downloadedLessonData['topics'];
-  // List<String> specificDataYouNeed = topicsMap.keys.toList();
-    // allLessons = 
+  
 
 
      //THE TIMING OF THIIIIIIIIIIIIIIS MIGHT F MY REORDABLELIST
@@ -2337,7 +2355,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                }
                else {
                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx()
+                    builder: (context) => Sentencesx(vocabx: "stupid")
                                           )
                 );
                }
@@ -3652,7 +3670,10 @@ class _ExercisesState extends State<Exercises> {
 }
  class Sentencesx extends StatelessWidget {
   Sentencesx({
-    Key? key,  }) : super(key: key);
+     Key? key, required this.vocabx,
+  }) : super(key: key);
+
+  late String vocabx;
 
   @override
   Widget build(BuildContext context) {
@@ -3665,7 +3686,7 @@ class _ExercisesState extends State<Exercises> {
       theme: context.watch<ThemeProvider>().currentTheme,
       //ThemeData.dark().copyWith(scaffoldBackgroundColor: darkBlue),
       // context.read<SwitchThemeCubit>().state,
-      home: Exercisesx(),
+      home: Exercisesx(vocabxx: vocabx),
     );
     //     }
     //  );
@@ -3676,11 +3697,11 @@ class _ExercisesState extends State<Exercises> {
 class Exercisesx extends StatefulWidget {
 
   Exercisesx({
-    Key? key,
+       Key? key, required this.vocabxx,
   }) : super(key: key);
 
  
-
+late String vocabxx;
   @override
   State<Exercisesx> createState() => _ExercisesxState();
 }
@@ -3689,20 +3710,12 @@ class _ExercisesxState extends State<Exercisesx> {
   int _counter = 0;
   bool justonce = false;
   bool _active = false;
-  //I will need to write sender to database
-  Map sender = {};
 
-  //once I get exp levels and assign exp points to all lessons
-  //a switch statement should determine which pool is picked
-  //then it should extra.rightpool
- //NEEDS CALL FROM HIVE HERE
- List poolList = extra.phew.keys.toList();
-  //late List backupPool;
+ // final myVocabList = widget.vocabxx;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
-  late List setTrip;
-  //late Future<bool> anonMine;
- // late bool anonMine;
+  late List setTrip; 
+
 
  List<Map<String, String>>? myVocabList;
 
@@ -3725,14 +3738,10 @@ class _ExercisesxState extends State<Exercisesx> {
     myFocusNode = FocusNode();
     _counter = 0;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
-   _fetchVocab();
-    //final anonMine = _loadData();
-   // else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
-    //print(anonMine);
-    //backupPool = [...poolList].shuffle();
-    //extra.phew.keys.toList().sublist(0,6);}
-    // linklink = islandreffy();
-    //init should make sure it only runs once
+  // _fetchVocab();
+   setState(() {
+      myVocabList = loadVocabFromHive('pashto');
+    });
 
   }
  
