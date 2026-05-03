@@ -725,7 +725,8 @@ class Referencer extends ChangeNotifier {
   Map<String, dynamic>? loadedData;
 
   // TODO: Replace with your actual interstitial ad unit ID
-  final String _adUnitId = 'ca-app-pub-5815053066312487/1427329368'; // Test ad unit ID
+ //I NEEEEEEEEEEEEEED TO CHANGE THIS BACK LANGUAGE AGNOSTIC
+  final String _adUnitId = 'ca-app-pub-3940256099942544/4411468910'; //'ca-app-pub-5815053066312487/1427329368'; // Test ad unit ID
 
   // Public getters to access the state from widgets
   bool get isAdLoaded => _isAdLoaded;
@@ -2549,6 +2550,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
             context.read<Referencer>().sendtoLessons(flatten(tierkeeper));
+            lessonmaker = jsonDecode(forEducation.all); 
             saveMyData(value:currentlyLoadingLemma);
             return;
            }
@@ -4019,8 +4021,8 @@ class _BannerAdPageState extends State<BannerAdPage> {
 
     // Get the appropriate ad unit ID based on the platform
     String adUnitId;
-
-      adUnitId = 'ca-app-pub-5815053066312487/9845182927';
+      //CHANGE THIS BACK LANGUAGE AGNOSTIC
+      adUnitId = 'ca-app-pub-3940256099942544/2934735716'; //'ca-app-pub-5815053066312487/9845182927';
 
 
 
