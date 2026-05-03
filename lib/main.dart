@@ -2549,9 +2549,10 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
             context.read<Referencer>().sendtoLessons(flatten(tierkeeper));
-           }
             saveMyData(value:currentlyLoadingLemma);
             return;
+           }
+            saveMyData(value:currentlyLoadingLemma);
             //my_lang_pref = currentlyLoadingLemma;
               
             
