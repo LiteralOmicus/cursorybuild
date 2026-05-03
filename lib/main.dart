@@ -2176,6 +2176,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     // 2. Decode the downloaded JSON file
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
    var lessonsBox = await Hive.openBox('lessonsBox');
+   //THIS NEEDS TO BE LANGUAGE AGNOSTIC
    await lessonsBox.put('pashto', downloadedLessonData);
    List<dynamic> topicsList = downloadedLessonData['topics'];
    // 2. Create your new Map where the values are LISTS
@@ -2353,7 +2354,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                //If you need aLessons to permanently change when the user does something, you have to send that new data back to your Referencer class
-               final List lemmyx =["atl","bna","koa"];
+               final List lemmyx =["atl","bna","koa", "ru"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
@@ -2545,13 +2546,14 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
               checkedLemmas[lemmyx[i].toString()] = true;
               currentlyLoadingLemma = lemmyx[i].toString(); // Show hourglass
             });
+           if (currentlyLoadingLemma == 'ru') {
+            //DOES THIS NEED A SETSTATE?
+            context.read<Referencer>().sendtoLessons(allLessons);
+           }
             saveMyData(value:currentlyLoadingLemma);
             //my_lang_pref = currentlyLoadingLemma;
               
             
-            context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
-
-            // 4. Start the backend call
             fetchSpecificResource(context, lemmyx[i].toString()).then((parsedData) {
                if (context.mounted) {
                   setState(() {
@@ -3684,7 +3686,8 @@ class _ExercisesxState extends State<Exercisesx> {
 
   Future<void> _fetchVocab() async {
     // 3. Grab the data from your Hive function
-    var data = await loadVocabFromHive("IntroPashtx");
+   //THIS NEEDS TO BE LANGUAGE AGNOSTIC
+    var data = await loadVocabFromHive("pashto");
     
     // 4. Put the data into the variable and redraw the screen!
     setState(() {
@@ -3698,6 +3701,7 @@ class _ExercisesxState extends State<Exercisesx> {
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
+   //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
    _fetchVocab();
     //final anonMine = _loadData();
    // else if (sender.isEmpty) {setTrip = poolList.sublist(0,6);}
@@ -3879,7 +3883,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                   children: <Widget>[
                                     Expanded(
                                         child: Text(
-                                          myVocabList['english'][_counter], //Eng
+                                          myVocabList![_counter]['english'], //Eng
                                           textAlign: TextAlign.center,
                                           style: Theme
                                               .of(context)
@@ -3895,7 +3899,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                 Visibility(
                                     visible: _active,
                                  //HAS RTO BE LANGUAGE AGNOSTIC
-                                    child: Text(myVocabList['target'][_counter])
+                                    child: Text(myVocabList![_counter]['target'])
                                 ),
                                 Container(
                                     child: Padding(
