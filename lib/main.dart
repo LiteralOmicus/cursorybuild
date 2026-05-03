@@ -2548,9 +2548,10 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
             });
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
-            context.read<Referencer>().sendtoLessons(allLessons);
+            context.read<Referencer>().sendtoLessons(flatten(tierkeeper));
            }
             saveMyData(value:currentlyLoadingLemma);
+            return;
             //my_lang_pref = currentlyLoadingLemma;
               
             
@@ -3883,7 +3884,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                   children: <Widget>[
                                     Expanded(
                                         child: Text(
-                                          myVocabList![_counter]['english'], //Eng
+                                          myVocabList[_counter]['english'] ?? "MISSING", //Eng
                                           textAlign: TextAlign.center,
                                           style: Theme
                                               .of(context)
@@ -3899,7 +3900,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                 Visibility(
                                     visible: _active,
                                  //HAS RTO BE LANGUAGE AGNOSTIC
-                                    child: Text(myVocabList![_counter]['target'])
+                                    child: Text(myVocabList[_counter]['target'] ?? "MISSING")
                                 ),
                                 Container(
                                     child: Padding(
