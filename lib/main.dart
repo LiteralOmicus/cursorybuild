@@ -2155,6 +2155,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
         Map<String, List<String>> groupedTopics = {};
    Map<dynamic, dynamic>? savedData = lessonsBox.get('pashto');
+   List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
   if (savedData != null && savedData['topics'] != null) { 
@@ -2176,7 +2177,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
           }
         }
   
-   List<String> specificDataYouNeed = topicsList.map((item) {   
+   specificDataYouNeed = xopicsList.map((item) {   
           return item['header'].toString();
         }).toList(); // .toList() packages the assembly line output back into a standard Dart List
   }
