@@ -2177,7 +2177,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
           }
         }
   
-   specificDataYouNeed = xopicsList.map((item) {   
+   specificDataYouNeed = xopicslist.map((item) {   
           return item['header'].toString();
         }).toList(); // .toList() packages the assembly line output back into a standard Dart List
   }
