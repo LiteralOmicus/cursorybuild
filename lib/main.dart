@@ -3739,6 +3739,7 @@ class _ExercisesxState extends State<Exercisesx> {
     myFocusNode = FocusNode();
     _counter = 0;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
+   loadVocabFromHive("pashto");
   // _fetchVocab();
   
 
@@ -3749,8 +3750,8 @@ class _ExercisesxState extends State<Exercisesx> {
     var lessonsBox = await Hive.openBox('lessonsBox');
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-      List<dynamic> rawVocabList = savedData['pairs']; 
+    if (savedData != null && savedData['vocab']['pairs'] != null) {
+      List<dynamic> rawVocabList = savedData['vocab']['pairs']; 
       
       // Clean it up and RETURN it
      // rawVocabList.map((item) {  return {  'english': item['english'].toString(),  
