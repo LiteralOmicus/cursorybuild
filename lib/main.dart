@@ -3774,6 +3774,7 @@ Future<void> _fetchVocab() async {
 
     if (savedData != null && savedData['vocab']['pairs'] != null) {
    // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['vocab']['pairs'];
       return rawVocabList.map((item) {
         return {
           'english': item['english'].toString(),
