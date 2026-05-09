@@ -3720,17 +3720,39 @@ class _ExercisesxState extends State<Exercisesx> {
 
  List<Map<String, String>>? myVocabList;
 
-
-  Future<void> _fetchVocab() async {
+Future<void> _fetchVocab() async {
+    try {
+      // Go get the data from Hive
+      var data = await loadVocabFromHive("pashto");
+      
+      if (!mounted) return;
+      
+      // Update the UI! (This stops the spinner)
+      setState(() {
+        myVocabList = data; 
+      });
+      
+    } catch (e) {
+      // IF ANYTHING CRASHES IN THE BACKGROUND:
+      
+      if (!mounted) return;
+      
+      // Force the spinner to stop and show the "No vocabulary found" text
+      setState(() {
+        myVocabList = []; 
+      });
+    }
+  }
+ // Future<void> _fetchVocab() async {
     // 3. Grab the data from your Hive function
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
-    var data = await loadVocabFromHive("pashto");
+  //  var data = await loadVocabFromHive("pashto");
     
     // 4. Put the data into the variable and redraw the screen!
-    setState(() {
-      myVocabList = data;
-    });
-  }
+  //  setState(() {
+   //   myVocabList = data;
+  //  });
+ // }
  
   @override
   void initState() {
@@ -3739,8 +3761,8 @@ class _ExercisesxState extends State<Exercisesx> {
     myFocusNode = FocusNode();
     _counter = 0;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
-   loadVocabFromHive("pashto");
-  // _fetchVocab();
+   //loadVocabFromHive("pashto");
+   _fetchVocab();
   
 
   }
@@ -3751,26 +3773,19 @@ class _ExercisesxState extends State<Exercisesx> {
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
     if (savedData != null && savedData['vocab']['pairs'] != null) {
-      List<dynamic> rawVocabList = savedData['vocab']['pairs']; 
-      
-      // Clean it up and RETURN it
-     // rawVocabList.map((item) {  return {  'english': item['english'].toString(),  
-     //HAS TO BE LANGUAGE AGNOSTIC
-       //   'target': item['Pashto'].toString(),   };
-    //  }).toList();
-    setState(() {
-    myVocabList = rawVocabList.map((item) {
-  return {
-    'english': item['english'].toString(),
-    // HAS TO BE LANGUAGE AGNOSTIC
-    'target': item['Pashto'].toString(), 
-  };
-}).toList();
-    });  
+   // Clean it up and return it to the bridge function
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['Pashto'].toString(), 
+        };
+      }).toList();
     } 
     
-    return []; // Return an empty list if nothing is found to prevent crashes
+    // If it doesn't exist, just hand back an empty list
+    return []; 
   }
+ 
   void openKeyboard() {
     FocusScope.of(context).requestFocus(myFocusNode);
   }
