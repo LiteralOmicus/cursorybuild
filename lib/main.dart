@@ -3741,7 +3741,7 @@ Future<void> _fetchVocab() async {
       
       // Force the spinner to stop and show the "No vocabulary found" text
       setState(() {
-        errormess = e;
+       // errormess = e;
         myVocabList = []; 
       });
     }
