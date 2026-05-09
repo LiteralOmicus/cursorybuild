@@ -3720,7 +3720,7 @@ class _ExercisesxState extends State<Exercisesx> {
  
 
 
- List<Map<String, String>>? myVocabList;
+ List<Map<String, String>>? myVocabList = [{"english" : "fuck", "pashto" : "you"}];
 
 Future<void> _fetchVocab() async {
     try {
@@ -3741,7 +3741,7 @@ Future<void> _fetchVocab() async {
       
       // Force the spinner to stop and show the "No vocabulary found" text
       setState(() {
-       // errormess = e;
+        errormess = e.toString();
         myVocabList = []; 
       });
     }
@@ -3911,7 +3911,7 @@ Future<void> _fetchVocab() async {
             
             // 2. THE EMPTY CHECK: Did Hive return an empty list?
             : myVocabList!.isEmpty
-                ? const Center(child: Text("I F'ed up again"))
+                ? const Center(child: Text(errormess))
                 
                 // 3. THE SUCCESS STATE: The data is here, safe to build!
                 : Center(
@@ -3964,7 +3964,7 @@ Future<void> _fetchVocab() async {
                                 Visibility(
                                     visible: _active,
                                  //HAS RTO BE LANGUAGE AGNOSTIC
-                                    child: Text(myVocabList![_counter]['target'] ?? "MISSING")
+                                    child: Text(myVocabList![_counter]['pashto'] ?? "MISSING")
                                 ),
                                 Container(
                                     child: Padding(
@@ -4013,7 +4013,6 @@ Future<void> _fetchVocab() async {
     }
 
     catch(e) {
-      print(e);
       return Center(
           child: Container(
               decoration: BoxDecoration
