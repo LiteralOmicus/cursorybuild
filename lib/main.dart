@@ -3711,11 +3711,13 @@ class _ExercisesxState extends State<Exercisesx> {
   int _counter = 0;
   bool justonce = false;
   bool _active = false;
+  String errormess = "No error msg saved yet.";
 
  // final myVocabList = widget.vocabxx;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip; 
+ 
 
 
  List<Map<String, String>>? myVocabList;
@@ -3739,6 +3741,7 @@ Future<void> _fetchVocab() async {
       
       // Force the spinner to stop and show the "No vocabulary found" text
       setState(() {
+        errormess = e;
         myVocabList = []; 
       });
     }
@@ -3772,13 +3775,13 @@ Future<void> _fetchVocab() async {
     var lessonsBox = await Hive.openBox('lessonsBox');
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['vocab']['pairs'] != null) {
+    if (savedData != null && savedData['pairs'] != null) {
    // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['vocab']['pairs'];
+     List<dynamic> rawVocabList = savedData['pairs'];
       return rawVocabList.map((item) {
         return {
           'english': item['english'].toString(),
-          'target': item['Pashto'].toString(), 
+          'target': item['pashto'].toString(), 
         };
       }).toList();
     } 
@@ -3908,7 +3911,7 @@ Future<void> _fetchVocab() async {
             
             // 2. THE EMPTY CHECK: Did Hive return an empty list?
             : myVocabList!.isEmpty
-                ? const Center(child: Text("No vocabulary found for this lesson."))
+                ? const Center(child: Text("I F'ed up again"))
                 
                 // 3. THE SUCCESS STATE: The data is here, safe to build!
                 : Center(
