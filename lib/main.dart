@@ -3911,7 +3911,7 @@ Future<void> _fetchVocab() async {
             
             // 2. THE EMPTY CHECK: Did Hive return an empty list?
             : myVocabList!.isEmpty
-                ? const Center(child: Text(errormess))
+                ? Center(child: Text(errormess))
                 
                 // 3. THE SUCCESS STATE: The data is here, safe to build!
                 : Center(
