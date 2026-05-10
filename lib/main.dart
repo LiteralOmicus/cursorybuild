@@ -3886,12 +3886,7 @@ class _ExercisesxState extends State<Exercisesx> {
                   ),
                 ],
               ),
-              body: myVocabList == null
-            ? const Center(child: CircularProgressIndicator())
-            
-            // 2. THE EMPTY CHECK: Did Hive return an empty list?
-            : myVocabList!.isEmpty
-                ? Center(child: Text(errormess))
+              body:Center(child: Text(errormess))
                 
                 // 3. THE SUCCESS STATE: The data is here, safe to build!
                 : Center(
