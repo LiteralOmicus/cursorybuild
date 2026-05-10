@@ -2211,7 +2211,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       ),
     );
     
-    myVocabList = loadVocabFromHive("pashto"); //vocabx
+   // myVocabList = loadVocabFromHive("pashto"); //vocabx
     return specificDataYouNeed; 
   }
   final url = Uri.https(
@@ -2622,6 +2622,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                   });
                 //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
                   context.read<Referencer>().sendtoLessons(parsedData);
+                  myVocabList = loadVocabFromHive("pashto");
                }
             }).catchError((error) {
                if (context.mounted) {
@@ -3731,8 +3732,7 @@ class _ExercisesxState extends State<Exercisesx> {
   bool justonce = false;
   bool _active = false;
   String errormess = "No error msg saved yet.";
-
- final myVocabList = widget.vocabxx;
+  List<Map<String, String>>? myVocabList;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip; 
@@ -3741,30 +3741,7 @@ class _ExercisesxState extends State<Exercisesx> {
 
 
 
-Future<void> _fetchVocab() async {
-    try {
-      // Go get the data from Hive
-      var data = await loadVocabFromHive("pashto");
-      
-      if (!mounted) return;
-      
-      // Update the UI! (This stops the spinner)
-      setState(() {
-        myVocabList = data; 
-      });
-      
-    } catch (e) {
-      // IF ANYTHING CRASHES IN THE BACKGROUND:
-      
-      if (!mounted) return;
-      
-      // Force the spinner to stop and show the "No vocabulary found" text
-      setState(() {
-        errormess = e.toString();
-        myVocabList = []; 
-      });
-    }
-  }
+
  // Future<void> _fetchVocab() async {
     // 3. Grab the data from your Hive function
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
@@ -3782,6 +3759,7 @@ Future<void> _fetchVocab() async {
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
+   myVocabList = widget.vocabxx;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
    //loadVocabFromHive("pashto");
   // _fetchVocab();
