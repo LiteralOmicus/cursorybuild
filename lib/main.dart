@@ -2621,7 +2621,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                   });
                 //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
                   context.read<Referencer>().sendtoLessons(parsedData);
-                  myVocabList = loadVocabFromHive("pashto");
+                  myVocabList = await loadVocabFromHive("pashto");
                }
             }).catchError((error) {
                if (context.mounted) {
