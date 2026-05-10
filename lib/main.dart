@@ -2058,6 +2058,7 @@ class _MyHomePageState extends State<MyHomePage> {
  Map<String, bool> checkedLemmas = {};
  late Map<dynamic, dynamic> lemmyx;
 //late
+  List<Map<String, String>>? myVocabList = [{"english" : "fuck", "pashto" : "you"}]; //vocabx
   Map _dump = {};
   String saveuserName = "";
   List privet = [];
@@ -2141,6 +2142,24 @@ class _MyHomePageState extends State<MyHomePage> {
 
 }
 
+   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['pashto'].toString(), 
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
+  }
 
  // 1. Add BuildContext to the parameters
  //I NEED TO CHANGE RETURN TYPE IF I MOVE REFERENCER REFERENCES UP HERE
@@ -2192,7 +2211,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       ),
     );
     
-    
+    myVocabList = loadVocabFromHive("pashto"); //vocabx
     return specificDataYouNeed; 
   }
   final url = Uri.https(
@@ -2356,7 +2375,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                }
                else {
                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx(vocabx: "stupid")
+                    builder: (context) => Sentencesx(vocabx: myVocabList)
                                           )
                 );
                }
@@ -3674,7 +3693,7 @@ class _ExercisesState extends State<Exercises> {
      Key? key, required this.vocabx,
   }) : super(key: key);
 
-  late String vocabx;
+  late List<Map<String, String>>? vocabx;
 
   @override
   Widget build(BuildContext context) {
@@ -3702,7 +3721,7 @@ class Exercisesx extends StatefulWidget {
   }) : super(key: key);
 
  
-late String vocabxx;
+late List<Map<String, String>>? vocabxx;
   @override
   State<Exercisesx> createState() => _ExercisesxState();
 }
@@ -3713,14 +3732,14 @@ class _ExercisesxState extends State<Exercisesx> {
   bool _active = false;
   String errormess = "No error msg saved yet.";
 
- // final myVocabList = widget.vocabxx;
+ final myVocabList = widget.vocabxx;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip; 
  
 
 
- List<Map<String, String>>? myVocabList = [{"english" : "fuck", "pashto" : "you"}];
+
 
 Future<void> _fetchVocab() async {
     try {
@@ -3765,30 +3784,13 @@ Future<void> _fetchVocab() async {
     _counter = 0;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
    //loadVocabFromHive("pashto");
-   _fetchVocab();
+  // _fetchVocab();
   
 
   }
  
 // Make sure it returns the List!
-  Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
-    var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-          'target': item['pashto'].toString(), 
-        };
-      }).toList();
-    } 
-    
-    // If it doesn't exist, just hand back an empty list
-    return []; 
-  }
  
   void openKeyboard() {
     FocusScope.of(context).requestFocus(myFocusNode);
