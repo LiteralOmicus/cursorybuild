@@ -2373,6 +2373,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                 );
                }
                else {
+               myVocabList = await loadVocabFromHive("pashto");
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList)
                                           )
@@ -2621,7 +2622,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                   });
                 //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
                   context.read<Referencer>().sendtoLessons(parsedData);
-                  myVocabList = await loadVocabFromHive("pashto");
+                 
                }
             }).catchError((error) {
                if (context.mounted) {
