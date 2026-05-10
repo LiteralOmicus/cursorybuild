@@ -2057,8 +2057,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late double fanalexp;
  Map<String, bool> checkedLemmas = {};
  late Map<dynamic, dynamic> lemmyx;
-//late
-  List<Map<String, String>>? myVocabList = [{"english" : "fuck", "pashto" : "you"}]; //vocabx
+ late List<Map<String, String>>?  myVocabList; // = [{"english" : "fuck", "pashto" : "you"}]; //vocabx
   Map _dump = {};
   String saveuserName = "";
   List privet = [];
