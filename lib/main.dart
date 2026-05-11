@@ -3886,10 +3886,7 @@ class _ExercisesxState extends State<Exercisesx> {
                   ),
                 ],
               ),
-              body:Center(child: Text(errormess))
-                
-                // 3. THE SUCCESS STATE: The data is here, safe to build!
-                : Center(
+              body: Center(
                   child: Column(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       crossAxisAlignment: CrossAxisAlignment.center,
