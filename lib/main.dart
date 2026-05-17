@@ -2375,7 +2375,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                else {
                myVocabList = await loadVocabFromHive("pashto");
                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx(vocabx: myVocabList)
+                    builder: (context) => Sentencesx(vocabx: [{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
                 );
                }
