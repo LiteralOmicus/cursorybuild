@@ -18,7 +18,8 @@
     </dict>
     
     <key>signingCertificate</key>
-    <string>74BBDDE5CA956B2FE76375C7B2D8086B8E00DAD8</string>
+    <string>D4510BBDE0B01C2A517DB1E59A981CB040844001</string>
+           
     
     <key>uploadBitcode</key>
     <false/>
