@@ -3063,7 +3063,7 @@ class _MyRome extends State<MyRomePage> {
                    // drawer: NavDrawer(),
                     appBar: AppBar(
                      // centerTitle: true,
-                    //  title: Text('Kangarule'),
+                    //  title: Text('Kangarule'), macdrizzy
                       actions: [
                         IconButton(
                             onPressed: () {
