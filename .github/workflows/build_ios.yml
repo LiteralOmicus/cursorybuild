@@ -255,7 +255,7 @@ jobs:
       - name: Direct xcrun Archive
         env:
           SIGNING_IDENTITY: "D4510BBDE0B01C2A517DB1E59A981CB040844001"
-          PROVISIONING_PROFILE_UUID: "63fcd44a-ff22-44db-8b80-ce59919d6ef9"
+          PROVISIONING_PROFILE_UUID: "941983c7-3f1d-4249-ac2c-85e9f8e4f346"
           TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
           ARCHIVE_PATH: "${{ github.workspace }}/build/ios/archive/Runner.xcarchive"
           PROFILE_NAME: "literalomicus"
