@@ -2375,7 +2375,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                else {
                myVocabList = await loadVocabFromHive("pashto");
                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx(vocabx: [{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
+                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
                 );
                }
@@ -3936,7 +3936,7 @@ class _ExercisesxState extends State<Exercisesx> {
                                 Visibility(
                                     visible: _active,
                                  //HAS RTO BE LANGUAGE AGNOSTIC
-                                    child: Text(myVocabList![_counter]['pashto'] ?? "MISSING")
+                                    child: Text(myVocabList![_counter]['target'] ?? "MISSING")
                                 ),
                                 Container(
                                     child: Padding(
