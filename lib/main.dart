@@ -2249,7 +2249,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      //SHOULD I PUT SEPERATEX? CAUSE 4 CONCERN
    //await lessonsBox.put('pashto', downloadedLessonData);
    Map<String, dynamic> masterDocument = {
-    ...lessonData, // brings in "topics": [...]
+    ...downloadedLessonData, // brings in "topics": [...]
     ...vocabData   // brings in "pairs": [...]
   };
 
