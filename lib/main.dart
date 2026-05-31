@@ -2151,7 +2151,7 @@ class _MyHomePageState extends State<MyHomePage> {
       return rawVocabList.map((item) {
         return {
           'english': item['english'].toString(),
-          'target': item['pashto'].toString(), //TOPP
+          'target': item['target'].toString(), //TOPP
         };
       }).toList();
     } 
@@ -2166,13 +2166,12 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
  //CHANGE ARGS LATER 
  //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
  var lessonsBox = await Hive.openBox('lessonsBox');
-  
-  if (lessonsBox.containsKey('pashto')) {
+  if (lessonsBox.containsKey(resourceName)) {
     // We found it in Hive! 
     lessonmaker = {};
 
         Map<String, List<String>> groupedTopics = {};
-   Map<dynamic, dynamic>? savedData = lessonsBox.get('pashto');
+   Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
@@ -2209,8 +2208,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         backgroundColor: Colors.green, // Optional: make it look like a success!
       ),
     );
-    
-   // myVocabList = loadVocabFromHive("pashto"); //vocabx
+    //CAUSE 4 CONCERN
+   // myVocabList = loadVocabFromHive(currentlyLoadingLemma); //vocabx
     return specificDataYouNeed; 
   }
   final url = Uri.https(
@@ -2257,7 +2256,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   };
 
   // 5. Save the combined master document to Hive
-  await lessonsBox.put('pashto', masterDocument);
+  await lessonsBox.put(resourceName, masterDocument);
    List<dynamic> topicsList = downloadedLessonData['topics'];
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
@@ -2387,7 +2386,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                 );
                }
                else {
-               myVocabList = await loadVocabFromHive("pashto");
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+               myVocabList = await loadVocabFromHive("IntroDarx");
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
@@ -2426,7 +2426,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                //If you need aLessons to permanently change when the user does something, you have to send that new data back to your Referencer class
-               final List lemmyx =["atl","bna","koa", "ru"];
+               final List lemmyx =["IntroPashtx","IntroDarx", "ru"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
