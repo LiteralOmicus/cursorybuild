@@ -2237,13 +2237,24 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     if (response.statusCode == 200) {
      final responseData = jsonDecode(response.body);
      String lessonUrl = responseData['lesson_file'];
+     String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
+     final vocabResponse = await http.get(Uri.parse(vocabUrl));
+     Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
    Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
      //---------------------------------------------------------------------------------------
      //IF THERES ANY PROBLEM CHECC THIS
    //var lessonsBox = await Hive.openBox('lessonsBox');
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
-   await lessonsBox.put('pashto', downloadedLessonData);
+     //SHOULD I PUT SEPERATEX? CAUSE 4 CONCERN
+   //await lessonsBox.put('pashto', downloadedLessonData);
+   Map<String, dynamic> masterDocument = {
+    ...lessonData, // brings in "topics": [...]
+    ...vocabData   // brings in "pairs": [...]
+  };
+
+  // 5. Save the combined master document to Hive
+  await lessonsBox.put('pashto', masterDocument);
    List<dynamic> topicsList = downloadedLessonData['topics'];
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
