@@ -2322,7 +2322,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text("Network request failed. Please check your connection."),
+        content: Text("$e"),           //"Network request failed. Please check your connection."),
         backgroundColor: Colors.red,
       ),
     );
