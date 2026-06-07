@@ -2171,7 +2171,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     lessonmaker = {};
 
    Map<String, List<String>> groupedTopics = {};
-   Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+   //Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+   await lessonsBox.clear();
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
@@ -2583,7 +2584,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         value: checkedLemmas[lemmyx[i].toString()] ?? false, 
         
         onChanged: (bool? newValue) async {
-          if (newValue == true) {
+        //  if (newValue == true) {
             
             // Wait for the user's choice from the dialog
             bool? confirmDownload = await showDialog<bool>(
@@ -2605,7 +2606,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                     ),
                   ],
                 );
-              },
+            //  },
             );
 
             // 2. If they tapped 'Cancel' or tapped outside the box, stop right here.
