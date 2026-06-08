@@ -2176,43 +2176,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
-  if (savedData != null && savedData['topics'] != null) { 
-    
-    // 4. Target the topics list!
-    List<dynamic> xopicslist = savedData['topics'];
-  
-        for (var item in xopicslist) {
-          String header = item['header'].toString();
-          String verbatimText = item['verbatim_text'].toString();
-
-          // If the Map already has this header (like "Tori"), add the new text to its list
-          if (groupedTopics.containsKey(header)) {
-            lessonmaker[header]!.add(verbatimText);
-          } 
-          // If this is the very first time we've seen this header, create a new list for it
-          else {
-            lessonmaker[header] = [verbatimText];
-          }
-        }
-  
-   specificDataYouNeed = xopicslist.map((item) {   
-          return item['header'].toString();
-        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
-  }
-    // Safety check because opening the box took a split second
-    if (!context.mounted) return []; 
-    
-    // Show the success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Completed! Loaded from device storage."),
-        backgroundColor: Colors.green, // Optional: make it look like a success!
-      ),
-    );
-    //CAUSE 4 CONCERN
-   // myVocabList = loadVocabFromHive(currentlyLoadingLemma); //vocabx
-    return specificDataYouNeed; 
-  }
+ 
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
@@ -2606,7 +2570,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                     ),
                   ],
                 );
-            //  },
+              },
             );
 
             // 2. If they tapped 'Cancel' or tapped outside the box, stop right here.
