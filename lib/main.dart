@@ -2567,7 +2567,20 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       }
 
       // Now you can use CheckboxListTile freely!
-      return CheckboxListTile(
+      return Tooltip(
+  // 1. The text you want the popup to display
+  message: "Tap to download lesson data for ${lemmyx[i]}.", 
+  
+  // 2. Optional: Force it to only trigger on a long-press (great for mobile)
+  triggerMode: TooltipTriggerMode.longPress, 
+  
+  // 3. Optional: Customize how it looks
+  decoration: BoxDecoration(
+    color: Colors.black87,
+    borderRadius: BorderRadius.circular(8),
+  ),
+  textStyle: const TextStyle(color: Colors.white),
+       child: CheckboxListTile(
         title: Text(
           '${lemmyx[i]}',
           style: const TextStyle(
@@ -2603,6 +2616,18 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                       // Returning 'true' means we proceed
                       onPressed: () => Navigator.of(context).pop(true), 
                     ),
+                   ListTile(
+        title: const Text(
+          "More Options...", 
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        trailing: const Icon(Icons.arrow_drop_up), // Visual cue for a popup
+        tileColor: Colors.grey[200], // Optional: Make it look distinct
+        onTap: () {
+          // Trigger your pop-up/dialog here!
+        },
+                    );
+      ),
                   ],
                 );
               },
