@@ -2171,8 +2171,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     lessonmaker = {};
 
    Map<String, List<String>> groupedTopics = {};
-   //CAUSE 4 CONCERN
-   Map<dynamic, dynamic>? savedData = null; //lessonsBox.get(resourceName);
+   Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
@@ -2218,7 +2217,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     '/getLessons',                  
     {
       'user': "-",             
-      'lang': "IntroPashtx",  
+      'lang': resourceName,  
       'resource': "idiot",
     },
   );
@@ -2240,15 +2239,6 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
      final vocabResponse = await http.get(Uri.parse(vocabUrl));
-     if (!lessonResponse.body.trim().startsWith('{') && !lessonResponse.body.trim().startsWith('[')) {
-  ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text("CRASH: Bucket returned XML/HTML instead of JSON!"),
-      backgroundColor: Colors.red,
-    ),
-  );
-  return []; // Abort immediately so it DOES NOT save to Hive!
-}
      Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
      Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
      //Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
@@ -2331,8 +2321,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     if (!context.mounted) return [];
 
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("$e"),           //"Network request failed. Please check your connection."),
+      const SnackBar(
+        content: Text("Network request failed. Please check your connection."),
         backgroundColor: Colors.red,
       ),
     );
