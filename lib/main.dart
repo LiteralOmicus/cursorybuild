@@ -2239,10 +2239,10 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
      final vocabResponse = await http.get(Uri.parse(vocabUrl));
-     Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
-     Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
-     //Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
-    // Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
+     //Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
+     //Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
+     Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
+     Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
      
      //---------------------------------------------------------------------------------------
      //IF THERES ANY PROBLEM CHECC THIS
