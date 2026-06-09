@@ -2171,12 +2171,48 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     lessonmaker = {};
 
    Map<String, List<String>> groupedTopics = {};
-   //Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
-   await lessonsBox.clear();
+   //CAUSE 4 CONCERN
+   Map<dynamic, dynamic>? savedData = null; //lessonsBox.get(resourceName);
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
- 
+  if (savedData != null && savedData['topics'] != null) { 
+    
+    // 4. Target the topics list!
+    List<dynamic> xopicslist = savedData['topics'];
+  
+        for (var item in xopicslist) {
+          String header = item['header'].toString();
+          String verbatimText = item['verbatim_text'].toString();
+
+          // If the Map already has this header (like "Tori"), add the new text to its list
+          if (groupedTopics.containsKey(header)) {
+            lessonmaker[header]!.add(verbatimText);
+          } 
+          // If this is the very first time we've seen this header, create a new list for it
+          else {
+            lessonmaker[header] = [verbatimText];
+          }
+        }
+  
+   specificDataYouNeed = xopicslist.map((item) {   
+          return item['header'].toString();
+        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
+  }
+    // Safety check because opening the box took a split second
+    if (!context.mounted) return []; 
+    
+    // Show the success message
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text("Completed! Loaded from device storage."),
+        backgroundColor: Colors.green, // Optional: make it look like a success!
+      ),
+    );
+    //CAUSE 4 CONCERN
+   // myVocabList = loadVocabFromHive(currentlyLoadingLemma); //vocabx
+    return specificDataYouNeed; 
+  }
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
@@ -2204,6 +2240,15 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
      final vocabResponse = await http.get(Uri.parse(vocabUrl));
+     if (!lessonResponse.body.trim().startsWith('{') && !lessonResponse.body.trim().startsWith('[')) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("CRASH: Bucket returned XML/HTML instead of JSON!"),
+      backgroundColor: Colors.red,
+    ),
+  );
+  return []; // Abort immediately so it DOES NOT save to Hive!
+}
      Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
      Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
      //Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
@@ -2548,7 +2593,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         value: checkedLemmas[lemmyx[i].toString()] ?? false, 
         
         onChanged: (bool? newValue) async {
-        //  if (newValue == true) {
+          if (newValue == true) {
             
             // Wait for the user's choice from the dialog
             bool? confirmDownload = await showDialog<bool>(
