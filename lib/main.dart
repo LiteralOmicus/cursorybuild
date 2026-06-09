@@ -2626,7 +2626,6 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         onTap: () {
           // Trigger your pop-up/dialog here!
         },
-                    )
       ),
                   ],
                 );
@@ -2685,7 +2684,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       );
     },
   ),
-                                                 //     )
+                                                      )
                                     ),
                                   ]
                               ),
