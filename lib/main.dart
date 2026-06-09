@@ -2218,7 +2218,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     '/getLessons',                  
     {
       'user': "-",             
-      'lang': resourceName,  
+      'lang': "IntroPashtx",  
       'resource': "idiot",
     },
   );
