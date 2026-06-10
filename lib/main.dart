@@ -2560,7 +2560,19 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                                       child: ListView.builder( 
     itemCount: lemmyx.length,
     itemBuilder: (context, i) {
-      
+      if (i == lemmyx.length) {
+      return ListTile(
+        title: const Text(
+          "More Options...", 
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        trailing: const Icon(Icons.arrow_drop_up),
+        tileColor: Colors.grey[200],
+        onTap: () {
+          // Trigger pop-up
+        },
+      );
+    }
       // Handle the null "Sender" case from your original code
       if (lemmyx[i] == null) {
         return const ListTile(title: Text('Sender'));
@@ -2579,7 +2591,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     color: Colors.black87,
     borderRadius: BorderRadius.circular(8),
   ),
-  textStyle: const TextStyle(color: Colors.black),
+ textStyle: const TextStyle(color: Colors.white),
        child: CheckboxListTile(
         title: Text(
           '${lemmyx[i]}',
@@ -2616,17 +2628,6 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                       // Returning 'true' means we proceed
                       onPressed: () => Navigator.of(context).pop(true), 
                     ),
-                   ListTile(
-        title: const Text(
-          "More Options...", 
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        trailing: const Icon(Icons.arrow_drop_up), // Visual cue for a popup
-        tileColor: Colors.grey[200], // Optional: Make it look distinct
-        onTap: () {
-          // Trigger your pop-up/dialog here!
-        },
-      ),
                   ],
                 );
               },
