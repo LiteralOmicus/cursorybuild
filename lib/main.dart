@@ -2681,12 +2681,12 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
             context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
           }
         }
+        ),
       );
     },
   ),
                                                      
    ),
-     )
                                   ]
                                    
                               ),
