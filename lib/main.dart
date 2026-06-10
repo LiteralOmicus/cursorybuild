@@ -2579,7 +2579,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     color: Colors.black87,
     borderRadius: BorderRadius.circular(8),
   ),
-  textStyle: const TextStyle(color: Colors.white),
+  textStyle: const TextStyle(color: Colors.black),
        child: CheckboxListTile(
         title: Text(
           '${lemmyx[i]}',
@@ -2684,8 +2684,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       );
     },
   ),
-                                                      )
-                                    ),
+                                                      );
+   ),
                                   ]
                               ),
                               ]
