@@ -718,6 +718,8 @@ Future<void> _showReportDialog(BuildContext context) async {
 }
 
 DatabaseReference ref = FirebaseDatabase.instance.ref('language');
+enum PipelineState { idle, uploading, approving, downloading, done, error }
+
 class Referencer extends ChangeNotifier {
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -778,8 +780,53 @@ class Referencer extends ChangeNotifier {
   BannerAd? get bannerAd => _bannerAd;
   bool get isBAdLoaded => _isAdLoaded;
   String uid = "";
-  //CAUSE FOR CONCERN
+  PipelineState currentTaskState = PipelineState.idle;
+  String? activeLesson; 
+  bool _isCancelled = false; // Emergency kill switch
 
+  // 2. The Background Function
+  Future<void> startHeavyPipeline(String lessonName) async {
+    _isCancelled = false;
+    activeLesson = lessonName;
+    
+    // STEP 1: UPLOADING
+    currentTaskState = PipelineState.uploading;
+    notifyListeners(); // Tells the dialog to show the first spinner
+    
+    // Simulate your server upload
+    await Future.delayed(const Duration(seconds: 3)); 
+    if (_isCancelled) return;
+
+    // STEP 2: APPROVING (The 30 minute wait)
+    currentTaskState = PipelineState.approving;
+    notifyListeners(); 
+    
+    // Simulate the long server processing time
+    await Future.delayed(const Duration(seconds: 5)); 
+    if (_isCancelled) return;
+
+    // STEP 3: DOWNLOADING
+    currentTaskState = PipelineState.downloading;
+    notifyListeners();
+    
+    // Simulate pulling the final JSON from the bucket
+    await Future.delayed(const Duration(seconds: 3));
+    if (_isCancelled) return;
+
+    // DONE!
+    currentTaskState = PipelineState.done;
+    notifyListeners();
+  }
+
+  // 3. The Cancel Function
+  void cancelPipeline() {
+    _isCancelled = true;
+    currentTaskState = PipelineState.idle;
+    activeLesson = null;
+    notifyListeners();
+  }
+  //CAUSE FOR CONCERN
+  
   // 2. This is the function you requested.
   void setUser(String newUid) {
     uid = newUid;
@@ -2563,13 +2610,104 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       if (i == lemmyx.length) {
       return ListTile(
         title: const Text(
-          "More Options...", 
+          "Upload PDF", 
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         trailing: const Icon(Icons.arrow_drop_up),
         tileColor: Colors.grey[200],
-        onTap: () {
-          // Trigger pop-up
+        onTap: () async {
+        // <-- Don't forget to make this async!
+    final referencer = context.read<Referencer>();
+    
+    // [OPTIONAL] You would likely put your FilePicker code right here!
+    // final selectedFile = await FilePicker.platform.pickFiles(...);
+    // if (selectedFile == null) return; // User canceled the picker
+    
+    String documentName = "New Uploaded PDF"; // Replace with your actual file name
+    
+    // 1. Start the 30-minute background task!
+    if (referencer.currentTaskState == PipelineState.idle) {
+       referencer.startHeavyPipeline(documentName);
+    }
+
+    // 2. Open the Resumable "Window" (The Dialog)
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Force them to use Close or Cancel
+      builder: (BuildContext context) {
+        
+        // 3. Consumer listens to the background task in real-time
+        return Consumer<Referencer>(
+          builder: (context, ref, child) {
+            
+            // Auto-close when the 30-minute task finally finishes
+            if (ref.currentTaskState == PipelineState.done) {
+               WidgetsBinding.instance.addPostFrameCallback((_) {
+                 if (Navigator.canPop(context)) Navigator.pop(context);
+                 // Trigger any final UI refreshes here
+               });
+            }
+
+            return AlertDialog(
+              title: Text('Processing $documentName'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // UI ROW 1: Uploading
+                  ListTile(
+                    leading: ref.currentTaskState.index > PipelineState.uploading.index 
+                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        : (ref.currentTaskState == PipelineState.uploading 
+                            ? const CircularProgressIndicator() 
+                            : const Icon(Icons.radio_button_unchecked)),
+                    title: const Text("PDF Uploaded"),
+                  ),
+                  
+                  // UI ROW 2: Approving
+                  ListTile(
+                    leading: ref.currentTaskState.index > PipelineState.approving.index 
+                        ? const Icon(Icons.check_circle, color: Colors.green)
+                        : (ref.currentTaskState == PipelineState.approving 
+                            ? const CircularProgressIndicator() 
+                            : const Icon(Icons.radio_button_unchecked)),
+                    title: const Text("License Approved"),
+                    subtitle: ref.currentTaskState == PipelineState.approving 
+                        ? const Text("This usually takes about 30 minutes...") 
+                        : null,
+                  ),
+
+                  // UI ROW 3: Downloading
+                  ListTile(
+                    leading: ref.currentTaskState == PipelineState.downloading 
+                        ? const CircularProgressIndicator() 
+                        : const Icon(Icons.radio_button_unchecked),
+                    title: const Text("Lessons Downloaded"),
+                  ),
+                ],
+              ),
+              actions: <Widget>[
+                // KILL SWITCH
+                TextButton(
+                  child: const Text('Cancel Request', style: TextStyle(color: Colors.red)),
+                  onPressed: () {
+                    ref.cancelPipeline(); 
+                    Navigator.of(context).pop(); 
+                  }, 
+                ),
+                
+                // HIDE BUTTON
+                TextButton(
+                  child: const Text('Close (Run in Background)'),
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Hides dialog, task keeps running
+                  }, 
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
         },
       );
     }
