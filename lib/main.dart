@@ -3040,7 +3040,24 @@ class _MyRome extends State<MyRomePage> {
 
 
 
+ Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['target'].toString(), //TOPP
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
+  }
 
 
 
@@ -3344,6 +3361,26 @@ class _ExercisesState extends State<Exercises> {
   Reference ref = FirebaseStorage.instance.ref("sounds");
 
 //List quiccint = [16, 17, 18, 19, 20];
+
+  Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['target'].toString(), //TOPP
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
+  }
+ 
   void envelope(String question, String answer, List lemmas, String name ) {
     //i set the lemmas to answer so length should match
     //  String? name = stdin.readLineSync();
@@ -3805,6 +3842,7 @@ class _ExercisesxState extends State<Exercisesx> {
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip; 
+  late List<Map<String, String>>?  myVocabList;
  
 
 
@@ -3834,6 +3872,24 @@ class _ExercisesxState extends State<Exercisesx> {
   // _fetchVocab();
   
 
+  }
+ Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['target'].toString(), //TOPP
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
   }
  
 // Make sure it returns the List!
@@ -4280,9 +4336,28 @@ class _MyNotebookState extends State<MyNotebookState> {
   // We might not even need to store the ad instance locally if Referencer holds it,
   // but keeping it local allows setState to rebuild just this part.
   BannerAd? _localBannerAd;
+  late List<Map<String, String>>?  myVocabList;
 
 
+   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['target'].toString(), //TOPP
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
+  }
+ 
   void getDat(Map wholenote) {
     quiccfix.clear(); // Empties the list []
     exposee.clear();  // Empties the map {}
@@ -4895,6 +4970,26 @@ class _MySettings extends State<MySettings> {
   void initState() {
     super.initState();
   }
+
+  Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+    var lessonsBox = await Hive.openBox('lessonsBox');
+    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+
+    if (savedData != null && savedData['pairs'] != null) {
+   // Clean it up and return it to the bridge function
+     List<dynamic> rawVocabList = savedData['pairs'];
+      return rawVocabList.map((item) {
+        return {
+          'english': item['english'].toString(),
+          'target': item['target'].toString(), //TOPP
+        };
+      }).toList();
+    } 
+    
+    // If it doesn't exist, just hand back an empty list
+    return []; 
+  }
+ 
   void _showPrivacyPolicy(BuildContext context) {
   showDialog(
     context: context,
