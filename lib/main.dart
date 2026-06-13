@@ -2387,7 +2387,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                }
                else {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
+               myVocabList = await loadVocabFromHive(RQ);
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
@@ -2558,7 +2558,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                                       height: screenHeight / 3,
                                       width: screenWidth / 2.2,
                                       child: ListView.builder( 
-    itemCount: lemmyx.length,
+    itemCount: lemmyx.length+1,
     itemBuilder: (context, i) {
       if (i == lemmyx.length) {
       return ListTile(
@@ -3134,11 +3134,23 @@ class _MyRome extends State<MyRomePage> {
                         ),
                         IconButton(
                           onPressed: () {
-                            Navigator.of(context).push(MaterialPageRoute(
-                                builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-                            )
-                            );
-                          },
+                            String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
+               if (!context.mounted) return;
+               if (RQ == 'ru') {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
+                )
+                );
+               }
+               else {
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+               myVocabList = await loadVocabFromHive(RQ);
+               Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
+                                          )
+                );
+               }
+              },
                           icon: const Icon(Icons.local_laundry_service),
                         ),
                         IconButton(
@@ -3578,11 +3590,23 @@ class _ExercisesState extends State<Exercises> {
                   ),
                   IconButton(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-                      )
-                      );
-                    },
+                     String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
+               if (!context.mounted) return;
+               if (RQ == 'ru') {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
+                )
+                );
+               }
+               else {
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+               myVocabList = await loadVocabFromHive(RQ);
+               Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
+                                          )
+                );
+               }
+              },
                     icon: const Icon(Icons.local_laundry_service),
                   ),
                   IconButton(
@@ -3903,11 +3927,23 @@ class _ExercisesxState extends State<Exercisesx> {
                   ),
                   IconButton(
                     onPressed: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-                      )
-                      );
-                    },
+                      String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
+               if (!context.mounted) return;
+               if (RQ == 'ru') {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
+                )
+                );
+               }
+               else {
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+               myVocabList = await loadVocabFromHive(RQ);
+               Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
+                                          )
+                );
+               }
+              },
                     icon: const Icon(Icons.local_laundry_service),
                   ),
                   IconButton(
@@ -4338,13 +4374,23 @@ class _MyNotebookState extends State<MyNotebookState> {
     ),
     IconButton(
     onPressed: () {
-    Navigator.of(context).push(MaterialPageRoute(
-    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-    )
-    );
-    },
-    icon: const Icon(Icons.local_laundry_service),
-    ),
+    String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
+               if (!context.mounted) return;
+               if (RQ == 'ru') {
+                Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
+                )
+                );
+               }
+               else {
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+               myVocabList = await loadVocabFromHive(RQ);
+               Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
+                                          )
+                );
+               }
+              },
     IconButton(
     onPressed: () {
     Navigator.of(context).push(
