@@ -3332,7 +3332,7 @@ class _ExercisesState extends State<Exercises> {
   late FocusNode myFocusNode;
   late List setTrip;
   late final AudioPlayer justaplayer;
-  late List<Map<String, String>>?  myVocabList;
+  //late List<Map<String, String>>?  myVocabList;
 
   //late Future<bool> anonMine;
  // late bool anonMine;
@@ -3362,24 +3362,6 @@ class _ExercisesState extends State<Exercises> {
 
 //List quiccint = [16, 17, 18, 19, 20];
 
-  Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
-    var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
-
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
-        };
-      }).toList();
-    } 
-    
-    // If it doesn't exist, just hand back an empty list
-    return []; 
-  }
  
   void envelope(String question, String answer, List lemmas, String name ) {
     //i set the lemmas to answer so length should match
@@ -3630,24 +3612,7 @@ class _ExercisesState extends State<Exercises> {
                     icon: const Icon(Icons.auto_stories),
                   ),
                   IconButton(
-              onPressed: () async {
-               String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
-               if (!context.mounted) return;
-               if (RQ == 'ru') {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-                )
-                );
-               }
-               else {
-                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
-               Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
-                                          )
-                );
-               }
-              },
+              onPressed: () {},
               icon: const Icon(Icons.local_laundry_service),
             ),
                   IconButton(
@@ -3842,7 +3807,7 @@ class _ExercisesxState extends State<Exercisesx> {
   late TextEditingController _controller;
   late FocusNode myFocusNode;
   late List setTrip; 
-  late List<Map<String, String>>?  myVocabList;
+ // late List<Map<String, String>>?  myVocabList;
  
 
 
@@ -3873,27 +3838,6 @@ class _ExercisesxState extends State<Exercisesx> {
   
 
   }
- Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
-    var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
-
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
-        };
-      }).toList();
-    } 
-    
-    // If it doesn't exist, just hand back an empty list
-    return []; 
-  }
- 
-// Make sure it returns the List!
-
  
   void openKeyboard() {
     FocusScope.of(context).requestFocus(myFocusNode);
@@ -3986,24 +3930,7 @@ class _ExercisesxState extends State<Exercisesx> {
                     icon: const Icon(Icons.auto_stories),
                   ),
                   IconButton(
-              onPressed: () async {
-               String RQ = (await SharedPreferences.getInstance()).getString('lang_pref') ?? 'ru';
-               if (!context.mounted) return;
-               if (RQ == 'ru') {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentences(sentencestart: context.read<Referencer>().getLemma())
-                )
-                );
-               }
-               else {
-                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
-               Navigator.of(context).push(MaterialPageRoute(
-                    builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
-                                          )
-                );
-               }
-              },
+              onPressed: () {},
               icon: const Icon(Icons.local_laundry_service),
             ),
                   IconButton(
