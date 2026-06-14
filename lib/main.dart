@@ -782,49 +782,118 @@ class Referencer extends ChangeNotifier {
   String uid = "";
   PipelineState currentTaskState = PipelineState.idle;
   String? activeLesson; 
-  bool _isCancelled = false; // Emergency kill switch
+  bool _isCancelled = false;
 
-  // 2. The Background Function
-  Future<void> startHeavyPipeline(String lessonName) async {
-    _isCancelled = false;
-    activeLesson = lessonName;
-    
-    // STEP 1: UPLOADING
-    currentTaskState = PipelineState.uploading;
-    notifyListeners(); // Tells the dialog to show the first spinner
-    
-    // Simulate your server upload
-    await Future.delayed(const Duration(seconds: 3)); 
-    if (_isCancelled) return;
-
-    // STEP 2: APPROVING (The 30 minute wait)
-    currentTaskState = PipelineState.approving;
-    notifyListeners(); 
-    
-    // Simulate the long server processing time
-    await Future.delayed(const Duration(seconds: 5)); 
-    if (_isCancelled) return;
-
-    // STEP 3: DOWNLOADING
-    currentTaskState = PipelineState.downloading;
-    notifyListeners();
-    
-    // Simulate pulling the final JSON from the bucket
-    await Future.delayed(const Duration(seconds: 3));
-    if (_isCancelled) return;
-
-    // DONE!
-    currentTaskState = PipelineState.done;
-    notifyListeners();
-  }
-
-  // 3. The Cancel Function
+  // ==========================================
+  // PIPELINE KILL SWITCH
+  // ==========================================
   void cancelPipeline() {
     _isCancelled = true;
     currentTaskState = PipelineState.idle;
     activeLesson = null;
-    notifyListeners();
+    notifyListeners(); // Instantly tells the UI to reset
   }
+
+ Future<void> startHeavyPipeline(String documentName, String filePath) async {
+    _isCancelled = false;
+    activeLesson = documentName;
+    
+    // --- STEP 1: UPLOADING ---
+    currentTaskState = PipelineState.uploading;
+    notifyListeners(); 
+    
+    try {
+      var uploadUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/uploadPdf');
+      var request = http.MultipartRequest('POST', uploadUri);
+      request.files.add(await http.MultipartFile.fromPath('file', filePath));
+      
+      var uploadResponse = await request.send();
+      
+      if (uploadResponse.statusCode != 200) {
+        throw Exception("Server rejected the PDF upload. Status: ${uploadResponse.statusCode}");
+      }
+      
+      if (_isCancelled) return; 
+
+      // --- STEP 2: APPROVING & POLLING ---
+      currentTaskState = PipelineState.approving;
+      notifyListeners(); 
+      
+      bool isProcessingComplete = false;
+      String? finalLessonUrl;
+      String? finalVocabUrl;
+
+      // Loop every 15 seconds to check the server status
+      while (!isProcessingComplete && !_isCancelled) {
+        
+        var pollUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/checkStatus', {
+          'doc_name': documentName,
+        });
+        
+        var statusResponse = await http.get(pollUri);
+        
+        if (statusResponse.statusCode == 200) {
+          var statusData = jsonDecode(statusResponse.body);
+          
+          if (statusData['status'] == 'COMPLETE') {
+            isProcessingComplete = true;
+            finalLessonUrl = statusData['lesson_file'];
+            finalVocabUrl = statusData['vocab_file'];
+          } else if (statusData['status'] == 'FAILED') {
+            throw Exception("Python server crashed during PDF extraction.");
+          }
+        }
+        
+        // Wait 15 seconds before asking again
+        if (!isProcessingComplete) {
+          await Future.delayed(const Duration(seconds: 15));
+        }
+      }
+
+      if (_isCancelled) return;
+
+      // --- STEP 3: DOWNLOADING ---
+      currentTaskState = PipelineState.downloading;
+      notifyListeners();
+      
+      if (finalLessonUrl == null || finalVocabUrl == null) {
+        throw Exception("Server finished but URLs were null.");
+      }
+
+      final lessonResponse = await http.get(Uri.parse(finalLessonUrl));
+      final vocabResponse = await http.get(Uri.parse(finalVocabUrl));
+
+      // The Blast Doors
+      if (!lessonResponse.body.trim().startsWith('{') && !lessonResponse.body.trim().startsWith('[')) {
+        throw Exception("Bucket returned HTML instead of Lesson JSON!");
+      }
+      if (!vocabResponse.body.trim().startsWith('{') && !vocabResponse.body.trim().startsWith('[')) {
+        throw Exception("Bucket returned HTML instead of Vocab JSON!");
+      }
+
+      // UTF-8 Decode to protect Perso-Arabic text
+      Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
+      Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
+
+      // Save to Hive
+      Map<String, dynamic> masterDocument = {
+        ...downloadedLessonData, 
+        ...vocabData 
+      };
+      var lessonsBox = await Hive.openBox('lessonsBox');
+      await lessonsBox.put(documentName, masterDocument);
+
+      // --- DONE ---
+      currentTaskState = PipelineState.done;
+      notifyListeners();
+
+    } catch (e) {
+      print("PIPELINE CRASHED: $e");
+      currentTaskState = PipelineState.error; 
+      notifyListeners();
+    }
+  }
+}
   //CAUSE FOR CONCERN
   
   // 2. This is the function you requested.
