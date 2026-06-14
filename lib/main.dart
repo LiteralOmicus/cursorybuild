@@ -787,113 +787,117 @@ class Referencer extends ChangeNotifier {
   // ==========================================
   // PIPELINE KILL SWITCH
   // ==========================================
-  void cancelPipeline() {
+  void cancelPipeline() async {
     _isCancelled = true;
     currentTaskState = PipelineState.idle;
     activeLesson = null;
-    notifyListeners(); // Instantly tells the UI to reset
+    notifyListeners(); 
+    
+    // Wipe the bookmark so it doesn't try to resume on next startup
+    var box = await Hive.openBox('settingsBox');
+    await box.delete('pending_document');
+  }
+
+ Future<void> recoverPendingTask() async {
+    var box = await Hive.openBox('settingsBox');
+    String? pendingLesson = box.get('pending_document');
+
+    if (pendingLesson != null) {
+      // The app woke up and found a ghost task!
+      activeLesson = pendingLesson;
+      currentTaskState = PipelineState.approving; // Jump straight to "Processing"
+      notifyListeners();
+
+      // Resume the polling loop
+      _pollAndDownload(pendingLesson);
+    }
   }
 
  Future<void> startHeavyPipeline(String documentName, String filePath) async {
     _isCancelled = false;
     activeLesson = documentName;
     
-    // --- STEP 1: UPLOADING ---
     currentTaskState = PipelineState.uploading;
     notifyListeners(); 
     
     try {
-      var uploadUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/uploadPdf');
-      var request = http.MultipartRequest('POST', uploadUri);
-      request.files.add(await http.MultipartFile.fromPath('file', filePath));
-      
-      var uploadResponse = await request.send();
-      
-      if (uploadResponse.statusCode != 200) {
-        throw Exception("Server rejected the PDF upload. Status: ${uploadResponse.statusCode}");
-      }
+      // --- Your Signed URL / Bucket Stream Upload Code Here ---
+      // ...
       
       if (_isCancelled) return; 
 
-      // --- STEP 2: APPROVING & POLLING ---
-      currentTaskState = PipelineState.approving;
-      notifyListeners(); 
-      
-      bool isProcessingComplete = false;
-      String? finalLessonUrl;
-      String? finalVocabUrl;
+      // THE MAGIC: Save a bookmark to local storage before polling starts!
+     //CAUSE 4 CONCERN SHARED_PREFS IS BETTER FOR THIS CHK LATENCY
+      var box = await Hive.openBox('settingsBox');
+      await box.put('pending_document', documentName);
 
-      // Loop every 15 seconds to check the server status
-      while (!isProcessingComplete && !_isCancelled) {
-        
-        var pollUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/checkStatus', {
-          'doc_name': documentName,
-        });
-        
-        var statusResponse = await http.get(pollUri);
-        
-        if (statusResponse.statusCode == 200) {
-          var statusData = jsonDecode(statusResponse.body);
-          
-          if (statusData['status'] == 'COMPLETE') {
-            isProcessingComplete = true;
-            finalLessonUrl = statusData['lesson_file'];
-            finalVocabUrl = statusData['vocab_file'];
-          } else if (statusData['status'] == 'FAILED') {
-            throw Exception("Python server crashed during PDF extraction.");
-          }
-        }
-        
-        // Wait 15 seconds before asking again
-        if (!isProcessingComplete) {
-          await Future.delayed(const Duration(seconds: 15));
-        }
-      }
-
-      if (_isCancelled) return;
-
-      // --- STEP 3: DOWNLOADING ---
-      currentTaskState = PipelineState.downloading;
-      notifyListeners();
-      
-      if (finalLessonUrl == null || finalVocabUrl == null) {
-        throw Exception("Server finished but URLs were null.");
-      }
-
-      final lessonResponse = await http.get(Uri.parse(finalLessonUrl));
-      final vocabResponse = await http.get(Uri.parse(finalVocabUrl));
-
-      // The Blast Doors
-      if (!lessonResponse.body.trim().startsWith('{') && !lessonResponse.body.trim().startsWith('[')) {
-        throw Exception("Bucket returned HTML instead of Lesson JSON!");
-      }
-      if (!vocabResponse.body.trim().startsWith('{') && !vocabResponse.body.trim().startsWith('[')) {
-        throw Exception("Bucket returned HTML instead of Vocab JSON!");
-      }
-
-      // UTF-8 Decode to protect Perso-Arabic text
-      Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
-      Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
-
-      // Save to Hive
-      Map<String, dynamic> masterDocument = {
-        ...downloadedLessonData, 
-        ...vocabData 
-      };
-      var lessonsBox = await Hive.openBox('lessonsBox');
-      await lessonsBox.put(documentName, masterDocument);
-
-      // --- DONE ---
-      currentTaskState = PipelineState.done;
-      notifyListeners();
+      // Trigger Step 2
+      _pollAndDownload(documentName);
 
     } catch (e) {
-      print("PIPELINE CRASHED: $e");
+      print("UPLOAD CRASHED: $e");
       currentTaskState = PipelineState.error; 
       notifyListeners();
     }
   }
 
+  // ==========================================
+  // STEP 2 & 3: THE POLLING & DOWNLOAD LOOP
+  // ==========================================
+  Future<void> _pollAndDownload(String documentName) async {
+    currentTaskState = PipelineState.approving;
+    notifyListeners(); 
+    
+    try {
+      bool isProcessingComplete = false;
+      String? finalLessonUrl;
+      String? finalVocabUrl;
+
+      // The 15-second loop
+      while (!isProcessingComplete && !_isCancelled) {
+        var pollUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/checkStatus', {
+          'doc_name': documentName,
+        });
+        
+        var statusResponse = await http.get(pollUri);
+        if (statusResponse.statusCode == 200) {
+          var statusData = jsonDecode(statusResponse.body);
+          if (statusData['status'] == 'COMPLETE') {
+            isProcessingComplete = true;
+           //CAUSE 4 CONCERN 
+           //THESE ARENT GOING TO WORK
+           //CHECK FETCHSPECIFICRESOURCE
+            finalLessonUrl = statusData['lesson_file'];
+            finalVocabUrl = statusData['vocab_file'];
+          }
+        }
+        
+        if (!isProcessingComplete) await Future.delayed(const Duration(seconds: 15));
+      }
+
+      if (_isCancelled) return;
+
+      currentTaskState = PipelineState.downloading;
+      notifyListeners();
+      
+      // --- Your Step 3 Download Code Here ---
+      // ... 
+      // await lessonsBox.put(documentName, masterDocument);
+
+      // DONE! Wipe the bookmark so it doesn't resume on next app launch.
+      var box = await Hive.openBox('settingsBox');
+      await box.delete('pending_document');
+
+      currentTaskState = PipelineState.done;
+      notifyListeners();
+
+    } catch (e) {
+      print("POLLING/DOWNLOAD CRASHED: $e");
+      currentTaskState = PipelineState.error; 
+      notifyListeners();
+    }
+  }
+}
   //CAUSE FOR CONCERN
   
   // 2. This is the function you requested.
@@ -1665,7 +1669,7 @@ SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp, DeviceOrien
         ChangeNotifierProvider(
           create: (context) {
             final referencer = Referencer();
-            // Call your initialization method on the Referencer instance here.
+            referencer.recoverPendingTask();
             //referencer.initializeAds(); // Assuming Referencer has this method now
             return referencer;
           },
