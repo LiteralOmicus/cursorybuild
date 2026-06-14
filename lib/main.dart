@@ -897,7 +897,6 @@ class Referencer extends ChangeNotifier {
       notifyListeners();
     }
   }
-}
   //CAUSE FOR CONCERN
   
   // 2. This is the function you requested.
