@@ -23,7 +23,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
+import 'package:file_picker/file_picker.dart';
 
 const String ppLong = """
 PRIVACY POLICY
@@ -2616,40 +2616,55 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         trailing: const Icon(Icons.arrow_drop_up),
         tileColor: Colors.grey[200],
         onTap: () async {
-        // <-- Don't forget to make this async!
-    final referencer = context.read<Referencer>();
-    
-    // [OPTIONAL] You would likely put your FilePicker code right here!
-    // final selectedFile = await FilePicker.platform.pickFiles(...);
-    // if (selectedFile == null) return; // User canceled the picker
-    
-    String documentName = "New Uploaded PDF"; // Replace with your actual file name
-    
-    // 1. Start the 30-minute background task!
-    if (referencer.currentTaskState == PipelineState.idle) {
-       referencer.startHeavyPipeline(documentName);
+       final referencer = context.read<Referencer>();
+    String documentNameToDisplay = "";
+
+    // ==========================================
+    // 1. ROUTER: WHAT ARE WE DOING?
+    // ==========================================
+    if (referencer.currentTaskState != PipelineState.idle) {
+      // SCENARIO A: A task is already running! 
+      // Skip the file picker entirely and grab the active name.
+      documentNameToDisplay = referencer.activeLesson ?? "PDF Document";
+      
+    } else {
+      // SCENARIO B: We are completely idle. Open the file picker!
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['pdf'], 
+      );
+
+      // If they close the picker without selecting a file, abort everything.
+      if (result == null || result.files.single.path == null) return; 
+
+      documentNameToDisplay = result.files.single.name;
+      String filePath = result.files.single.path!; 
+      
+      // Start the heavy API pipeline with the brand new file!
+      referencer.startHeavyPipeline(documentNameToDisplay, filePath);
     }
 
-    // 2. Open the Resumable "Window" (The Dialog)
+    // ==========================================
+    // 2. OPEN THE ALERT DIALOG 
+    // (Both paths lead here!)
+    // ==========================================
     showDialog(
       context: context,
-      barrierDismissible: false, // Force them to use Close or Cancel
+      barrierDismissible: false, 
       builder: (BuildContext context) {
         
-        // 3. Consumer listens to the background task in real-time
         return Consumer<Referencer>(
           builder: (context, ref, child) {
             
-            // Auto-close when the 30-minute task finally finishes
+            // Auto-close the dialog when the 30-minute task finally finishes
             if (ref.currentTaskState == PipelineState.done) {
                WidgetsBinding.instance.addPostFrameCallback((_) {
                  if (Navigator.canPop(context)) Navigator.pop(context);
-                 // Trigger any final UI refreshes here
                });
             }
 
             return AlertDialog(
-              title: Text('Processing $documentName'),
+              title: Text('Processing $documentNameToDisplay'), 
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -2699,7 +2714,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                 TextButton(
                   child: const Text('Close (Run in Background)'),
                   onPressed: () {
-                    Navigator.of(context).pop(); // Hides dialog, task keeps running
+                    Navigator.of(context).pop(); 
                   }, 
                 ),
               ],
@@ -2708,7 +2723,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         );
       },
     );
-        },
+  },
       );
     }
       // Handle the null "Sender" case from your original code
