@@ -893,8 +893,7 @@ class Referencer extends ChangeNotifier {
       notifyListeners();
     }
   }
-}
-}
+
   //CAUSE FOR CONCERN
   
   // 2. This is the function you requested.
@@ -2699,7 +2698,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       
     } else {
       // SCENARIO B: We are completely idle. Open the file picker!
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
+      FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'], 
       );
