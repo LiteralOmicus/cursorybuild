@@ -2335,9 +2335,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
     {
-      'user': "-",             
+      'user': "-",    //should be UID         
       'lang': resourceName,  
-      'resource': "idiot",
     },
   );
 
