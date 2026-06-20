@@ -813,26 +813,61 @@ class Referencer extends ChangeNotifier {
     }
   }
 
- Future<void> startHeavyPipeline(String documentName, String filePath) async {
+ Future<void> startHeavyPipeline(String filePath) async {
     _isCancelled = false;
-    activeLesson = documentName;
+    activeLesson = "source.pdf"; // Keeps your AlertDialog UI from breaking
     
     currentTaskState = PipelineState.uploading;
     notifyListeners(); 
     
     try {
-      // --- Your Signed URL / Bucket Stream Upload Code Here ---
-      // ...
+      // --- 1. Get the Signed URL from FastAPI ---
+      var getUrlUri = Uri.https('https://toknlicensex-220938151994.us-central1.run.app', '/get-upload-url'); 
+      var getUrlResponse = await http.post(
+        getUrlUri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'uid': uid, // Just the uid now!
+        }),
+      );
+
+      // Handle the specific ValueError exceptions raised by your Python script
+      if (getUrlResponse.statusCode == 429) {
+        throw Exception("Daily token limit reached.");
+      } else if (getUrlResponse.statusCode != 200) {
+        throw Exception("Server rejected URL request: ${getUrlResponse.body}");
+      }
+
+      String signedUrl = jsonDecode(getUrlResponse.body)['upload_url'];
+
+      if (_isCancelled) return;
+
+      // --- 2. Stream directly to Google Cloud Storage ---
+      File pdfFile = File(filePath);
+      final bytes = await pdfFile.readAsBytes();
+      final uploadResponse = await http.put(
+        Uri.parse(signedUrl),
+        headers: { 'Content-Type': 'application/pdf' },
+        body: bytes, 
+      );
       
+      if (uploadResponse.statusCode != 200) {
+        throw Exception("Direct bucket upload failed. Status: ${uploadResponse.statusCode}");
+      }
+
+      // Optional: Clean up the OS temp file to save phone storage
+      if (await pdfFile.exists()) {
+        await pdfFile.delete(); 
+      }
+
       if (_isCancelled) return; 
 
-      // THE MAGIC: Save a bookmark to local storage before polling starts!
-     //CAUSE 4 CONCERN SHARED_PREFS IS BETTER FOR THIS CHK LATENCY
+      // --- 3. Save bookmark and start polling ---
       var box = await Hive.openBox('settingsBox');
-      await box.put('pending_document', documentName);
-
-      // Trigger Step 2
-      _pollAndDownload(documentName);
+      await box.put('pending_document', 'source.pdf');
+      
+      // Move to Step 2! 
+      _pollAndDownload('source.pdf');
 
     } catch (e) {
       print("UPLOAD CRASHED: $e");
@@ -840,7 +875,6 @@ class Referencer extends ChangeNotifier {
       notifyListeners();
     }
   }
-
   // ==========================================
   // STEP 2 & 3: THE POLLING & DOWNLOAD LOOP
   // ==========================================
@@ -850,51 +884,89 @@ class Referencer extends ChangeNotifier {
     
     try {
       bool isProcessingComplete = false;
-      String? finalLessonUrl;
-      String? finalVocabUrl;
 
-      // The 15-second loop
+      // ==========================================
+      // STEP 1: POLLING (Just checking status)
+      // ==========================================
       while (!isProcessingComplete && !_isCancelled) {
-        var pollUri = Uri.https('buckethandx-220938151994.us-central1.run.app', '/checkStatus', {
-          'doc_name': documentName,
+        var pollUri = Uri.https('https://toknlicensex-220938151994.us-central1.run.app', '/check-status', {
+          'uid': uid!, 
         });
         
-        var statusResponse = await http.get(pollUri);
+        var statusResponse = await http.get(pollUri).timeout(const Duration(seconds: 10));
+        
         if (statusResponse.statusCode == 200) {
           var statusData = jsonDecode(statusResponse.body);
-          if (statusData['status'] == 'COMPLETE') {
-            isProcessingComplete = true;
-           //CAUSE 4 CONCERN 
-           //THESE ARENT GOING TO WORK
-           //CHECK FETCHSPECIFICRESOURCE
-            finalLessonUrl = statusData['lesson_file'];
-            finalVocabUrl = statusData['vocab_file'];
+          
+          if (statusData['status'] == 'SUCCESS' || statusData['status'] == 'COMPLETE') {
+            // WE NO LONGER GRAB URLS HERE. Just break the loop.
+            isProcessingComplete = true; 
+          } else if (statusData['status'] == 'FAILED') {
+            throw Exception("Worker scripts failed: ${statusData['error']}");
           }
         }
         
-        if (!isProcessingComplete) await Future.delayed(const Duration(seconds: 15));
+        if (!isProcessingComplete) {
+          await Future.delayed(const Duration(seconds: 15));
+          if (_isCancelled) return;
+        }
       }
 
       if (_isCancelled) return;
 
+
+      // ==========================================
+      // STEP 2: FETCH SIGNED URLS FROM /getLessons
+      // ==========================================
+      // NOTE: Update 'source' below to whatever variable holds the user's target language
+      var getLessonsUri = Uri.https('buckethand-220938151994.us-central1.run.app', '/getLessons', {
+        'user': uid!,
+        'lang': 'source',       // <--- CHANGE THIS to your actual language variable (e.g., 'pashto')
+        'resource': 'source.pdf' // Included so your Python 'if not all([...])' validation doesn't crash
+      });
+
+      var lessonsUrlsResponse = await http.get(getLessonsUri).timeout(const Duration(seconds: 15));
+
+      if (lessonsUrlsResponse.statusCode != 200) {
+        throw Exception("Failed to fetch Signed URLs from /getLessons: ${lessonsUrlsResponse.body}");
+      }
+
+      var urlData = jsonDecode(lessonsUrlsResponse.body);
+      String? finalLessonUrl = urlData['lesson_file'];
+      String? finalVocabUrl = urlData['vocab_file'];
+
+      if (finalLessonUrl == null || finalVocabUrl == null) {
+        throw Exception("Python returned 200 but was missing the Signed URLs.");
+      }
+
+
+      // ==========================================
+      // STEP 3: DOWNLOADING & SAVING
+      // ==========================================
       currentTaskState = PipelineState.downloading;
       notifyListeners();
       
-      // --- Your Step 3 Download Code Here ---
-      // ... 
-      // await lessonsBox.put(documentName, masterDocument);
+      final lessonResponse = await http.get(Uri.parse(finalLessonUrl)).timeout(const Duration(seconds: 30));
+      final vocabResponse = await http.get(Uri.parse(finalVocabUrl)).timeout(const Duration(seconds: 30));
 
-      // DONE! Wipe the bookmark so it doesn't resume on next app launch.
-      var box = await Hive.openBox('settingsBox');
-      await box.delete('pending_document');
+      Map<String, dynamic> lessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
+      Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
+
+      var lessonsBox = await Hive.openBox('lessonsBox');
+      await lessonsBox.put(documentName, { ...lessonData, ...vocabData });
+
+      var settingsBox = await Hive.openBox('settingsBox');
+      await settingsBox.delete('pending_document');
 
       currentTaskState = PipelineState.done;
-      notifyListeners();
 
     } catch (e) {
-      print("POLLING/DOWNLOAD CRASHED: $e");
+      print("PIPELINE ERROR: $e");
       currentTaskState = PipelineState.error; 
-      notifyListeners();
+      
+    } finally {
+      // The guaranteed UI update runs whether it succeeds, fails, or cancels
+      notifyListeners(); 
     }
   }
   //CAUSE FOR CONCERN
@@ -2331,6 +2403,9 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    // myVocabList = loadVocabFromHive(currentlyLoadingLemma); //vocabx
     return specificDataYouNeed; 
   }
+ //DONT CHANGE THIS ONE
+ //NOT YET
+ // I HAVE TO MAKE SURE EVERYTHING IS VARIABLE AND THE RIGHT ARGUMENTS ARE PASSED
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
