@@ -2787,7 +2787,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
       String filePath = result.files.single.path!; 
       
       // Start the heavy API pipeline with the brand new file!
-      referencer.startHeavyPipeline(documentNameToDisplay, filePath);
+      referencer.startHeavyPipeline(filePath);
     }
 
     // ==========================================
