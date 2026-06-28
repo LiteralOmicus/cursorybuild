@@ -822,7 +822,7 @@ class Referencer extends ChangeNotifier {
     
     try {
       // --- 1. Get the Signed URL from FastAPI ---
-      var getUrlUri = Uri.https('https://toknlicensex-220938151994.us-central1.run.app', '/get-upload-url'); 
+      var getUrlUri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/get-upload-url'); 
       var getUrlResponse = await http.post(
         getUrlUri,
         headers: {'Content-Type': 'application/json'},
