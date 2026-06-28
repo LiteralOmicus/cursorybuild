@@ -22,10 +22,10 @@ jobs:
 
     steps:
       # Use an action to select a specific Xcode version
-      - name: Select Xcode 26.5.1
+      - name: Select Xcode 26.2.0
         uses: maxim-lobanov/setup-xcode@v1
         with:
-          xcode-version: '26.5.1' # Use the latest stable version 
+          xcode-version: '26.2.0' # Use the latest stable version 
 
       - name: Show Xcode Version (for verification)
         run: xcodebuild -version
