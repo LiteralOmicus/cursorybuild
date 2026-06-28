@@ -25,6 +25,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:file_picker/file_picker.dart';
 
+final GlobalKey<ScaffoldMessengerState> snackbarKey = GlobalKey<ScaffoldMessengerState>();
 const String ppLong = """
 PRIVACY POLICY
 Last updated April 10, 2023
@@ -829,7 +830,7 @@ class Referencer extends ChangeNotifier {
         body: jsonEncode({
           'uid': uid, // Just the uid now!
         }),
-      );
+      ).timeout(const Duration(seconds: 15)); // Add a timeout to prevent infinite hangs
 
       // Handle the specific ValueError exceptions raised by your Python script
       if (getUrlResponse.statusCode == 429) {
@@ -873,6 +874,22 @@ class Referencer extends ChangeNotifier {
       print("UPLOAD CRASHED: $e");
       currentTaskState = PipelineState.error; 
       notifyListeners();
+      print("PIPELINE ERROR: $e");
+      
+      // 1. Update the state (this pops the dialog we set up)
+      currentTaskState = PipelineState.error; 
+      notifyListeners(); 
+      
+      // 2. Shoot the error directly to the user's screen
+      snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
+      //rethrow;
     }
   }
   // ==========================================
@@ -1765,6 +1782,7 @@ class HelloFlutterApp extends StatelessWidget {
           child: MaterialApp(
           debugShowCheckedModeBanner: false,
           title: 'Flutter Demo',
+          scaffoldMessengerKey: snackbarKey,
           theme: Provider.of<ThemeProvider>(context, listen: true).currentTheme,
           //CHANGERU
           home: myForm() //MyHomePage()
