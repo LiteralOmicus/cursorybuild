@@ -55,5 +55,11 @@
     </array>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>We use the microphone to enable voice recording to allow users to interface with the Exercises functionality by inputting answers through speech to text..</string>
-	</dict>
+		<key>NSPhotoLibraryUsageDescription</key>
+		<string>This app requires access to your photo library so you can select and upload documents or images for processing.</string>
+		<key>NSCameraUsageDescription</key>
+		<string>This app requires access to the camera to allow you to take photos of documents for upload.</string>
+		<key>NSMicrophoneUsageDescription</key>
+		<string>This app requires access to the microphone for recording video uploads.</string>
+</dict>
 </plist>
