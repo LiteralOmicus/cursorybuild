@@ -816,7 +816,7 @@ class Referencer extends ChangeNotifier {
     }
   }
 
- Future<void> _triggerExtraction(String uid, String lang) async {
+ Future<Map<String, dynamic>> _triggerExtraction(String uid, String lang) async {
     // Using your FastAPI domain
     var uri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/trigger-extraction');
     
@@ -893,7 +893,7 @@ class Referencer extends ChangeNotifier {
       var box = await Hive.openBox('settingsBox');
       await box.put('pending_document', 'source.pdf');
       Map<String, dynamic> metadata = await _triggerExtraction(uid!, 'WRONG WAY'); 
-      documentNameToDisplay = metadata['title'] ?? "Unktle";
+      String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
       String license = metadata['license'] ?? "Unknowse";
       
