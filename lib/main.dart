@@ -2868,7 +2868,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
 
                   // UI ROW 3: Downloading
                   ListTile( //CAUSE 4 CONCERN I THINK MY ENUM NEEDS MORE STATES
-                    leading: leading: _buildStatusIcon(ref.currentTaskState, PipelineState.downloading),
+                    leading:_buildStatusIcon(ref.currentTaskState, PipelineState.downloading),
                     title: const Text("Lessons Downloaded"),
                   ),
                 ],
