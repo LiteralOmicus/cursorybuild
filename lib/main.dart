@@ -803,6 +803,8 @@ class Referencer extends ChangeNotifier {
     var box = await Hive.openBox('settingsBox');
     String? pendingLesson = box.get('pending_document');
 
+    //await _triggerExtraction(uid!, 'WRONG WAY'); // Example language code
+
     if (pendingLesson != null) {
       // The app woke up and found a ghost task!
       activeLesson = pendingLesson;
@@ -812,6 +814,29 @@ class Referencer extends ChangeNotifier {
       // Resume the polling loop
       _pollAndDownload(pendingLesson);
     }
+  }
+
+ Future<void> _triggerExtraction(String uid, String lang) async {
+    // Using your FastAPI domain
+    var uri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/trigger-extraction');
+    
+    var response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'uid': uid,
+        'lang': lang
+       // 'filename': 'source.pdf' // Hardcoded based on our earlier setup
+      }),
+    ).timeout(const Duration(seconds: 90));
+
+    if (response.statusCode != 200) {
+      throw Exception("Failed to trigger backend extraction: ${response.body}");
+    }
+    
+    // If it's a 200 OK, FastAPI successfully wrote "PROCESSING" to status.json 
+    // and fired off the background workers!
+    return jsonDecode(response.body);
   }
 
  Future<void> startHeavyPipeline(String filePath) async {
@@ -867,9 +892,15 @@ class Referencer extends ChangeNotifier {
       // --- 3. Save bookmark and start polling ---
       var box = await Hive.openBox('settingsBox');
       await box.put('pending_document', 'source.pdf');
+      Map<String, dynamic> metadata = await _triggerExtraction(uid!, 'WRONG WAY'); 
+      documentNameToDisplay = metadata['title'] ?? "Unktle";
+      String author = metadata['author'] ?? "Unhor";
+      String license = metadata['license'] ?? "Unknowse";
       
-      // Move to Step 2! 
-      _pollAndDownload('source.pdf');
+      // Notify listeners so the AlertDialog title instantly changes from 
+      // "Processing source.pdf" to "Processing [Actual Textbook Name]"
+      notifyListeners();
+      await _pollAndDownload('source.pdf');
 
     } catch (e) {
       print("UPLOAD CRASHED: $e");
