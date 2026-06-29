@@ -829,6 +829,7 @@ class Referencer extends ChangeNotifier {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'uid': uid, // Just the uid now!
+         'filename': 'source',
         }),
       ).timeout(const Duration(seconds: 15)); // Add a timeout to prevent infinite hangs
 
@@ -2541,7 +2542,25 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
  return [];
 }
 
-
+Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
+    // 1. Prevent the "Enum Trap" - Never show green if it's an error
+    if (currentState == PipelineState.error) {
+      return const Icon(Icons.error, color: Colors.red);
+    }
+    
+    // 2. The step is successfully finished
+    if (currentState.index > rowState.index) {
+      return const Icon(Icons.check_circle, color: Colors.green);
+    }
+    
+    // 3. The step is currently running
+    if (currentState == rowState) {
+      return const CircularProgressIndicator();
+    }
+    
+    // 4. The step hasn't started yet
+    return const Icon(Icons.radio_button_unchecked);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2834,21 +2853,13 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                 children: [
                   // UI ROW 1: Uploading
                   ListTile(
-                    leading: ref.currentTaskState.index > PipelineState.uploading.index 
-                        ? const Icon(Icons.check_circle, color: Colors.green)
-                        : (ref.currentTaskState == PipelineState.uploading 
-                            ? const CircularProgressIndicator() 
-                            : const Icon(Icons.radio_button_unchecked)),
+                    leading: _buildStatusIcon(ref.currentTaskState, PipelineState.approving),
                     title: const Text("PDF Uploaded"),
                   ),
                   
                   // UI ROW 2: Approving
                   ListTile(
-                    leading: ref.currentTaskState.index > PipelineState.approving.index 
-                        ? const Icon(Icons.check_circle, color: Colors.green)
-                        : (ref.currentTaskState == PipelineState.approving 
-                            ? const CircularProgressIndicator() 
-                            : const Icon(Icons.radio_button_unchecked)),
+                    leading: _buildStatusIcon(ref.currentTaskState, PipelineState.downloading),
                     title: const Text("License Approved"),
                     subtitle: ref.currentTaskState == PipelineState.approving 
                         ? const Text("This usually takes about 30 minutes...") 
@@ -2856,10 +2867,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
                   ),
 
                   // UI ROW 3: Downloading
-                  ListTile(
-                    leading: ref.currentTaskState == PipelineState.downloading 
-                        ? const CircularProgressIndicator() 
-                        : const Icon(Icons.radio_button_unchecked),
+                  ListTile( //CAUSE 4 CONCERN I THINK MY ENUM NEEDS MORE STATES
+                    leading: leading: _buildStatusIcon(ref.currentTaskState, PipelineState.downloading),
                     title: const Text("Lessons Downloaded"),
                   ),
                 ],
