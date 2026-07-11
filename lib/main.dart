@@ -808,8 +808,8 @@ class Referencer extends ChangeNotifier {
     if (pendingLesson != null) {
       // The app woke up and found a ghost task!
       activeLesson = pendingLesson;
-      currentTaskState = PipelineState.approving; // Jump straight to "Processing"
-      notifyListeners();
+      //currentTaskState = PipelineState.approving; // Jump straight to "Processing"
+     // notifyListeners();
 
       // Resume the polling loop
       _pollAndDownload(pendingLesson);
@@ -882,16 +882,18 @@ class Referencer extends ChangeNotifier {
         throw Exception("Direct bucket upload failed. Status: ${uploadResponse.statusCode}");
       }
 
+      currentTaskState = PipelineState.approving;
+      notifyListeners();
+
       // Optional: Clean up the OS temp file to save phone storage
-      if (await pdfFile.exists()) {
-        await pdfFile.delete(); 
-      }
+   //   if (await pdfFile.exists()) { await pdfFile.delete(); }
 
       if (_isCancelled) return; 
 
       // --- 3. Save bookmark and start polling ---
-      var box = await Hive.openBox('settingsBox');
-      await box.put('pending_document', 'source.pdf');
+     //THERES REALLY NO REASON 4 THIS I DONT UNDERSTAND CAUSE 4 CONCERN
+      //var box = await Hive.openBox('settingsBox');
+      //await box.put('pending_document', 'source.pdf');
       Map<String, dynamic> metadata = await _triggerExtraction(uid!, 'WRONG WAY'); 
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
