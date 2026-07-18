@@ -894,11 +894,11 @@ class Referencer extends ChangeNotifier {
      //THERES REALLY NO REASON 4 THIS I DONT UNDERSTAND CAUSE 4 CONCERN
       //var box = await Hive.openBox('settingsBox');
       //await box.put('pending_document', 'source.pdf');
-      Map<String, dynamic> metadata = await _triggerExtraction(uid!, 'WRONG WAY'); 
+      Map<String, dynamic> metadata = await _triggerExtraction(uid!); 
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
       String license = metadata['license'] ?? "Unknowse";
-      
+      //NOW UPDATE THE TOOLTIP WRONGX
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
       notifyListeners();
@@ -926,9 +926,7 @@ class Referencer extends ChangeNotifier {
       //rethrow;
     }
   }
-  // ==========================================
-  // STEP 2 & 3: THE POLLING & DOWNLOAD LOOP
-  // ==========================================
+
   Future<void> _pollAndDownload(String documentName) async {
     currentTaskState = PipelineState.approving;
     notifyListeners(); 
@@ -958,8 +956,73 @@ class Referencer extends ChangeNotifier {
         }
         
         if (!isProcessingComplete) {
-          await Future.delayed(const Duration(seconds: 15));
           if (_isCancelled) return;
+
+      // ==========================================
+      // 1. UPDATE UI TO DOWNLOADING
+      // ==========================================
+      currentTaskState = PipelineState.downloading;
+      notifyListeners();
+
+      // ==========================================
+      // 2. HIT THE BUCKETHAND /MATCHTHIS ENDPOINT
+      // ==========================================
+      // Update this URL to your actual buckethand Cloud Run domain
+      var downloadUri = Uri.https('buckethand-YOUR_PROJECT_HASH.us-central1.run.app', '/MATCHTHIS');
+      
+      var downloadResponse = await http.post(
+        downloadUri,
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'uid': uid,
+          // Pass the document name so your Python server knows what to send back
+          'filename': documentName 
+        }),
+      ).timeout(const Duration(minutes: 3)); // Give it time for large files!
+
+      if (downloadResponse.statusCode != 200) {
+        throw Exception("Download endpoint failed with status: ${downloadResponse.statusCode}");
+      }
+
+      if (_isCancelled) return;
+
+      // ==========================================
+      // 3. SAVE THE FILE TO THE DEVICE
+      // ==========================================
+      // Get the safe directory for local app files
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+      
+      // Save it as a .json or .pdf depending on what your extraction workers generate
+      String finalSavePath = "${appDocDir.path}/processed_$documentName";
+      File finalFile = File(finalSavePath);
+      
+      // Write the bytes directly from the Python response
+      await finalFile.writeAsBytes(downloadResponse.bodyBytes);
+
+      // ==========================================
+      // 4. CLEANUP AND FINISH
+      // ==========================================
+      currentTaskState = PipelineState.done;
+      notifyListeners();
+
+      // Wipe the ghost task from memory so it doesn't try to recover it on reboot!
+      var box = await Hive.openBox('settingsBox');
+      await box.delete('pending_task');
+
+      // Optional: Shoot a success SnackBar
+      snackbarKey.currentState?.showSnackBar(
+        const SnackBar(
+          content: Text("Lesson successfully downloaded!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+    } catch (e) {
+      // Your existing catch block will handle any crashes here!
+      hasError = true;
+      lastErrorMessage = e.toString();
+      notifyListeners(); 
+    }
         }
       }
 
