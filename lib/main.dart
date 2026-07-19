@@ -722,6 +722,9 @@ DatabaseReference ref = FirebaseDatabase.instance.ref('language');
 enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
+  // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
+  List<dynamic> lemmyx = []; 
+
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
   bool _showContinueButton = false; // Private field for showing continue button
@@ -934,11 +937,9 @@ class Referencer extends ChangeNotifier {
     try {
       bool isProcessingComplete = false;
 
-      // ==========================================
-      // STEP 1: POLLING (Just checking status)
-      // ==========================================
       while (!isProcessingComplete && !_isCancelled) {
-        var pollUri = Uri.https('https://toknlicensex-220938151994.us-central1.run.app', '/check-status', {
+        // FIX 1: Removed 'https://' from the domain string!
+        var pollUri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/check-status', {
           'uid': uid!, 
         });
         
@@ -947,143 +948,38 @@ class Referencer extends ChangeNotifier {
         if (statusResponse.statusCode == 200) {
           var statusData = jsonDecode(statusResponse.body);
           
-          if (statusData['status'] == 'SUCCESS' || statusData['status'] == 'COMPLETE') {
-            // WE NO LONGER GRAB URLS HERE. Just break the loop.
+          if (statusData['overall_status'] == 'SUCCESS' || statusData['overall_status'] == 'COMPLETE') {
             isProcessingComplete = true; 
-          } else if (statusData['status'] == 'FAILED') {
+          } else if (statusData['overall_status'] == 'FAILED') {
             throw Exception("Worker scripts failed: ${statusData['error']}");
           }
         }
         
+        // Pause before checking again so we don't spam Google Cloud
         if (!isProcessingComplete) {
+          await Future.delayed(const Duration(seconds: 15));
           if (_isCancelled) return;
-
-      // ==========================================
-      // 1. UPDATE UI TO DOWNLOADING
-      // ==========================================
-      currentTaskState = PipelineState.downloading;
-      notifyListeners();
-
-      // ==========================================
-      // 2. HIT THE BUCKETHAND /MATCHTHIS ENDPOINT
-      // ==========================================
-      // Update this URL to your actual buckethand Cloud Run domain
-      var downloadUri = Uri.https('buckethand-YOUR_PROJECT_HASH.us-central1.run.app', '/MATCHTHIS');
-      
-      var downloadResponse = await http.post(
-        downloadUri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'uid': uid,
-          // Pass the document name so your Python server knows what to send back
-          'filename': documentName 
-        }),
-      ).timeout(const Duration(minutes: 3)); // Give it time for large files!
-
-      if (downloadResponse.statusCode != 200) {
-        throw Exception("Download endpoint failed with status: ${downloadResponse.statusCode}");
-      }
+        }
+      } // <--- End of while loop
 
       if (_isCancelled) return;
 
       // ==========================================
-      // 3. SAVE THE FILE TO THE DEVICE
+      // CLEAN UP MEMORY & PASS BATON
       // ==========================================
-      // Get the safe directory for local app files
-      Directory appDocDir = await getApplicationDocumentsDirectory();
-      
-      // Save it as a .json or .pdf depending on what your extraction workers generate
-      String finalSavePath = "${appDocDir.path}/processed_$documentName";
-      File finalFile = File(finalSavePath);
-      
-      // Write the bytes directly from the Python response
-      await finalFile.writeAsBytes(downloadResponse.bodyBytes);
-
-      // ==========================================
-      // 4. CLEANUP AND FINISH
-      // ==========================================
-      currentTaskState = PipelineState.done;
-      notifyListeners();
-
-      // Wipe the ghost task from memory so it doesn't try to recover it on reboot!
       var box = await Hive.openBox('settingsBox');
       await box.delete('pending_task');
 
-      // Optional: Shoot a success SnackBar
-      snackbarKey.currentState?.showSnackBar(
-        const SnackBar(
-          content: Text("Lesson successfully downloaded!"),
-          backgroundColor: Colors.green,
-        ),
-      );
+      currentTaskState = PipelineState.downloading;
+      notifyListeners();
 
     } catch (e) {
-      // Your existing catch block will handle any crashes here!
+      // FIX 2: The missing catch statement!
       hasError = true;
       lastErrorMessage = e.toString();
       notifyListeners(); 
     }
-        }
-      }
-
-      if (_isCancelled) return;
-
-
-      // ==========================================
-      // STEP 2: FETCH SIGNED URLS FROM /getLessons
-      // ==========================================
-      // NOTE: Update 'source' below to whatever variable holds the user's target language
-      var getLessonsUri = Uri.https('buckethand-220938151994.us-central1.run.app', '/getLessons', {
-        'user': uid!,
-        'lang': 'source',       // <--- CHANGE THIS to your actual language variable (e.g., 'pashto')
-        'resource': 'source.pdf' // Included so your Python 'if not all([...])' validation doesn't crash
-      });
-
-      var lessonsUrlsResponse = await http.get(getLessonsUri).timeout(const Duration(seconds: 15));
-
-      if (lessonsUrlsResponse.statusCode != 200) {
-        throw Exception("Failed to fetch Signed URLs from /getLessons: ${lessonsUrlsResponse.body}");
-      }
-
-      var urlData = jsonDecode(lessonsUrlsResponse.body);
-      String? finalLessonUrl = urlData['lesson_file'];
-      String? finalVocabUrl = urlData['vocab_file'];
-
-      if (finalLessonUrl == null || finalVocabUrl == null) {
-        throw Exception("Python returned 200 but was missing the Signed URLs.");
-      }
-
-
-      // ==========================================
-      // STEP 3: DOWNLOADING & SAVING
-      // ==========================================
-      currentTaskState = PipelineState.downloading;
-      notifyListeners();
-      
-      final lessonResponse = await http.get(Uri.parse(finalLessonUrl)).timeout(const Duration(seconds: 30));
-      final vocabResponse = await http.get(Uri.parse(finalVocabUrl)).timeout(const Duration(seconds: 30));
-
-      Map<String, dynamic> lessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
-      Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
-
-      var lessonsBox = await Hive.openBox('lessonsBox');
-      await lessonsBox.put(documentName, { ...lessonData, ...vocabData });
-
-      var settingsBox = await Hive.openBox('settingsBox');
-      await settingsBox.delete('pending_document');
-
-      currentTaskState = PipelineState.done;
-
-    } catch (e) {
-      print("PIPELINE ERROR: $e");
-      currentTaskState = PipelineState.error; 
-      
-    } finally {
-      // The guaranteed UI update runs whether it succeeds, fails, or cancels
-      notifyListeners(); 
-    }
   }
-  //CAUSE FOR CONCERN
   
   // 2. This is the function you requested.
   void setUser(String newUid) {
@@ -1547,6 +1443,13 @@ class Referencer extends ChangeNotifier {
   Map getLemma() {
     return Lemx;
   }
+
+// 2. Create a helper method to add items and trigger the UI rebuild
+  void addToLemmyx(dynamic newItem) {
+    lemmyx.add(newItem);
+    notifyListeners(); // <-- THIS is what wakes up the ListView!
+  }
+}
 
 Future<void> firstTime(List pic, String handle) async {
   // 1. Get the current user directly (no listener!)
