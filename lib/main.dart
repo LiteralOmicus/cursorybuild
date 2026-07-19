@@ -819,7 +819,7 @@ class Referencer extends ChangeNotifier {
     }
   }
 
- Future<Map<String, dynamic>> _triggerExtraction(String uid, String lang) async {
+ Future<Map<String, dynamic>> _triggerExtraction(String uid) async {
     // Using your FastAPI domain
     var uri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/trigger-extraction');
     
@@ -827,8 +827,7 @@ class Referencer extends ChangeNotifier {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'uid': uid,
-        'lang': lang
+        'uid': uid
        // 'filename': 'source.pdf' // Hardcoded based on our earlier setup
       }),
     ).timeout(const Duration(seconds: 90));
@@ -957,7 +956,7 @@ class Referencer extends ChangeNotifier {
         
         // Pause before checking again so we don't spam Google Cloud
         if (!isProcessingComplete) {
-          await Future.delayed(const Duration(seconds: 15));
+          await Future.delayed(const Duration(seconds: 45));
           if (_isCancelled) return;
         }
       } // <--- End of while loop
@@ -1449,7 +1448,7 @@ class Referencer extends ChangeNotifier {
     lemmyx.add(newItem);
     notifyListeners(); // <-- THIS is what wakes up the ListView!
   }
-}
+
 
 Future<void> firstTime(List pic, String handle) async {
   // 1. Get the current user directly (no listener!)
@@ -2265,7 +2264,7 @@ class _MyHomePageState extends State<MyHomePage> {
   late TextEditingController dontroller;
   late double fanalexp;
  Map<String, bool> checkedLemmas = {};
- late Map<dynamic, dynamic> lemmyx;
+ //late Map<dynamic, dynamic> lemmyx;
  late List<Map<String, String>>?  myVocabList; // = [{"english" : "fuck", "pashto" : "you"}]; //vocabx
   Map _dump = {};
   String saveuserName = "";
@@ -2428,7 +2427,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
     {
-      'user': "-",    //should be UID         
+      'user': "000A",    //should be UID         
       'lang': resourceName,  
     },
   );
@@ -2541,6 +2540,19 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
  return [];
 }
 
+void _onReferencerStateChanged(context) {
+  final ref = context.read<Referencer>();
+    
+    if (ref.currentTaskState == PipelineState.downloading) {
+      ref.currentTaskState = PipelineState.done; // Reset it immediately
+      
+      // 2. Actually CALL your function. 
+      // 'context' is already available here. We use ref.activeLesson 
+      // (or whatever variable holds the filename) for the resourceName!
+      fetchSpecificResource(context, "NEWLANGUAGE");
+}
+}
+ 
 Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
     // 1. Prevent the "Enum Trap" - Never show green if it's an error
     if (currentState == PipelineState.error) {
@@ -2573,7 +2585,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         .of(context)
         .size
         .height;
-
+    Map<dynamic,dynamic> lemmyx = context.watch<Referencer>().lemmyx;
     return Scaffold(
         appBar: AppBar(
           actions: [
@@ -2590,7 +2602,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                     '🏠', // Home emoji
                     style: TextStyle(
                       fontSize: 24, // Adjust size to look like an icon
-                      color: Colors.white, // Adjust color
+                      color: Colors.white, // Adjust colorl
                     )
                 )
             ),
@@ -2655,7 +2667,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
                List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
                //If you need aLessons to permanently change when the user does something, you have to send that new data back to your Referencer class
-               final List lemmyx =["IntroPashtx","IntroDarx", "ru"];
+               //final List lemmyx =["IntroPashtx","IntroDarx", "ru"];
                 final rawValue = context.read<Referencer>().getExp();
                 if (rawValue == null || rawValue is! num) {
                 fanalexp = 10.0;
