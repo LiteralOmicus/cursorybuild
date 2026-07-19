@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List<dynamic> lemmyx = []; 
+  Map<dynamic,dynamic> lemmyx = context.watch<Referencer>().lemmyx;
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -907,10 +907,8 @@ class Referencer extends ChangeNotifier {
       await _pollAndDownload('source.pdf');
 
     } catch (e) {
-      print("UPLOAD CRASHED: $e");
       currentTaskState = PipelineState.error; 
       notifyListeners();
-      print("PIPELINE ERROR: $e");
       
       // 1. Update the state (this pops the dialog we set up)
       currentTaskState = PipelineState.error; 
@@ -973,10 +971,22 @@ class Referencer extends ChangeNotifier {
       notifyListeners();
 
     } catch (e) {
-      // FIX 2: The missing catch statement!
-      hasError = true;
-      lastErrorMessage = e.toString();
+      currentTaskState = PipelineState.error; 
+      notifyListeners();
+      
+      // 1. Update the state (this pops the dialog we set up)
+      currentTaskState = PipelineState.error; 
       notifyListeners(); 
+      
+      // 2. Shoot the error directly to the user's screen
+      snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text(e.toString().replaceAll('Exception: ', '')),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
     }
   }
   
