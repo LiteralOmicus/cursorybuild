@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx = context.watch<Referencer>().lemmyx;
+  List lemmyx =["IntroPashtx","IntroDarx", "ru"];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -903,6 +903,7 @@ class Referencer extends ChangeNotifier {
       //NOW UPDATE THE TOOLTIP WRONGX
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
+      addToLemmyx("NEWLANGUAGE");
       notifyListeners();
       await _pollAndDownload('source.pdf');
 
@@ -1454,7 +1455,7 @@ class Referencer extends ChangeNotifier {
   }
 
 // 2. Create a helper method to add items and trigger the UI rebuild
-  void addToLemmyx(dynamic newItem) {
+  void addToLemmyx(String newItem) {
     lemmyx.add(newItem);
     notifyListeners(); // <-- THIS is what wakes up the ListView!
   }
