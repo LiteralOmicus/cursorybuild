@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  Map<dynamic,dynamic> lemmyx = context.watch<Referencer>().lemmyx;
+  List lemmyx = context.watch<Referencer>().lemmyx;
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -2595,7 +2595,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         .of(context)
         .size
         .height;
-    Map<dynamic,dynamic> lemmyx = context.watch<Referencer>().lemmyx;
+    List lemmyx = context.watch<Referencer>().lemmyx;
     return Scaffold(
         appBar: AppBar(
           actions: [
