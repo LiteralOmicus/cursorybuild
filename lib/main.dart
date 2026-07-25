@@ -894,8 +894,8 @@ class Referencer extends ChangeNotifier {
 
       // --- 3. Save bookmark and start polling ---
      //THERES REALLY NO REASON 4 THIS I DONT UNDERSTAND CAUSE 4 CONCERN
-      //var box = await Hive.openBox('settingsBox');
-      //await box.put('pending_document', 'source.pdf');
+      var box = await Hive.openBox('settingsBox');
+      await box.put('pending_document', 'source.pdf');
       Map<String, dynamic> metadata = await _triggerExtraction(uid!); 
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
@@ -934,6 +934,7 @@ class Referencer extends ChangeNotifier {
     
     try {
       bool isProcessingComplete = false;
+     //CAN THIS EVER COMPLETE?
 
       while (!isProcessingComplete && !_isCancelled) {
         // FIX 1: Removed 'https://' from the domain string!
@@ -941,7 +942,7 @@ class Referencer extends ChangeNotifier {
           'uid': uid!, 
         });
         
-        var statusResponse = await http.get(pollUri).timeout(const Duration(seconds: 10));
+        var statusResponse = await http.get(pollUri).timeout(const Duration(seconds: 15));
         
         if (statusResponse.statusCode == 200) {
           var statusData = jsonDecode(statusResponse.body);
@@ -955,7 +956,7 @@ class Referencer extends ChangeNotifier {
         
         // Pause before checking again so we don't spam Google Cloud
         if (!isProcessingComplete) {
-          await Future.delayed(const Duration(seconds: 45));
+          await Future.delayed(const Duration(seconds: 30));
           if (_isCancelled) return;
         }
       } // <--- End of while loop
@@ -2321,6 +2322,9 @@ class _MyHomePageState extends State<MyHomePage> {
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
     quiccfunk();
     dontroller = TextEditingController();
+   WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<Referencer>().addListener(_onReferencerStateChanged);
+    });
    
   }
 
@@ -2329,6 +2333,7 @@ class _MyHomePageState extends State<MyHomePage> {
     //I think I want to make a stream for comments
     //I ned to dispose of stream too
     dontroller.dispose();
+    context.read<Referencer>().removeListener(_onReferencerStateChanged);
     super.dispose();
   }
 
@@ -2551,7 +2556,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
  return [];
 }
 
-void _onReferencerStateChanged(context) {
+void _onReferencerStateChanged() {
   final ref = context.read<Referencer>();
     
     if (ref.currentTaskState == PipelineState.downloading) {
