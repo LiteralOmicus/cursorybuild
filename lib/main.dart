@@ -2819,6 +2819,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
     itemBuilder: (context, i) {
       if (i == lemmyx.length) {
       return ListTile(
+       key: const ValueKey('upload_button_key'),
         title: const Text(
           "Upload PDF", 
           style: TextStyle(fontWeight: FontWeight.bold),
