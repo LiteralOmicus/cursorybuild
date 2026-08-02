@@ -938,12 +938,17 @@ class Referencer extends ChangeNotifier {
 
       while (!isProcessingComplete && !_isCancelled) {
         // FIX 1: Removed 'https://' from the domain string!
-        var pollUri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/check-status', {
-          'uid': uid!, 
-        });
+       // var pollUri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/check-status', {
+        //  'uid': uid!, 
+       // });
         
-        var statusResponse = await http.get(pollUri).timeout(const Duration(seconds: 15));
-        
+       // var statusResponse = await http.get(pollUri).timeout(const Duration(seconds: 15));
+        var pollUri = Uri.https('toknlicensex-220938151994.us-central1.run.app', '/check-status');
+        var statusResponse = await http.post(
+          pollUri,
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'uid': uid}), // 2. Send the uid in the body
+        ).timeout(const Duration(seconds: 15));
         if (statusResponse.statusCode == 200) {
           var statusData = jsonDecode(statusResponse.body);
           
