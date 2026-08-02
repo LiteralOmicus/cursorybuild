@@ -2470,6 +2470,15 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
      final vocabResponse = await http.get(Uri.parse(vocabUrl));
+     if (lessonResponse.statusCode != 200) {
+       // This will throw the raw XML straight to your phone's SnackBar
+       throw Exception("GCS REJECTED LESSON:\n${lessonResponse.body}");
+     }
+     
+     if (vocabResponse.statusCode != 200) {
+       // This will throw the raw XML straight to your phone's SnackBar
+       throw Exception("GCS REJECTED VOCAB:\n${vocabResponse.body}");
+     }
      //Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
      //Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
      Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
