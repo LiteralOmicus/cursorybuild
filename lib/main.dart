@@ -789,53 +789,7 @@ class Referencer extends ChangeNotifier {
   bool _isCancelled = false;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  Future<void> sourceFromFirebase() async {
-    try {
-      DataSnapshot snapshot = await ref.get();
-      
-      if (snapshot.exists) {
-        // RTDB returns a dynamic map. We have to cast it safely.
-        final data = snapshot.value as Map<dynamic, dynamic>;
-        
-        lemmyx.clear(); // Clear local list before adding the cloud data
-        //THIS IS WHERE CHECKED SHUD COME IN 
-        data.forEach((key, value) {
-          lemmyx.add(Map<String, dynamic>.from(value));
-        });
-        
-        notifyListeners(); 
-        print("✅ Data sourced successfully from Realtime Database.");
-      }
-    } catch (e) {
-      print("❌ Error sourcing data: $e");
-    }
-  }
-
-  // ==========================================
-  // 2. SAVE IT (Push to Realtime Database)
-  // ==========================================
-  Future<void> saveToFirebase() async {
-    try {
-      // Create a master map of all updates to push at once
-      Map<String, dynamic> updates = {};
-      
-      for (var attributeMap in lemmyx) {
-        // ⚠️ CRITICAL RTDB RULE: Database keys CANNOT contain '/' characters.
-        // Because you have "Russian/ Русский", we must sanitize the key name 
-        // before saving it, otherwise Firebase will crash.
-        String safeKey = attributeMap['display'].toString().replaceAll('/', '_');
-        
-        updates[safeKey] = attributeMap;
-      }
-      
-      // Push all updates in one atomic network request
-      await ref.update(updates);
-      print("✅ Successfully saved all attributes to Realtime Database!");
-      
-    } catch (e) {
-      print("❌ Realtime Database save failed: $e");
-    }
-  }
+  
 
   // ==========================================
   // PIPELINE KILL SWITCH
