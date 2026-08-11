@@ -787,6 +787,51 @@ class Referencer extends ChangeNotifier {
   PipelineState currentTaskState = PipelineState.idle;
   String? activeLesson; 
   bool _isCancelled = false;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  Future<void> sourceFromFirebase() async {
+    try {
+      var snapshot = await _firestore.collection('language_attributes').get();
+      
+      if (snapshot.docs.isNotEmpty) {
+        lemmyx = snapshot.docs.map((doc) => doc.data()).toList();
+        notifyListeners(); // Update the UI with the fresh data
+        print("✅ Data sourced successfully from Firebase.");
+      }
+    } catch (e) {
+      print("❌ Error sourcing data: $e");
+    }
+  }
+
+  // ==========================================
+  // 3. SAVE IT (Push to Firebase)
+  // ==========================================
+  Future<void> saveToFirebase() async {
+    try {
+      // Using a WriteBatch is the safest and most efficient way 
+      // to push a whole list of maps to Firestore at once.
+      WriteBatch batch = _firestore.batch();
+      
+      for (var attributeMap in lemmyx) {
+        // We use the 'id' (e.g., IntroPashtx) as the actual Document ID 
+        // in Firestore to make it incredibly easy to query later.
+        var docRef = _firestore
+            .collection('language_attributes')
+            .doc(attributeMap['id']);
+            
+        // SetOptions(merge: true) ensures we don't overwrite existing 
+        // fields that aren't included in this specific map.
+        batch.set(docRef, attributeMap, SetOptions(merge: true));
+      }
+      
+      await batch.commit();
+      print("✅ Successfully saved all attributes to Firebase!");
+      
+    } catch (e) {
+      print("❌ Firebase save failed: $e");
+    }
+  }
+}
 
   // ==========================================
   // PIPELINE KILL SWITCH
