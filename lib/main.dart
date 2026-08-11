@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =[{"langx": "IntroPashtx", "display": "pashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "dari", "message": "the library source for dari"},{"display": "Russian/ Русский", langx":"ru", "message": "the library source for Russian"}];
+  List lemmyx =[{"langx": "IntroPashtx", "display": "pashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "dari", "message": "the library source for dari"},{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian"}];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -3021,7 +3021,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
             //my_lang_pref = currentlyLoadingLemma;
               
             
-            fetchSpecificResource(context, lemmyx[i["langx"].toString()).then((parsedData) {
+            fetchSpecificResource(context, lemmyx[i]["langx"].toString()).then((parsedData) {
                if (context.mounted) {
                   setState(() {
                     currentlyLoadingLemma = null; // Hide hourglass
