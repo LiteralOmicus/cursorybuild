@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =["IntroPashtx","IntroDarx", "ru"];
+  List lemmyx =[{"langx": "IntroPashtx", "display": "pashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "dari", "message": "the library source for dari"},{"display": "Russian/ Русский", langx":"ru", "message": "the library source for Russian"}];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -900,10 +900,13 @@ class Referencer extends ChangeNotifier {
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
       String license = metadata['license'] ?? "Unknowse";
+      String slicedDocument = documentNameToDisplay.length > 10 ? documentNameToDisplay.substring(0, 10) : documentNameToDisplay;
+      String slicedAuthor = author.length > 15 ? author.substring(0, 15) : author;
+      String slicedLicense = license.length > 5 ? license.substring(0, 5) : license;
       //NOW UPDATE THE TOOLTIP WRONGX
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
-      addToLemmyx("NEWLANGUAGE");
+      addToLemmyx({"display":"NEWLANGUAGE", "langx": "NEWLANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"});
       notifyListeners();
       await _pollAndDownload('source.pdf');
 
@@ -1461,7 +1464,7 @@ class Referencer extends ChangeNotifier {
   }
 
 // 2. Create a helper method to add items and trigger the UI rebuild
-  void addToLemmyx(String newItem) {
+  void addToLemmyx(Map newItem) {
     lemmyx.add(newItem);
     notifyListeners(); // <-- THIS is what wakes up the ListView!
   }
@@ -2829,7 +2832,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                                       height: screenHeight / 3,
                                       width: screenWidth / 2.2,
                                       child: ListView.builder( 
-    itemCount: lemmyx.length+1,
+    itemCount: lemmyx.length+1, //isthisupdating WITH NEW LENGTH!? NO IDEA TILE DISAPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPPEARS
     itemBuilder: (context, i) {
       if (i == lemmyx.length) {
       return ListTile(
@@ -2843,10 +2846,6 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         onTap: () async {
        final referencer = context.read<Referencer>();
     String documentNameToDisplay = "";
-
-    // ==========================================
-    // 1. ROUTER: WHAT ARE WE DOING?
-    // ==========================================
     if (referencer.currentTaskState != PipelineState.idle) {
       // SCENARIO A: A task is already running! 
       // Skip the file picker entirely and grab the active name.
@@ -2942,14 +2941,14 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
       );
     }
       // Handle the null "Sender" case from your original code
-      if (lemmyx[i] == null) {
+      if (lemmyx[i]["display"] == null) {
         return const ListTile(title: Text('Sender'));
       }
 
       // Now you can use CheckboxListTile freely!
       return Tooltip(
   // 1. The text you want the popup to display
-  message: "Tap to download lesson data for ${lemmyx[i]}.", 
+  message: "${lemmyx[i]["message"]}.", 
   
   // 2. Optional: Force it to only trigger on a long-press (great for mobile)
   triggerMode: TooltipTriggerMode.longPress, 
@@ -2962,7 +2961,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
  textStyle: const TextStyle(color: Colors.white),
        child: CheckboxListTile(
         title: Text(
-          '${lemmyx[i]}',
+          '${lemmyx[i]["display"]}',
           style: const TextStyle(
             fontWeight: FontWeight.bold,
             fontSize: 20,
@@ -2984,7 +2983,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               builder: (BuildContext context) {
                 return AlertDialog(
                   title: const Text('Confirm Download'),
-                  content: Text('You are about to download ${lemmyx[i]}. Are you sure?'),
+                  content: Text('You are about to download ${lemmyx[i]["display"]}. Are you sure?'),
                   actions: <Widget>[
                     TextButton(
                       child: const Text('Cancel'),
@@ -3008,8 +3007,8 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
             setState(() {
               
               checkedLemmas.clear();
-              checkedLemmas[lemmyx[i].toString()] = true;
-              currentlyLoadingLemma = lemmyx[i].toString(); // Show hourglass
+              checkedLemmas[lemmyx[i]["display"].toString()] = true;
+              currentlyLoadingLemma = lemmyx[i]["display"].toString(); // Show hourglass
             });
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
@@ -3022,7 +3021,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
             //my_lang_pref = currentlyLoadingLemma;
               
             
-            fetchSpecificResource(context, lemmyx[i].toString()).then((parsedData) {
+            fetchSpecificResource(context, lemmyx[i["langx"].toString()).then((parsedData) {
                if (context.mounted) {
                   setState(() {
                     currentlyLoadingLemma = null; // Hide hourglass
@@ -3044,7 +3043,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
             // 5. If they UNCHECK the box, we don't need a popup. 
             // Just instantly clear it.
             setState(() {
-              checkedLemmas.remove(lemmyx[i].toString());
+              checkedLemmas.remove(lemmyx[i]["display"].toString());
               currentlyLoadingLemma = null; 
             });
             context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
