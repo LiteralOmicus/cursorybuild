@@ -791,12 +791,20 @@ class Referencer extends ChangeNotifier {
 
   Future<void> sourceFromFirebase() async {
     try {
-      var snapshot = await _firestore.collection('language_attributes').get();
+      DataSnapshot snapshot = await ref.get();
       
-      if (snapshot.docs.isNotEmpty) {
-        lemmyx = snapshot.docs.map((doc) => doc.data()).toList();
-        notifyListeners(); // Update the UI with the fresh data
-        print("✅ Data sourced successfully from Firebase.");
+      if (snapshot.exists) {
+        // RTDB returns a dynamic map. We have to cast it safely.
+        final data = snapshot.value as Map<dynamic, dynamic>;
+        
+        lemmyx.clear(); // Clear local list before adding the cloud data
+        //THIS IS WHERE CHECKED SHUD COME IN 
+        data.forEach((key, value) {
+          lemmyx.add(Map<String, dynamic>.from(value));
+        });
+        
+        notifyListeners(); 
+        print("✅ Data sourced successfully from Realtime Database.");
       }
     } catch (e) {
       print("❌ Error sourcing data: $e");
@@ -804,34 +812,30 @@ class Referencer extends ChangeNotifier {
   }
 
   // ==========================================
-  // 3. SAVE IT (Push to Firebase)
+  // 2. SAVE IT (Push to Realtime Database)
   // ==========================================
   Future<void> saveToFirebase() async {
     try {
-      // Using a WriteBatch is the safest and most efficient way 
-      // to push a whole list of maps to Firestore at once.
-      WriteBatch batch = _firestore.batch();
+      // Create a master map of all updates to push at once
+      Map<String, dynamic> updates = {};
       
       for (var attributeMap in lemmyx) {
-        // We use the 'id' (e.g., IntroPashtx) as the actual Document ID 
-        // in Firestore to make it incredibly easy to query later.
-        var docRef = _firestore
-            .collection('language_attributes')
-            .doc(attributeMap['id']);
-            
-        // SetOptions(merge: true) ensures we don't overwrite existing 
-        // fields that aren't included in this specific map.
-        batch.set(docRef, attributeMap, SetOptions(merge: true));
+        // ⚠️ CRITICAL RTDB RULE: Database keys CANNOT contain '/' characters.
+        // Because you have "Russian/ Русский", we must sanitize the key name 
+        // before saving it, otherwise Firebase will crash.
+        String safeKey = attributeMap['display'].toString().replaceAll('/', '_');
+        
+        updates[safeKey] = attributeMap;
       }
       
-      await batch.commit();
-      print("✅ Successfully saved all attributes to Firebase!");
+      // Push all updates in one atomic network request
+      await ref.update(updates);
+      print("✅ Successfully saved all attributes to Realtime Database!");
       
     } catch (e) {
-      print("❌ Firebase save failed: $e");
+      print("❌ Realtime Database save failed: $e");
     }
   }
-}
 
   // ==========================================
   // PIPELINE KILL SWITCH
