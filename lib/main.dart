@@ -716,7 +716,7 @@ Future<void> _showReportDialog(BuildContext context) async {
       );
     },
   );
-}
+
 
 DatabaseReference ref = FirebaseDatabase.instance.ref('language');
 enum PipelineState { idle, uploading, approving, downloading, done, error }
