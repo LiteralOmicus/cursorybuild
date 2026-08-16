@@ -716,7 +716,7 @@ Future<void> _showReportDialog(BuildContext context) async {
       );
     },
   );
-
+}
 
 DatabaseReference ref = FirebaseDatabase.instance.ref('language');
 enum PipelineState { idle, uploading, approving, downloading, done, error }
@@ -787,9 +787,6 @@ class Referencer extends ChangeNotifier {
   PipelineState currentTaskState = PipelineState.idle;
   String? activeLesson; 
   bool _isCancelled = false;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  
 
   // ==========================================
   // PIPELINE KILL SWITCH
