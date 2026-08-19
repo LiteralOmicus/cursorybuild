@@ -789,8 +789,79 @@ class Referencer extends ChangeNotifier {
   bool _isCancelled = false;
 
   // ==========================================
-  // PIPELINE KILL SWITCH
+  // SOURCE FROM FIREBASE (Realtime Database)
   // ==========================================
+  Future<void> sourceFromFirebase() async {
+    try {
+      DataSnapshot snapshot = await ref.get();
+      
+      if (snapshot.exists && snapshot.value != null) {
+        // Use a temporary list so we don't clear lemmyx if the parse fails
+        List<Map<String, dynamic>> tempList = [];
+        final rawData = snapshot.value;
+
+        // Handle if Firebase stored it as a Dictionary (Map)
+        if (rawData is Map) {
+          rawData.forEach((key, value) {
+            if (value is Map) {
+              Map<String, dynamic> safeMap = {};
+              value.forEach((vKey, vValue) {
+                safeMap[vKey.toString()] = vValue;
+              });
+              tempList.add(safeMap);
+            }
+          });
+        } 
+        // Handle if Firebase stored it as an Array (List)
+        else if (rawData is List) {
+          for (var item in rawData) {
+            if (item is Map) {
+              Map<String, dynamic> safeMap = {};
+              item.forEach((vKey, vValue) {
+                safeMap[vKey.toString()] = vValue;
+              });
+              tempList.add(safeMap);
+            }
+          }
+        }
+
+        // Apply the newly parsed data
+        if (tempList.isNotEmpty) {
+          lemmyx.clear();
+          lemmyx.addAll(tempList);
+          notifyListeners();
+        }
+      }
+    } catch (e) {
+      print("Error sourcing data: $e");
+    }
+  }
+
+  // ==========================================
+  // SAVE TO FIREBASE (Realtime Database)
+  // ==========================================
+  Future<void> saveToFirebase() async {
+    try {
+      Map<String, dynamic> updates = {};
+      
+      for (var attributeMap in lemmyx) {
+        // Prevent crashes by ensuring the 'display' key actually exists
+        if (attributeMap.containsKey('display') && attributeMap['display'] != null) {
+          // Firebase RTDB crashes if keys contain '/'
+          String safeKey = attributeMap['display'].toString().replaceAll('/', '_');
+          updates[safeKey] = attributeMap;
+        }
+      }
+      
+      if (updates.isNotEmpty) {
+        await ref.update(updates);
+      }
+      
+    } catch (e) {
+      print("Realtime Database save failed: $e");
+    }
+  }
+ 
   void cancelPipeline() async {
     _isCancelled = true;
     currentTaskState = PipelineState.idle;
