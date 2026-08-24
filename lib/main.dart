@@ -2600,7 +2600,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     // Assign the list of separate strings directly to your header key
     groupedTopics[header] = separateStrings;
   }
-        }):
+        });
    
    // 1. We just grab all the keys from the map (e.g., "Vowels", "Vowel symbols")
 // 2. We ensure they are strings, and package them straight into a List
