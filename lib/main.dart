@@ -2443,20 +2443,31 @@ class _MyHomePageState extends State<MyHomePage> {
   
 
 }
-
+//changex
    Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+  //  Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
+    dynamic savedData = lessonsBox.get(resourceName);
+
+  // 2. Verify the data exists and is actually a List
+  if (savedData != null && savedData is List) {
+    
+    // 3. Iterate directly through the List
+    return savedData.map<Map<String, String>>((item) {
+      
+      // Safety check: ensure each item in the list is a Map before extracting
+      if (item is Map) {
         return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
+          'english': item['english']?.toString() ?? '',
+          'target': item['target']?.toString() ?? '', 
         };
-      }).toList();
+      }
+      
+      // Fallback for any malformed items in the array
+      return {'english': '', 'target': ''}; 
+      
+    }).toList();
     } 
     
     // If it doesn't exist, just hand back an empty list
@@ -2571,30 +2582,29 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
   // 5. Save the combined master document to Hive
   await lessonsBox.put(resourceName, masterDocument);
-   List<dynamic> topicsList = downloadedLessonData['topics'];
+     //CHANGEX
+   Map topicsList = downloadedLessonData;
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
 
         Map<String, List<String>> groupedTopics = {};
-        for (var item in topicsList) {
-          String header = item['header'].toString();
-          String verbatimText = item['verbatim_text'].toString();
-
-          // If the Map already has this header (like "Tori"), add the new text to its list
-          if (groupedTopics.containsKey(header)) {
-            lessonmaker[header]!.add(verbatimText);
-          } 
-          // If this is the very first time we've seen this header, create a new list for it
-          else {
-            lessonmaker[header] = [verbatimText];
-          }
-        }
-   
-   List<String> specificDataYouNeed = topicsList.map((item) {   
-          return item['header'].toString();
-        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
+     //   for (var item in topicsList) {
+     topicsList.forEach((key, valueList) {
+         String header = key; 
   
-
+  if (valueList is List) {
+    // Map each item to a string and compile them into a List<String>.
+    // No .join() is used, so the strings stay completely separate.
+    List<String> separateStrings = valueList.map((e) => e.toString()).toList();
+    
+    // Assign the list of separate strings directly to your header key
+    groupedTopics[header] = separateStrings;
+  }
+        }):
+   
+   // 1. We just grab all the keys from the map (e.g., "Vowels", "Vowel symbols")
+// 2. We ensure they are strings, and package them straight into a List
+List<String> specificDataYouNeed = topicsList.keys.map((key) => key.toString()).toList();
 
      //THE TIMING OF THIIIIIIIIIIIIIIS MIGHT F MY REORDABLELIST
       ScaffoldMessenger.of(context).showSnackBar(
@@ -2731,8 +2741,8 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                 );
                }
                else {
-                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
+                //CAUSE 4 CONCERN THIS NEEDS A VARIABLE CHANGEX
+               myVocabList = await loadVocabFromHive("NEWLANGUAGE");
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
