@@ -746,6 +746,7 @@ class Referencer extends ChangeNotifier {
  // Map socialite = {};
   List photo = ["1", "RU"];
   List whenReady = List.empty(growable: true);
+  String ULTIMATELANG "IntroPashtx"
 
   //this ^^^ is for the list of status ids per user
   //late int saveUser;
@@ -788,6 +789,32 @@ class Referencer extends ChangeNotifier {
   String? activeLesson; 
   bool _isCancelled = false;
 
+  // ==========================================
+  // DETERMINE DOWNLOAD SOURCE (Library vs Directory)
+  // ==========================================
+  Map<String, String> determineSource() {
+    // Assuming ULTIMATELANGUAGE is an integer index saved in your class. 
+    // If it's passed in, just add it as an argument: determineSource(int ULTIMATELANGUAGE)
+    
+    // 1. Direct lookup in lemmyx! No loops, no searching.
+    String message = lemmyx[ULTIMATELANGUAGE]['message']?.toString() ?? "";
+    String backendLangx = lemmyx[ULTIMATELANGUAGE]['langx']?.toString() ?? "";
+    
+    String backendUserId;
+
+    // 2. Check for "library"
+    if (message.toLowerCase().contains('library')) {
+      backendUserId = "000A"; 
+    } else {
+      backendUserId = uid ?? ""; 
+    }
+
+    // 3. Return the exact uid and the langx string
+    return {
+      'uid': backendUserId,
+      'lang': backendLangx, 
+    };
+  }
   // ==========================================
   // SOURCE FROM FIREBASE (Realtime Database)
   // ==========================================
@@ -3090,6 +3117,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               checkedLemmas.clear();
               checkedLemmas[lemmyx[i]["display"].toString()] = true;
               currentlyLoadingLemma = lemmyx[i]["display"].toString(); // Show hourglass
+              context.read<Referencer>().ULTIMATELANGUAGE = lemmyx[i]["langx"];
             });
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
