@@ -746,7 +746,7 @@ class Referencer extends ChangeNotifier {
  // Map socialite = {};
   List photo = ["1", "RU"];
   List whenReady = List.empty(growable: true);
-  String ULTIMATELANG "IntroPashtx"
+  String ULTIMATELANG = "IntroPashtx";
 
   //this ^^^ is for the list of status ids per user
   //late int saveUser;
