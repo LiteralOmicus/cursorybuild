@@ -746,7 +746,7 @@ class Referencer extends ChangeNotifier {
  // Map socialite = {};
   List photo = ["1", "RU"];
   List whenReady = List.empty(growable: true);
-  String ULTIMATELANG = "IntroPashtx";
+  String ULTIMATELANGUAGE = "IntroPashtx";
 
   //this ^^^ is for the list of status ids per user
   //late int saveUser;
@@ -995,16 +995,19 @@ class Referencer extends ChangeNotifier {
       var box = await Hive.openBox('settingsBox');
       await box.put('pending_document', 'source.pdf');
       Map<String, dynamic> metadata = await _triggerExtraction(uid!); 
+      var lBox = await Hive.openBox("lessonsBox");
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
       String license = metadata['license'] ?? "Unknowse";
+      ULTIMATELANGUAGE = metadata["language"] ?? "MISS!";
       String slicedDocument = documentNameToDisplay.length > 10 ? documentNameToDisplay.substring(0, 10) : documentNameToDisplay;
       String slicedAuthor = author.length > 15 ? author.substring(0, 15) : author;
       String slicedLicense = license.length > 5 ? license.substring(0, 5) : license;
       //NOW UPDATE THE TOOLTIP WRONGX
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
-      addToLemmyx({"display":"NEWLANGUAGE", "langx": "NEWLANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"});
+      await lBox.put(ULTIMATELANGUAGE, {});
+      addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"});
       notifyListeners();
       await _pollAndDownload('source.pdf');
 
@@ -2687,10 +2690,9 @@ void _onReferencerStateChanged() {
     if (ref.currentTaskState == PipelineState.downloading) {
       ref.currentTaskState = PipelineState.done; // Reset it immediately
       
-      // 2. Actually CALL your function. 
-      // 'context' is already available here. We use ref.activeLesson 
-      // (or whatever variable holds the filename) for the resourceName!
-      fetchSpecificResource(context, "NEWLANGUAGE");
+   //   Map<String, String> sourceData = ref.determineSource();
+      String dyL = ref.ULTIMATELANGUAGE;
+      fetchSpecificResource(context, dyL);
 }
 }
  
