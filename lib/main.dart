@@ -793,12 +793,23 @@ class Referencer extends ChangeNotifier {
   // DETERMINE DOWNLOAD SOURCE (Library vs Directory)
   // ==========================================
   Map<String, String> determineSource() {
+    int targetIndex = lemmyx.indexWhere(
+      (element) => element['langx'] == ULTIMATELANG
+    );
+
+    // 2. Safely grab the dictionary using that index. 
+    // If targetIndex is -1 (not found), we provide an empty map {} as a fallback.
+    final targetLangDict = targetIndex != -1 ? lemmyx[targetIndex] : {};
+
+    // 3. Extract the message and the langx code
+    String message = targetLangDict['message']?.toString() ?? "";
+    String backendLangx = targetLangDict['langx']?.toString() ?? ULTIMATELANG;
     // Assuming ULTIMATELANGUAGE is an integer index saved in your class. 
     // If it's passed in, just add it as an argument: determineSource(int ULTIMATELANGUAGE)
     
     // 1. Direct lookup in lemmyx! No loops, no searching.
-    String message = lemmyx[ULTIMATELANGUAGE]['message']?.toString() ?? "";
-    String backendLangx = lemmyx[ULTIMATELANGUAGE]['langx']?.toString() ?? "";
+  //  String message = lemmyx[ULTIMATELANGUAGE]['message']?.toString() ?? "";
+  //  String backendLangx = lemmyx[ULTIMATELANGUAGE]['langx']?.toString() ?? "";
     
     String backendUserId;
 
@@ -2509,6 +2520,8 @@ class _MyHomePageState extends State<MyHomePage> {
 Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
  //CHANGE ARGS LATER 
  //THIS IS A PLACEHOLDER ------------------------------------------------------------------------------ 2122
+ //NEED TO PUT ULTIMATELANGUAGE
+ final ref = context.read<Referencer>();
  var lessonsBox = await Hive.openBox('lessonsBox');
   if (lessonsBox.containsKey(resourceName)) {
     // We found it in Hive! 
@@ -2558,12 +2571,17 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   }
  //DONT CHANGE THIS ONE
  //NOT YET
- // I HAVE TO MAKE SURE EVERYTHING IS VARIABLE AND THE RIGHT ARGUMENTS ARE PASSED
+ // I HAVE TO MAKE SURE EVERYTHING IS VARIABLE AND THE RIGHT ARGUMENTS ARE PASSED.
+ Map<String, String> sourceData = ref.determineSource();
+    
+    // 2. Extract the variables
+    String safeUser = sourceData['uid'] ?? "";
+    String safeLang = sourceData['lang'] ?? "";
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
     {
-      'user': "000A",    //should be UID         
+      'user': safeUser,    //should be UID         
       'lang': resourceName,  
     },
   );
