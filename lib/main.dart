@@ -794,7 +794,7 @@ class Referencer extends ChangeNotifier {
   // ==========================================
   Map<String, String> determineSource() {
     int targetIndex = lemmyx.indexWhere(
-      (element) => element['langx'] == ULTIMATELANG
+      (element) => element['langx'] == ULTIMATELANGUAGE
     );
 
     // 2. Safely grab the dictionary using that index. 
@@ -803,7 +803,7 @@ class Referencer extends ChangeNotifier {
 
     // 3. Extract the message and the langx code
     String message = targetLangDict['message']?.toString() ?? "";
-    String backendLangx = targetLangDict['langx']?.toString() ?? ULTIMATELANG;
+    String backendLangx = targetLangDict['langx']?.toString() ?? ULTIMATELANGUAGE;
     // Assuming ULTIMATELANGUAGE is an integer index saved in your class. 
     // If it's passed in, just add it as an argument: determineSource(int ULTIMATELANGUAGE)
     
@@ -2532,43 +2532,52 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    List<String> specificDataYouNeed = [];
 
   // 3. Check that the data actually exists AND that the 'topics' key is inside it
-  if (savedData != null && savedData['topics'] != null) { 
+//  if (savedData != null && savedData['topics'] != null) { 
+   if (savedData != null && savedData is Map) {
     
     // 4. Target the topics list!
-    List<dynamic> xopicslist = savedData['topics'];
+ //   List<dynamic> xopicslist = savedData['topics'];
   
-        for (var item in xopicslist) {
-          String header = item['header'].toString();
-          String verbatimText = item['verbatim_text'].toString();
+        savedData.forEach((key, value) {
+      String header = key.toString();
+      
+      // 3. In your new JSON, the value is already a List of strings
+      if (value is List) {
+        
+        // Convert the dynamic list into a List of strings
+        List<String> verbatimTexts = value.map((item) => item.toString()).toList();
 
-          // If the Map already has this header (like "Tori"), add the new text to its list
-          if (groupedTopics.containsKey(header)) {
-            lessonmaker[header]!.add(verbatimText);
-          } 
-          // If this is the very first time we've seen this header, create a new list for it
-          else {
-            lessonmaker[header] = [verbatimText];
-          }
+        // 4. If the Map already has this header, add all the texts to the existing list
+        if (lessonmaker.containsKey(header)) {
+          lessonmaker[header]!.addAll(verbatimTexts);
+        } 
+        // 5. If this is the very first time we've seen this header, assign the new list
+        else {
+          lessonmaker[header] = verbatimTexts;
         }
+      }
+    });
   
-   specificDataYouNeed = xopicslist.map((item) {   
-          return item['header'].toString();
-        }).toList(); // .toList() packages the assembly line output back into a standard Dart List
-  }
-    // Safety check because opening the box took a split second
-    if (!context.mounted) return []; 
-    
-    // Show the success message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Completed! Loaded from device storage."),
-        backgroundColor: Colors.green, // Optional: make it look like a success!
-      ),
-    );
-    //CAUSE 4 CONCERN
-   // myVocabList = loadVocabFromHive(currentlyLoadingLemma); //vocabx
-    return specificDataYouNeed; 
-  }
+   // ... inside your if (savedData != null && savedData is Map) block ...
+
+    // THIS replaces the old xopicslist.map assembly line!
+    // It grabs all the keys (your headers) from the dictionary and packages them into a List.
+    specificDataYouNeed = savedData.keys.map((key) => key.toString()).toList();
+  } 
+
+  // Safety check because opening the box took a split second
+  if (!context.mounted) return []; 
+  
+  // Show the success message
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Completed! Loaded from device storage."),
+      backgroundColor: Colors.green, 
+    ),
+  );
+
+  return specificDataYouNeed; 
+}
  //DONT CHANGE THIS ONE
  //NOT YET
  // I HAVE TO MAKE SURE EVERYTHING IS VARIABLE AND THE RIGHT ARGUMENTS ARE PASSED.
