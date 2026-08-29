@@ -2540,7 +2540,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   
         savedData.forEach((key, value) {
       String header = key.toString();
-      
+         //changex
+      if (header == 'vocab') return;
       // 3. In your new JSON, the value is already a List of strings
       if (value is List) {
         
@@ -2632,9 +2633,10 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    //THIS NEEDS TO BE LANGUAGE AGNOSTIC
      //SHOULD I PUT SEPERATEX? CAUSE 4 CONCERN
    //await lessonsBox.put('pashto', downloadedLessonData);
+     //CHANGEX
    Map<String, dynamic> masterDocument = {
     ...downloadedLessonData, // brings in "topics": [...]
-    ...vocabData   // brings in "pairs": [...]
+    "vocab": vocabData   // brings in "pairs": [...]
   };
 
   // 5. Save the combined master document to Hive
