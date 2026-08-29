@@ -3145,7 +3145,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               
               checkedLemmas.clear();
               checkedLemmas[lemmyx[i]["display"].toString()] = true;
-              currentlyLoadingLemma = lemmyx[i]["display"].toString(); // Show hourglass
+              currentlyLoadingLemma = lemmyx[i]["langx"].toString(); // Show hourglass
               context.read<Referencer>().ULTIMATELANGUAGE = lemmyx[i]["langx"];
             });
            if (currentlyLoadingLemma == 'ru') {
