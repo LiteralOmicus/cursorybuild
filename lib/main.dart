@@ -2837,7 +2837,11 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               if (snapshot.hasData) {
                final referencer = context.watch<Referencer>();
                //LOOOOOOOOOOOOOOOOOOOOOOOOOOK HERE FOR UR SOURCE
-               List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
+             // changexx  List aLessons = (referencer.info["lessons"] as List?) ?? ["test"];
+               List rawLessons = (referencer.info["lessons"] as List?) ?? [];
+
+                // 2. ONLY use the backup if the list is completely empty
+                List aLessons = rawLessons.isEmpty ? ["test"] : rawLessons;
                //If you need aLessons to permanently change when the user does something, you have to send that new data back to your Referencer class
                //final List lemmyx =["IntroPashtx","IntroDarx", "ru"];
                 final rawValue = context.read<Referencer>().getExp();
