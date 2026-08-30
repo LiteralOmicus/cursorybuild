@@ -2625,7 +2625,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      //Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
      //Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
      Map<String, dynamic> downloadedLessonData = jsonDecode(utf8.decode(lessonResponse.bodyBytes));
-     Map<String, dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
+     List<dynamic> vocabData = jsonDecode(utf8.decode(vocabResponse.bodyBytes));
      
      //---------------------------------------------------------------------------------------
      //IF THERES ANY PROBLEM CHECC THIS
