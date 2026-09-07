@@ -2531,9 +2531,9 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
    List<String> specificDataYouNeed = [];
 
-  // 3. Check that the data actually exists AND that the 'topics' key is inside it
-//  if (savedData != null && savedData['topics'] != null) { 
-   if (savedData is! Map && savedData.isEmpty) {
+  
+//   if (savedData is Map && savedData.isNotEmpty) {
+   if (false) {
     
     // 4. Target the topics list!
  //   List<dynamic> xopicslist = savedData['topics'];
