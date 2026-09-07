@@ -2532,8 +2532,8 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    List<String> specificDataYouNeed = [];
 
   
-//   if (savedData is Map && savedData.isNotEmpty) {
-   if (false) {
+ if (savedData is Map && savedData.isNotEmpty && false) {
+ //  if (false) {
     
     // 4. Target the topics list!
  //   List<dynamic> xopicslist = savedData['topics'];
