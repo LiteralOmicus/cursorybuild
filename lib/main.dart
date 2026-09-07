@@ -2564,7 +2564,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     // THIS replaces the old xopicslist.map assembly line!
     // It grabs all the keys (your headers) from the dictionary and packages them into a List.
     specificDataYouNeed = savedData.keys.map((key) => key.toString()).toList();
-  } 
+  
 
   // Safety check because opening the box took a split second
   if (!context.mounted) return []; 
@@ -2578,6 +2578,19 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   );
 
   return specificDataYouNeed; 
+ }
+   else {// THIS SHUD RUN CHECK STATUS
+    if (!context.mounted) return []; 
+  
+  // Show the success message
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Data not in Hive, reaching out to server..."),
+      backgroundColor: Colors.green, 
+    ),
+  );
+
+   }
 }
  //DONT CHANGE THIS ONE
  //NOT YET
