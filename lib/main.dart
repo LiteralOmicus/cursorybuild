@@ -2531,7 +2531,7 @@ class _MyHomePageState extends State<MyHomePage> {
         }
       }
     });
-  Need = savedData.keys.map((key) => key.toString()).toList();
+  List Need = avedData.keys.map((key) => key.toString()).toList();
   return Need;
   
  }
@@ -2544,6 +2544,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
  final ref = context.read<Referencer>();
  var lessonsBox = await Hive.openBox('lessonsBox');
   if (lessonsBox.containsKey(resourceName)) {
+   // WHAT HAPPENS IF NOT IN HIVE
     // We found it in Hive! 
     lessonmaker = {};
 
@@ -2677,7 +2678,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   //      Map<String, List<String>> groupedTopics = {};
      if (masterDocument[downloadedLessonData] is Map && masterDocument[downloadedLessonData].isNotEmpty) {
     
-List<String> specificDataYouNeed = processFetchedData(masterDocument);
+specificDataYouNeed = processFetchedData(masterDocument);
       }
      else {
       if (!context.mounted) return []; 
