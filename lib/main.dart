@@ -2677,7 +2677,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
         lessonmaker = {};
 //changex grouped topics is the problem get rid of it
   //      Map<String, List<String>> groupedTopics = {};
-     if (masterDocument[downloadedLessonData] is Map && masterDocument[downloadedLessonData].isNotEmpty) {
+     if (masterDocument.isNotEmpty) {
     
 specificDataYouNeed = processFetchedData(masterDocument);
       }
