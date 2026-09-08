@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =[{"langx": "IntroPashtx", "display": "pashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "dari", "message": "the library source for dari"},{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian"}];
+  List lemmyx =[{"langx": "IntroPashtx", "display": "IntroPashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "IntroDari", "message": "the library source for dari"},{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian"}, {"langx": "Nihongo", "display": "Nihongo", "message": "the library source for Japanese"}, {"langx": "ItalianFSI", "display": "ItalianFSI", "message": "the library source for Italian"} ];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -2515,6 +2515,26 @@ class _MyHomePageState extends State<MyHomePage> {
     return []; 
   }
 
+ List<String> processFetchedData(Map avedData) {  
+        avedData.forEach((key, value) {
+      String header = key.toString();
+      if (header == 'vocab') return;
+      if (value is List) {
+        List<String> verbatimTexts = value.map((item) => item.toString()).toList();
+
+        
+        if (lessonmaker.containsKey(header)) {
+          lessonmaker[header]!.addAll(verbatimTexts);
+        } 
+        else {
+          lessonmaker[header] = verbatimTexts;
+        }
+      }
+    });
+  Need = savedData.keys.map((key) => key.toString()).toList();
+  return Need;
+  
+ }
  // 1. Add BuildContext to the parameters
  //I NEED TO CHANGE RETURN TYPE IF I MOVE REFERENCER REFERENCES UP HERE
 Future<List<String>> fetchSpecificResource(BuildContext context, String resourceName) async {
@@ -2533,11 +2553,6 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
 
   
  if (savedData is Map && savedData.isNotEmpty) {
- //  if (false) {
-    
-    // 4. Target the topics list!
- //   List<dynamic> xopicslist = savedData['topics'];
-  
         savedData.forEach((key, value) {
       String header = key.toString();
          //changex
@@ -2658,27 +2673,24 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
    Map topicsList = downloadedLessonData;
    // 2. Create your new Map where the values are LISTS
         lessonmaker = {};
-
-        Map<String, List<String>> groupedTopics = {};
-     //   for (var item in topicsList) {
-     topicsList.forEach((key, valueList) {
-         String header = key; 
-  
-  if (valueList is List) {
-    // Map each item to a string and compile them into a List<String>.
-    // No .join() is used, so the strings stay completely separate.
-    List<String> separateStrings = valueList.map((e) => e.toString()).toList();
+//changex grouped topics is the problem get rid of it
+  //      Map<String, List<String>> groupedTopics = {};
+     if (masterDocument[downloadedLessonData] is Map && masterDocument[downloadedLessonData].isNotEmpty) {
     
-    // Assign the list of separate strings directly to your header key
-    groupedTopics[header] = separateStrings;
-  }
-        });
-   
-   // 1. We just grab all the keys from the map (e.g., "Vowels", "Vowel symbols")
-// 2. We ensure they are strings, and package them straight into a List
-List<String> specificDataYouNeed = topicsList.keys.map((key) => key.toString()).toList();
+List<String> specificDataYouNeed = processFetchedData(masterDocument);
+      }
+     else {
+      if (!context.mounted) return []; 
+  
+  // Show the success message
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Something went terribly wrong."),
+      backgroundColor: Colors.red, 
+    ),
+  );
 
-     //THE TIMING OF THIIIIIIIIIIIIIIS MIGHT F MY REORDABLELIST
+     }
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Success! Lesson downloaded."),
