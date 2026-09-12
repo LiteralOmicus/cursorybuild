@@ -899,6 +899,12 @@ class Referencer extends ChangeNotifier {
       print("Realtime Database save failed: $e");
     }
   }
+
+ void setCurrentLanguage(String newLanguage) {
+    ULTIMATELANGUAGE = newLanguage;
+    ref.child('ru/users/$saveUser/info/currentLanguage').set(newLanguage);
+    notifyListeners();
+  }
  
   void cancelPipeline() async {
     _isCancelled = true;
@@ -3179,7 +3185,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               checkedLemmas.clear();
               checkedLemmas[lemmyx[i]["display"].toString()] = true;
               currentlyLoadingLemma = lemmyx[i]["langx"].toString(); // Show hourglass
-              context.read<Referencer>().ULTIMATELANGUAGE = lemmyx[i]["langx"];
+              context.read<Referencer>().setCurrentLanguage(lemmyx[i]["langx"]);
             });
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
