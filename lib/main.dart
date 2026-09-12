@@ -1444,6 +1444,19 @@ class Referencer extends ChangeNotifier {
 };
     }
     _isLoading = false;
+    if (info['info'] != null && info['info']['languages'] != null) {
+      List<dynamic> rawLanguages = info['info']['languages'];
+      
+      // 3. Extract and enforce the strict lemmyx formatting
+      lemmyx = rawLanguages.map((item) {
+        final mapItem = Map<String, dynamic>.from(item as Map);
+        
+        return {
+          "display": mapItem["display"] ?? "Unknown",
+          "langx": mapItem["langx"] ?? "Unknown",
+          "message": mapItem["message"] ?? ""
+        };
+      }).toList();
     notifyListeners(); // Notify UI that loading has finished
   }
     );
@@ -1584,7 +1597,8 @@ class Referencer extends ChangeNotifier {
 // 2. Create a helper method to add items and trigger the UI rebuild
   void addToLemmyx(Map newItem) {
     lemmyx.add(newItem);
-    notifyListeners(); // <-- THIS is what wakes up the ListView!
+    ref.child('ru/users/$saveUser/info/languages').set(lemmyx);
+    notifyListeners(); 
   }
 
 
