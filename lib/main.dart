@@ -1026,7 +1026,7 @@ class Referencer extends ChangeNotifier {
       await lBox.put(ULTIMATELANGUAGE, {});
       addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"});
       notifyListeners();
-      await _pollAndDownload('source.pdf');
+      await _pollAndDownload(ULTIMATELANGUAGE);
 
     } catch (e) {
       currentTaskState = PipelineState.error; 
@@ -1068,7 +1068,7 @@ class Referencer extends ChangeNotifier {
         var statusResponse = await http.post(
           pollUri,
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'uid': uid}), // 2. Send the uid in the body
+          body: jsonEncode({'uid': uid, 'lang': documentName}), // 2. Send the uid in the body
         ).timeout(const Duration(seconds: 15));
         if (statusResponse.statusCode == 200) {
           var statusData = jsonDecode(statusResponse.body);
