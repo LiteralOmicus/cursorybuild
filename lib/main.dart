@@ -1024,7 +1024,7 @@ class Referencer extends ChangeNotifier {
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
       await lBox.put(ULTIMATELANGUAGE, {});
-      addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"});
+      addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"}, true);
       notifyListeners();
       await _pollAndDownload(ULTIMATELANGUAGE);
 
@@ -1450,13 +1450,15 @@ class Referencer extends ChangeNotifier {
       // 3. Extract and enforce the strict lemmyx formatting
       lemmyx = rawLanguages.map((item) {
         final mapItem = Map<String, dynamic>.from(item as Map);
-        
-        return {
-          "display": mapItem["display"] ?? "Unknown",
-          "langx": mapItem["langx"] ?? "Unknown",
-          "message": mapItem["message"] ?? ""
-        };
-      }).toList();
+    
+    Map<String, dynamic> formattedItem = {
+      "display": mapItem["display"] ?? "Unknown",
+      "langx": mapItem["langx"] ?? "Unknown",
+      "message": mapItem["message"] ?? ""
+    };
+
+    // Pass the item in, and tell it NOT to save back to Firebase!
+    addToLemmyx(formattedItem, false);
     notifyListeners(); // Notify UI that loading has finished
   }
     }
@@ -1596,9 +1598,11 @@ class Referencer extends ChangeNotifier {
   }
 
 // 2. Create a helper method to add items and trigger the UI rebuild
-  void addToLemmyx(Map newItem) {
+  void addToLemmyx(Map newItem, bool saveToCloud) {
     lemmyx.add(newItem);
+    if (saveToCloud) {
     ref.child('ru/users/$saveUser/info/languages').set(lemmyx);
+  }
     notifyListeners(); 
   }
 
