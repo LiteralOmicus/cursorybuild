@@ -1459,6 +1459,7 @@ class Referencer extends ChangeNotifier {
       }).toList();
     notifyListeners(); // Notify UI that loading has finished
   }
+    }
     );
         }
 
