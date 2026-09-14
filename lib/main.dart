@@ -1448,7 +1448,7 @@ class Referencer extends ChangeNotifier {
       List<dynamic> rawLanguages = info['info']['languages'];
       
       // 3. Extract and enforce the strict lemmyx formatting
-      lemmyx = rawLanguages.map((item) {
+      rawLanguages.forEach((item) {
         final mapItem = Map<String, dynamic>.from(item as Map);
     
     Map<String, dynamic> formattedItem = {
@@ -1461,9 +1461,9 @@ class Referencer extends ChangeNotifier {
     addToLemmyx(formattedItem, false);
     notifyListeners(); // Notify UI that loading has finished
   }
-    }
     );
         }
+    }
 
   Future<void> anonSet(bool myValue) async {
   _isLoading = true;
