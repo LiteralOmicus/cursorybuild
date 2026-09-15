@@ -5489,6 +5489,43 @@ class _MySettings extends State<MySettings> {
     // If it doesn't exist, just hand back an empty list
     return []; 
   }
+
+ void _showLibrariesPopup(BuildContext context) {
+  // Grab the current list of libraries from your state manager
+  final libraries = context.read<Referencer>().lemmyx;
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: const Text("My Libraries"),
+        // SizedBox with double.maxFinite is required to keep ListView from crashing inside a dialog
+        content: SizedBox(
+          width: double.maxFinite, 
+          child: ListView.builder(
+            shrinkWrap: true, // Forces the list to only take up as much space as it needs
+            itemCount: libraries.length,
+            itemBuilder: (context, index) {
+              final lib = libraries[index];
+              
+              return ListTile(
+                title: Text(lib["display"] ?? "Unknown Library"),
+                subtitle: Text(lib["message"] ?? ""),
+                // NO onTap property here = no clicking, no highlighting!
+              );
+            },
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Closes the popup
+            child: const Text("Close"),
+          ),
+        ],
+      );
+    },
+  );
+}
  
   void _showPrivacyPolicy(BuildContext context) {
   showDialog(
@@ -5699,6 +5736,19 @@ class _MySettings extends State<MySettings> {
                       child: Text('Privacy Policy',
                                        style: Theme.of(context).textTheme.labelLarge)
                   ),
+                 OutlinedButton(
+                      onPressed: () {
+    
+  },
+                      child: Text('Terms of Use',
+                                       style: Theme.of(context).textTheme.labelLarge)
+                  ),
+                 ElevatedButton(
+  onPressed: () {
+   _showLibrariesPopup(context)
+   },
+  child: const Text("View Libraries"),
+),
     OutlinedButton(
             child: Text('Sign Out',
                              style: Theme.of(context).textTheme.labelLarge),
