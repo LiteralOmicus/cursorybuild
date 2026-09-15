@@ -930,7 +930,7 @@ class Referencer extends ChangeNotifier {
      // notifyListeners();
 
       // Resume the polling loop
-      _pollAndDownload(pendingLesson);
+    //  _pollAndDownload(pendingLesson);
     }
   }
 
@@ -1026,7 +1026,7 @@ class Referencer extends ChangeNotifier {
       await lBox.put(ULTIMATELANGUAGE, {});
       addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"}, true);
       notifyListeners();
-      await _pollAndDownload(ULTIMATELANGUAGE);
+      //await _pollAndDownload(ULTIMATELANGUAGE);
 
     } catch (e) {
       currentTaskState = PipelineState.error; 
@@ -2672,6 +2672,12 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      String vocabUrl = responseData['vocab_file'];
      final lessonResponse = await http.get(Uri.parse(lessonUrl));
      final vocabResponse = await http.get(Uri.parse(vocabUrl));
+     ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Data not in Hive, reaching out to server..."),
+      backgroundColor: Colors.green, 
+    ),
+  );
      if (lessonResponse.statusCode != 200) {
        // This will throw the raw XML straight to your phone's SnackBar
        throw Exception("GCS REJECTED LESSON:\n${lessonResponse.body}");
