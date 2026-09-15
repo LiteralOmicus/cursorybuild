@@ -5745,7 +5745,7 @@ class _MySettings extends State<MySettings> {
                   ),
                  ElevatedButton(
   onPressed: () {
-   _showLibrariesPopup(context)
+   _showLibrariesPopup(context);
    },
   child: const Text("View Libraries"),
 ),
