@@ -5475,13 +5475,13 @@ class _MySettings extends State<MySettings> {
     var lessonsBox = await Hive.openBox('lessonsBox');
     Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
+    if (savedData != null && savedData is List) {
+      return savedData.map((item) {
+       final mapItem = Map<dynamic, dynamic>.from(item as Map);
+      
         return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
+          'english': mapItem['english'].toString() ?? "",
+          'target': mapItem['target'].toString() ?? "", //TOPP
         };
       }).toList();
     } 
