@@ -5473,10 +5473,11 @@ class _MySettings extends State<MySettings> {
 
   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+    dynamic savedData = lessonsBox.get(resourceName);
 
     if (savedData != null && savedData is List) {
-      return savedData.map((item) {
+     List<dynamic> rawList = savedData;
+      return rawList.map((item) {
        final mapItem = Map<dynamic, dynamic>.from(item as Map);
       
         return {
