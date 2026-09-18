@@ -4379,8 +4379,8 @@ class _ExercisesxState extends State<Exercisesx> {
   List<Map<String, String>>? myVocabList;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
-  List setTrip = [{"english" : "fuck", "target" : "you"}];; 
- // late List<Map<String, String>>?  myVocabList;
+//  List setTrip = [{"english" : "fuck", "target" : "you"}]; 
+ List<Map<String, String>>  myVocabList = [{"english" : "fuck", "pashto" : "you"}];
  
 
 
