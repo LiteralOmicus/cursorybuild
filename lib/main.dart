@@ -4379,7 +4379,7 @@ class _ExercisesxState extends State<Exercisesx> {
   List<Map<String, String>>? myVocabList;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
-  late List setTrip; 
+  List setTrip = [{"english" : "fuck", "target" : "you"}];; 
  // late List<Map<String, String>>?  myVocabList;
  
 
@@ -5694,11 +5694,22 @@ class _MySettings extends State<MySettings> {
                }
                else {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
+                try
+                {
                myVocabList = await loadVocabFromHive("IntroDarx");
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
                 );
+                } catch (e) {
+               ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Failed to load vocabulary: $e"),
+        backgroundColor: Colors.red,
+        duration: const Duration(seconds: 4),
+      ),
+    );
+                }
                }
               },
               icon: const Icon(Icons.local_laundry_service),
