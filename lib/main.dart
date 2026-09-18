@@ -5481,8 +5481,8 @@ class _MySettings extends State<MySettings> {
        final mapItem = Map<dynamic, dynamic>.from(item as Map);
       
         return {
-          'english': mapItem['english'].toString() ?? "",
-          'target': mapItem['target'].toString() ?? "", //TOPP
+          'english': mapItem['english']?.toString() ?? "",
+          'target': mapItem['target']?.toString() ?? "", //TOPP
         };
       }).toList();
     } 
