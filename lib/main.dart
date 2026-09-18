@@ -4376,7 +4376,7 @@ class _ExercisesxState extends State<Exercisesx> {
   bool justonce = false;
   bool _active = false;
   String errormess = "No error msg saved yet.";
-  List<Map<String, String>>? myVocabList;
+ // List<Map<String, String>>? myVocabList;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
 //  List setTrip = [{"english" : "fuck", "target" : "you"}]; 
