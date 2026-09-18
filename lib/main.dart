@@ -4376,11 +4376,11 @@ class _ExercisesxState extends State<Exercisesx> {
   bool justonce = false;
   bool _active = false;
   String errormess = "No error msg saved yet.";
- // List<Map<String, String>>? myVocabList;
+  List<Map<String, String>>? myVocabList;
   late TextEditingController _controller;
   late FocusNode myFocusNode;
 //  List setTrip = [{"english" : "fuck", "target" : "you"}]; 
- List<Map<String, String>>  myVocabList = [{"english" : "fuck", "pashto" : "you"}];
+// List<Map<String, String>>  myVocabList = [{"english" : "fuck", "pashto" : "you"}];
  
 
 
@@ -4404,6 +4404,15 @@ class _ExercisesxState extends State<Exercisesx> {
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
+   if (widget.vocabxx != null && widget.vocabxx!.isNotEmpty) {
+    // If the data is completely safe and valid, use it
+    myVocabList = widget.vocabxx!;
+  } else {
+    // If the data is missing or empty, use your backup list to prevent a crash
+    myVocabList = [
+      {"english": "fuck", "target": "you"}
+    ];
+  }
   // myVocabList = widget.vocabxx;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
    //loadVocabFromHive("pashto");
