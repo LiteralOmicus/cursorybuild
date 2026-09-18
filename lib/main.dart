@@ -4404,7 +4404,7 @@ class _ExercisesxState extends State<Exercisesx> {
     _controller = TextEditingController();
     myFocusNode = FocusNode();
     _counter = 0;
-   myVocabList = widget.vocabxx;
+  // myVocabList = widget.vocabxx;
    //THE VARIABLE SHOULD GO HERE LANGUAGE AGNOSTIC
    //loadVocabFromHive("pashto");
   // _fetchVocab();
