@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =[{"langx": "IntroPashtx", "display": "IntroPashto", "message": "the library source for pashto "}, {"langx": "IntroDarx", "display": "IntroDari", "message": "the library source for dari"},{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian"}, {"langx": "Nihongo", "display": "Nihongo", "message": "the library source for Japanese"}, {"langx": "ItalianFSI", "display": "ItalianFSI", "message": "the library source for Italian"} ];
+  List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashtx", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "ItalianFSI", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"} ];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -1024,7 +1024,7 @@ class Referencer extends ChangeNotifier {
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
       await lBox.put(ULTIMATELANGUAGE, {});
-      addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense"}, true);
+      addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense", "attribute": "placeholder"}, true);
       notifyListeners();
       //await _pollAndDownload(ULTIMATELANGUAGE);
 
@@ -1454,7 +1454,8 @@ class Referencer extends ChangeNotifier {
     Map<String, dynamic> formattedItem = {
       "display": mapItem["display"] ?? "Unknown",
       "langx": mapItem["langx"] ?? "Unknown",
-      "message": mapItem["message"] ?? ""
+      "message": mapItem["message"] ?? "",
+     "attribute": mapItem["attribute"] ?? ""
     };
 
     // Pass the item in, and tell it NOT to save back to Firebase!
@@ -5502,7 +5503,7 @@ for (var item in rawList) {
   
   formattedVocab.add({
     'english': mapItem['english']?.toString() ?? "",
-    'target': mapItem['target']?.toString() ?? mapItem['pashto']?.toString() ?? "", 
+    'target': mapItem['target']?.toString() ?? "", 
   });
 }
 
@@ -5542,7 +5543,7 @@ return formattedVocab;
               
               return ListTile(
                 title: Text(lib["display"] ?? "Unknown Library"),
-                subtitle: Text(lib["message"] ?? ""),
+                subtitle: Text(lib["attribute"] ?? ""),
                 // NO onTap property here = no clicking, no highlighting!
               );
             },
