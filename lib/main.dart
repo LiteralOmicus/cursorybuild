@@ -3215,12 +3215,13 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               checkedLemmas[lemmyx[i]["display"].toString()] = true;
               currentlyLoadingLemma = lemmyx[i]["langx"].toString(); // Show hourglass
               context.read<Referencer>().setCurrentLanguage(lemmyx[i]["langx"]);
+              saveMyData(value:currentlyLoadingLemma);
             });
            if (currentlyLoadingLemma == 'ru') {
             //DOES THIS NEED A SETSTATE?
             context.read<Referencer>().sendtoLessons(flatten(tierkeeper));
             lessonmaker = jsonDecode(forEducation.all); 
-            saveMyData(value:currentlyLoadingLemma);
+            //saveMyData(value:currentlyLoadingLemma);
             return;
            }
             saveMyData(value:currentlyLoadingLemma);
@@ -5484,16 +5485,28 @@ class _MySettings extends State<MySettings> {
     var lessonsBox = await Hive.openBox('lessonsBox');
     dynamic savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData is List) {
-     List<dynamic> rawList = savedData;
-      return rawList.map((item) {
-       final mapItem = Map<dynamic, dynamic>.from(item as Map);
+    if (savedData != null && savedData is Map && savedData['vocab'] != null) {
+     List<dynamic> rawList = savedData["vocab"];
+List<Map<String, String>> formattedVocab = [];
+for (var item in rawList) {
+  final mapItem = Map<dynamic, dynamic>.from(item as Map);
+  
+  formattedVocab.add({
+    'english': mapItem['english']?.toString() ?? "",
+    'target': mapItem['target']?.toString() ?? mapItem['pashto']?.toString() ?? "", 
+  });
+}
+
+return formattedVocab;
+     // return rawList;
+     //.map((item) {
+   //    final mapItem = Map<dynamic, dynamic>.from(item as Map);
       
-        return {
-          'english': mapItem['english']?.toString() ?? "",
-          'target': mapItem['target']?.toString() ?? "", //TOPP
-        };
-      }).toList();
+        //return {
+         // 'english': mapItem['english']?.toString() ?? "",
+   //       'target': mapItem['target']?.toString() ?? "", //TOPP
+   //     };
+  //    }).toList();
     } 
     
     // If it doesn't exist, just hand back an empty list
@@ -5705,7 +5718,8 @@ class _MySettings extends State<MySettings> {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
                 try
                 {
-               myVocabList = await loadVocabFromHive("IntroDarx");
+               myVocabList = await loadVocabFromHive(RQ);
+                if (!context.mounted) return;
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
