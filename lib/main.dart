@@ -2299,9 +2299,10 @@ class SignInState extends State<SignIn> {
                            // 1. Anonymous / Empty Check
   if (emailController.text.isEmpty && passwordController.text.isEmpty) {
     await context.read<Referencer>().anonSet(true);
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => MyHomePage())
-    );
+    Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage())
+          );
     return; // STOP here
   }
 
@@ -2325,9 +2326,10 @@ class SignInState extends State<SignIn> {
 
       // D. Navigate only after changi finishes
       if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (context) => MyHomePage())
-        );
+         Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => MyHomePage())
+          );
       }
     }
   } catch (e) {
@@ -2514,30 +2516,32 @@ class _MyHomePageState extends State<MyHomePage> {
 
 }
 //changex
-   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+     Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-  //  Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
-
     dynamic savedData = lessonsBox.get(resourceName);
 
-  // 2. Verify the data exists and is actually a List
-  if (savedData != null && savedData is List) {
-    
-    // 3. Iterate directly through the List
-    return savedData.map<Map<String, String>>((item) {
+    if (savedData != null && savedData is Map && savedData['vocab'] != null) {
+     List<dynamic> rawList = savedData["vocab"];
+List<Map<String, String>> formattedVocab = [];
+for (var item in rawList) {
+  final mapItem = Map<dynamic, dynamic>.from(item as Map);
+  
+  formattedVocab.add({
+    'english': mapItem['english']?.toString() ?? "",
+    'target': mapItem['target']?.toString() ?? mapItem['pashto']?.toString() ?? "", 
+  });
+}
+
+return formattedVocab;
+     // return rawList;
+     //.map((item) {
+   //    final mapItem = Map<dynamic, dynamic>.from(item as Map);
       
-      // Safety check: ensure each item in the list is a Map before extracting
-      if (item is Map) {
-        return {
-          'english': item['english']?.toString() ?? '',
-          'target': item['target']?.toString() ?? '', 
-        };
-      }
-      
-      // Fallback for any malformed items in the array
-      return {'english': '', 'target': ''}; 
-      
-    }).toList();
+        //return {
+         // 'english': mapItem['english']?.toString() ?? "",
+   //       'target': mapItem['target']?.toString() ?? "", //TOPP
+   //     };
+  //    }).toList();
     } 
     
     // If it doesn't exist, just hand back an empty list
@@ -2826,11 +2830,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
 
             IconButton(
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-                    ),
-                  );
+                    Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 icon: Text(
                     '🏠', // Home emoji
@@ -2862,7 +2862,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                }
                else {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE CHANGEX
-               myVocabList = await loadVocabFromHive("NEWLANGUAGE");
+               myVocabList = await loadVocabFromHive(RQ);
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
@@ -3614,25 +3614,37 @@ class _MyRome extends State<MyRomePage> {
 
 
 
- Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+    dynamic savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
-        };
-      }).toList();
+    if (savedData != null && savedData is Map && savedData['vocab'] != null) {
+     List<dynamic> rawList = savedData["vocab"];
+List<Map<String, String>> formattedVocab = [];
+for (var item in rawList) {
+  final mapItem = Map<dynamic, dynamic>.from(item as Map);
+  
+  formattedVocab.add({
+    'english': mapItem['english']?.toString() ?? "",
+    'target': mapItem['target']?.toString() ?? mapItem['pashto']?.toString() ?? "", 
+  });
+}
+
+return formattedVocab;
+     // return rawList;
+     //.map((item) {
+   //    final mapItem = Map<dynamic, dynamic>.from(item as Map);
+      
+        //return {
+         // 'english': mapItem['english']?.toString() ?? "",
+   //       'target': mapItem['target']?.toString() ?? "", //TOPP
+   //     };
+  //    }).toList();
     } 
     
     // If it doesn't exist, just hand back an empty list
     return []; 
   }
-
 
 
 
@@ -3701,11 +3713,7 @@ class _MyRome extends State<MyRomePage> {
                       actions: [
                         IconButton(
                             onPressed: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-                                ),
-                              );
+                              Navigator.of(context).popUntil((route) => route.isFirst);
                             },
                             icon: Text(
                                 '🏠', // Home emoji
@@ -3737,7 +3745,7 @@ class _MyRome extends State<MyRomePage> {
                }
                else {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
+               myVocabList = await loadVocabFromHive(RQ);
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
@@ -4161,11 +4169,7 @@ class _ExercisesState extends State<Exercises> {
                 actions: [
                   IconButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-                          ),
-                        );
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       icon: Text(
                           '🏠', // Home emoji
@@ -4488,11 +4492,7 @@ class _ExercisesxState extends State<Exercisesx> {
                 actions: [
                   IconButton(
                       onPressed: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-                          ),
-                        );
+                        Navigator.of(context).popUntil((route) => route.isFirst);
                       },
                       icon: Text(
                           '🏠', // Home emoji
@@ -4849,19 +4849,32 @@ class _MyNotebookState extends State<MyNotebookState> {
   late List<Map<String, String>>?  myVocabList;
 
 
-   Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
+     Future<List<Map<String, String>>> loadVocabFromHive(String resourceName) async {
     var lessonsBox = await Hive.openBox('lessonsBox');
-    Map<dynamic, dynamic>? savedData = lessonsBox.get(resourceName);
+    dynamic savedData = lessonsBox.get(resourceName);
 
-    if (savedData != null && savedData['pairs'] != null) {
-   // Clean it up and return it to the bridge function
-     List<dynamic> rawVocabList = savedData['pairs'];
-      return rawVocabList.map((item) {
-        return {
-          'english': item['english'].toString(),
-          'target': item['target'].toString(), //TOPP
-        };
-      }).toList();
+    if (savedData != null && savedData is Map && savedData['vocab'] != null) {
+     List<dynamic> rawList = savedData["vocab"];
+List<Map<String, String>> formattedVocab = [];
+for (var item in rawList) {
+  final mapItem = Map<dynamic, dynamic>.from(item as Map);
+  
+  formattedVocab.add({
+    'english': mapItem['english']?.toString() ?? "",
+    'target': mapItem['target']?.toString() ?? mapItem['pashto']?.toString() ?? "", 
+  });
+}
+
+return formattedVocab;
+     // return rawList;
+     //.map((item) {
+   //    final mapItem = Map<dynamic, dynamic>.from(item as Map);
+      
+        //return {
+         // 'english': mapItem['english']?.toString() ?? "",
+   //       'target': mapItem['target']?.toString() ?? "", //TOPP
+   //     };
+  //    }).toList();
     } 
     
     // If it doesn't exist, just hand back an empty list
@@ -4937,11 +4950,7 @@ class _MyNotebookState extends State<MyNotebookState> {
           actions: [
             IconButton(
             onPressed: () {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-          builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-      ),
-    );
+    Navigator.of(context).popUntil((route) => route.isFirst);
     },
         icon: Text(
             '🏠', // Home emoji
@@ -4973,7 +4982,7 @@ class _MyNotebookState extends State<MyNotebookState> {
                }
                else {
                 //CAUSE 4 CONCERN THIS NEEDS A VARIABLE
-               myVocabList = await loadVocabFromHive("IntroDarx");
+               myVocabList = await loadVocabFromHive(RQ);
                Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => Sentencesx(vocabx: myVocabList) //[{"pashto": "fudge", "english"  : "you"}, {"pashto": "what", "english" : "suck"}])
                                           )
@@ -5680,11 +5689,7 @@ return formattedVocab;
           actions: [
             IconButton(
                 onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                        builder: (context) => StateMgmt(isLoading: context.watch<Referencer>()._isLoading, Child: MyHomePage())
-                    ),
-                  );
+                  Navigator.of(context).popUntil((route) => route.isFirst);
                 },
                 icon: Text(
                     '🏠', // Home emoji
