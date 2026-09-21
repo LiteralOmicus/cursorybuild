@@ -2129,10 +2129,9 @@ class SignInState extends State<SignIn> {
                                     );
 } else {
   await context.read<Referencer>().changi(); 
-  Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MyHomePage())
-          );
+  Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
 }
       }
     }
@@ -2300,10 +2299,9 @@ class SignInState extends State<SignIn> {
                            // 1. Anonymous / Empty Check
   if (emailController.text.isEmpty && passwordController.text.isEmpty) {
     await context.read<Referencer>().anonSet(true);
-    Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MyHomePage())
-          );
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
     return; // STOP here
   }
 
@@ -2327,10 +2325,9 @@ class SignInState extends State<SignIn> {
 
       // D. Navigate only after changi finishes
       if (mounted) {
-         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => MyHomePage())
-          );
+         Navigator.of(context).push(
+      MaterialPageRoute(builder: (context) => MyHomePage())
+    );
       }
     }
   } catch (e) {
@@ -2831,7 +2828,10 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
 
             IconButton(
                 onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
                 },
                 icon: Text(
                     '🏠', // Home emoji
@@ -3714,7 +3714,10 @@ return formattedVocab;
                       actions: [
                         IconButton(
                             onPressed: () {
-                              Navigator.of(context).popUntil((route) => route.isFirst);
+                              Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
                             },
                             icon: Text(
                                 '🏠', // Home emoji
@@ -4170,7 +4173,10 @@ class _ExercisesState extends State<Exercises> {
                 actions: [
                   IconButton(
                       onPressed: () {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
                       },
                       icon: Text(
                           '🏠', // Home emoji
@@ -4493,7 +4499,10 @@ class _ExercisesxState extends State<Exercisesx> {
                 actions: [
                   IconButton(
                       onPressed: () {
-                        Navigator.of(context).popUntil((route) => route.isFirst);
+                        Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
                       },
                       icon: Text(
                           '🏠', // Home emoji
@@ -4951,7 +4960,10 @@ return formattedVocab;
           actions: [
             IconButton(
             onPressed: () {
-    Navigator.of(context).popUntil((route) => route.isFirst);
+    Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
     },
         icon: Text(
             '🏠', // Home emoji
@@ -5690,7 +5702,10 @@ return formattedVocab;
           actions: [
             IconButton(
                 onPressed: () {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => const MyHomePage()), // Replace with your exact Home widget
+  (route) => false, // The 'false' tells it to destroy every other screen in the stack
+);
                 },
                 icon: Text(
                     '🏠', // Home emoji
