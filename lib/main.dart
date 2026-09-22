@@ -2915,8 +2915,8 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                 }
                // String saveuserName = _dump["info"]?["handle"] ?? "N/A"; //_dump["info"]["handle"];
               // List icon = _dump["info"]?["photo"] ?? []; //_dump["info"]["photo"];
-      String saveuserName = referencer.info["info"]["handle"] ?? "N/A";
-      List icon = referencer.info["photo"] ?? [];
+      String saveuserName = referencer.info["info"]?["handle"] ?? "N/A";
+      List icon = referencer.info["info"]?["photo"] ?? ["1", "RU"];
                 return
                   Scrollbar(
                       trackVisibility: true,
