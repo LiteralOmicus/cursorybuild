@@ -723,7 +723,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashtx", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "ItalianFSI", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"} ];
+  List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashto", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "Italian", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"} ];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -5923,46 +5923,15 @@ class FirstPage extends StatefulWidget {
 class _FirstPageState extends State<FirstPage> {
   int _questionIndex = 0;
   //Declaring variables to store previous answers
-  //String prevAns = "", prevCorrectAns = "";
-
-  //Boolean variable to check of this was the user's
   List traits = [];
-  //first attempt at the question.
-  // bool firstAttempt = true;
-  //Boolean variable to check if the user's answer was correct.
-  //bool check = true;
-
-  //Defining the function for tapping on a any specific answer.
-  void _answerQuestion(String myAns) {
-    //Made to false as the user made the first attempt on tapping
-    //an answer and calling this function.
-    setState(() {
-      // The following boolean statement checks if answer was true.
-      traits.add(myAns);
-      if (_questionIndex == _questions.length - 1) {
-        //If the index of the last question is displayed here then it is set back
-        //to 0 (the index of the first question), essentially resetting the quiz.
-        {
-          Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => Start(handle: widget.handle)
-          )
-          );
-        }
-      } else {
-        _questionIndex = _questionIndex + 1;
-      }
-    });
-  }
-
-
-
-  var _questions = [
+ // List<Map<String, Object>> langoptions = [];
+   var _questions = [
     //A list of dictionaries which represent the question, possible answers
     //and the correct answer.
    //CAUSE FOR CONCERN NEEDS TEXTBOX HERE NOW
     {
       'questionText': 'What language are you learning?',
-      'answers': ['russian'],
+      'answers': [],
     },
     {
       'questionText': 'Why do you want to learn a language?',
@@ -5978,6 +5947,59 @@ class _FirstPageState extends State<FirstPage> {
 
     },
   ];
+  // A flag to ensure we only build the questions once
+  bool _isInitialized = false;
+
+  // 2. Use didChangeDependencies to safely grab Provider data before the screen draws
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    
+    // We only want to build the list the very first time the screen loads
+    if (!_isInitialized) {
+      final lemmyx = context.read<Referencer>().lemmyx;
+      //List<String> languageOptions = [];
+      
+      for (var lib in lemmyx) {
+        _questions[0]["answers"].add(lib['display']?.toString() ?? "Unknown Language");
+      }
+     _isInitialized = true; // Lock it so it doesn't rebuild if the keyboard pops up
+    }
+  }
+
+  //Defining the function for tapping on a any specific answer.
+  void _answerQuestion(String myAns) {
+    // NEW: Only do the Firebase lookup when answering the question at index 1
+    if (_questionIndex == 0) {
+      final lemmo = context.read<Referencer>().lemmyx;
+      for (var lib in lemmo) {
+        if (lib['display']?.toString() == myAns) {
+          // Replace ULTIMATELANGUAGE with your actual setter/variable
+          context.read<Referencer>().ULTIMATELANGUAGE = lib['langx']?.toString() ?? "ru";
+          break; 
+        }
+      }
+    }
+
+    // YOUR ORIGINAL CODE (Completely untouched)
+    setState(() {
+      traits.add(myAns);
+      if (_questionIndex == _questions.length - 1) {
+        {
+          Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => Start(handle: widget.handle)
+          )
+          );
+        }
+      } else {
+        _questionIndex = _questionIndex + 1;
+      }
+    });
+  }
+
+
+
+ 
 
   @override
   Widget build(BuildContext context) {
