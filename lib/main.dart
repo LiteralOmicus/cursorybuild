@@ -5925,7 +5925,7 @@ class _FirstPageState extends State<FirstPage> {
   //Declaring variables to store previous answers
   List traits = [];
  // List<Map<String, Object>> langoptions = [];
-   var _questions = [
+    List<Map<String, List>> _questions = [
     //A list of dictionaries which represent the question, possible answers
     //and the correct answer.
    //CAUSE FOR CONCERN NEEDS TEXTBOX HERE NOW
