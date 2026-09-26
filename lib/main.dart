@@ -1016,7 +1016,9 @@ class Referencer extends ChangeNotifier {
       String documentNameToDisplay = metadata['title'] ?? "Unktle";
       String author = metadata['author'] ?? "Unhor";
       String license = metadata['license'] ?? "Unknowse";
-      ULTIMATELANGUAGE = metadata["language"] ?? "MISS!";
+      String reglang = metadata["language"] ?? "MISS!";
+      String ULTIMATELANGUAGE = metadata["ultimatelangx"] ?? "MISS!";
+     //CHECK TO MAKE SURE IF APP UNINSTALLED LANG CAM STILL B FOUMD
       String slicedDocument = documentNameToDisplay.length > 10 ? documentNameToDisplay.substring(0, 10) : documentNameToDisplay;
       String slicedAuthor = author.length > 15 ? author.substring(0, 15) : author;
       String slicedLicense = license.length > 5 ? license.substring(0, 5) : license;
