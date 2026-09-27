@@ -703,6 +703,7 @@ Map<String, dynamic> NB =  {
     ]
   }
 };
+
 Future<String?> readLANGPREF() async {
   //my_lang_pref
   final prefs = await SharedPreferences.getInstance();
@@ -774,6 +775,67 @@ ThemeData GreenDark = ThemeData(
   visualDensity: VisualDensity.adaptivePlatformDensity,
 );
 
+
+
+// Ensure your global 'termsOfUse' variable is accessible here 
+// (e.g., imported from your constants file)
+
+class TermsOfUseDialog extends StatelessWidget {
+  /// If true, shows [Decline] and [Agree & Continue]. 
+  /// If false, shows only a [Close] button.
+  final bool requireAgreement;
+  
+  /// The function to run if they click "Agree & Continue"
+  final VoidCallback? onAgreed;
+
+  const TermsOfUseDialog({
+    Key? key,
+    required this.requireAgreement,
+    this.onAgreed,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text("Terms of Use & Privacy Policy"),
+      // The SizedBox is required to prevent the ScrollView from crashing the dialog
+      content: SizedBox(
+        width: double.maxFinite,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            // Removed 'const' so the global variable can be injected
+            children: [
+              Text(termsOfUse), 
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        // DYNAMIC BUTTONS LOGIC
+        if (requireAgreement) ...[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(), // Dismisses dialog
+            child: const Text("Decline", style: TextStyle(color: Colors.red)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Dismisses dialog first
+              if (onAgreed != null) onAgreed!(); // Triggers your signup/continue logic
+            },
+            child: const Text("Agree & Continue"),
+          ),
+        ] else ...[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("Close"),
+          ),
+        ],
+      ],
+    );
+  }
+}
 
 class ThemeProvider with ChangeNotifier {
   ThemeData currentTheme = GreenLight;
@@ -3323,6 +3385,30 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
       
     } else {
       // SCENARIO B: We are completely idle. Open the file picker!
+     bool? userAgreed = await showDialog<bool>(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text("Copyright Notice"),
+                  content: const Text(
+                    "By proceeding, you confirm that you own the rights to this document or have explicit permission to upload and process it. Do not upload copyrighted textbooks or strictly protected materials."
+                  ),
+                  actions: <Widget>[
+                    TextButton(
+                      child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                      onPressed: () => Navigator.of(context).pop(false), // Returns false
+                    ),
+                    ElevatedButton(
+                      child: const Text('I Agree'),
+                      onPressed: () => Navigator.of(context).pop(true), // Returns true
+                    ),
+                  ],
+                );
+              },
+            );
+
+            // If the user tapped 'Cancel' or tapped outside the dialog, stop everything.
+            if (userAgreed != true) return;
       FilePickerResult? result = await FilePicker.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf'], 
@@ -6058,7 +6144,18 @@ return formattedVocab;
                   ),
                  OutlinedButton(
                       onPressed: () {
-    
+                       showDialog(
+  context: context,
+  // Setting barrierDismissible to true lets them close it by tapping anywhere outside the box
+  barrierDismissible: true, 
+  builder: (BuildContext context) {
+    return const TermsOfUseDialog(
+      requireAgreement: false, 
+      // You don't need to pass 'onAgreed' at all here!
+    );
+  }
+);
+            
   },
                       child: Text('Terms of Use',
                                        style: Theme.of(context).textTheme.labelLarge)
