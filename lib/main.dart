@@ -287,7 +287,7 @@ westleydunn30@gmail.com
 
 This Terms and Conditions was created using Termly's Terms and Conditions Generator
 
-"""
+""";
 const String ppLong = """
 PRIVACY POLICY
 Last updated April 10, 2023
@@ -6187,7 +6187,7 @@ class _FirstPageState extends State<FirstPage> {
   //Declaring variables to store previous answers
   List traits = [];
  // List<Map<String, Object>> langoptions = [];
-    List<Map<String, List<String>>> _questions = [
+    List<Map<List, String>> _questions = [
     //A list of dictionaries which represent the question, possible answers
     //and the correct answer.
    //CAUSE FOR CONCERN NEEDS TEXTBOX HERE NOW
