@@ -1270,7 +1270,17 @@ class Referencer extends ChangeNotifier {
        // 'filename': 'source.pdf' // Hardcoded based on our earlier setup
       }),
     ).timeout(const Duration(seconds: 90));
-
+    if (getUrlResponse.statusCode == 451) {
+        snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("THIS LICENSE IS NOT ACCEPTED!"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
+      //rethrow;
+      } 
     if (response.statusCode != 200) {
       throw Exception("Failed to trigger backend extraction: ${response.body}");
     }
@@ -1301,7 +1311,15 @@ class Referencer extends ChangeNotifier {
 
       // Handle the specific ValueError exceptions raised by your Python script
       if (getUrlResponse.statusCode == 429) {
-        throw Exception("Daily token limit reached.");
+        snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("Tokens exhausted! Please try again next week."),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
+      //rethrow;
       } else if (getUrlResponse.statusCode != 200) {
         throw Exception("Server rejected URL request: ${getUrlResponse.body}");
       }
