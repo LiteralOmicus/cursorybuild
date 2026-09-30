@@ -1270,7 +1270,7 @@ class Referencer extends ChangeNotifier {
        // 'filename': 'source.pdf' // Hardcoded based on our earlier setup
       }),
     ).timeout(const Duration(seconds: 90));
-    if (getUrlResponse.statusCode == 451) {
+    if (response.statusCode == 451) {
         snackbarKey.currentState?.showSnackBar(
         SnackBar(
           content: Text("THIS LICENSE IS NOT ACCEPTED!"),
