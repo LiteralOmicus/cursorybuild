@@ -1369,6 +1369,7 @@ class Referencer extends ChangeNotifier {
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
       await lBox.put(ULTIMATELANGUAGE, {});
       addToLemmyx({"display":"$ULTIMATELANGUAGE", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense", "attribute": "placeholder"}, true);
+      currentTaskState = PipelineState.done;
       notifyListeners();
       //await _pollAndDownload(ULTIMATELANGUAGE);
 
