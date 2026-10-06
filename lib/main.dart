@@ -3094,7 +3094,7 @@ specificDataYouNeed = processFetchedData(masterDocument);
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
      tier = Map.fromEntries(
     downloadedLessonData.entries.take(5)
-  );
+  ).toList();
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
