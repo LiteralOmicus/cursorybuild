@@ -3031,7 +3031,13 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
   );
      if (lessonResponse.statusCode != 200) {
        // This will throw the raw XML straight to your phone's SnackBar
-       throw Exception("GCS REJECTED LESSON:\n${lessonResponse.body}");
+     //  throw Exception("GCS REJECTED LESSON:\n${lessonResponse.body}");
+      ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Not there yet!:/ try again in 1 hour."),
+      backgroundColor: Colors.yellow, 
+    ),
+  );
      }
      
      if (vocabResponse.statusCode != 200) {
@@ -3407,6 +3413,29 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
       documentNameToDisplay = referencer.activeLesson ?? "PDF Document";
       
     } else {
+     const anonTine = referencer.anonTag;
+     if (anonTine == true) {
+        await showDialog(
+          context: context,
+          builder: (BuildContext context) {
+            return AlertDialog(
+              title: const Text("Account Required"),
+              content: const Text(
+                "You must create a free account to upload and process PDF documents. Please log in or sign up to unlock this feature."
+              ),
+              actions: <Widget>[
+                TextButton(
+                  child: const Text('Close'),
+                  onPressed: () => Navigator.of(context).pop(),
+                ),
+                // Optional: You can add a second button here that navigates them directly to your Start/Login screen
+              ],
+            );
+          },
+        );
+        
+        return; // <-- CRITICAL: This stops the code here so the file picker never opens!
+      }
       // SCENARIO B: We are completely idle. Open the file picker!
      bool? userAgreed = await showDialog<bool>(
               context: context,
