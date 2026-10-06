@@ -1128,6 +1128,7 @@ class Referencer extends ChangeNotifier {
     // 3. Extract the message and the langx code
     String message = targetLangDict['message']?.toString() ?? "";
     String backendLangx = targetLangDict['langx']?.toString() ?? ULTIMATELANGUAGE;
+    String folderName = targetLangDict['display']?.toString() ?? "SOMETHINGWENTWRONG";
     // Assuming ULTIMATELANGUAGE is an integer index saved in your class. 
     // If it's passed in, just add it as an argument: determineSource(int ULTIMATELANGUAGE)
     
@@ -1148,6 +1149,7 @@ class Referencer extends ChangeNotifier {
     return {
       'uid': backendUserId,
       'lang': backendLangx, 
+     "foldername": folderName
     };
   }
   // ==========================================
@@ -2993,12 +2995,14 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     // 2. Extract the variables
     String safeUser = sourceData['uid'] ?? "";
     String safeLang = sourceData['lang'] ?? "";
+    String foldernamex = sourceData['foldername'] ?? "";
   final url = Uri.https(
     'buckethandx-220938151994.us-central1.run.app', 
     '/getLessons',                  
     {
       'user': safeUser,    //should be UID         
-      'lang': resourceName,  
+      'langx': resourceName,  
+      'foldername': foldernamex
     },
   );
 
@@ -6326,8 +6330,8 @@ class _FirstPageState extends State<FirstPage> {
 
   // 2. Use didChangeDependencies to safely grab Provider data before the screen draws
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
+  void didChangeDependenciesx() {
+   // super.didChangeDependencies();
     
     // We only want to build the list the very first time the screen loads
     if (!_isInitialized) {
@@ -6378,6 +6382,7 @@ class _FirstPageState extends State<FirstPage> {
 
   @override
   Widget build(BuildContext context) {
+   didChangeDependenciesx();
     return Scaffold(
       appBar: AppBar(
       ),
