@@ -3413,7 +3413,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
       documentNameToDisplay = referencer.activeLesson ?? "PDF Document";
       
     } else {
-     const anonTine = referencer.anonTag;
+     bool anonTine = referencer.anonTag;
      if (anonTine == true) {
         await showDialog(
           context: context,
