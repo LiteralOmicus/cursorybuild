@@ -3001,7 +3001,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
     '/getLessons',                  
     {
       'user': safeUser,    //should be UID         
-      'langx': resourceName,  
+      'langx': safeLang,  
       'foldername': foldernamex
     },
   );
