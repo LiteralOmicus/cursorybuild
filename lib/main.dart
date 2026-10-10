@@ -1047,7 +1047,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashto", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "Italian", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"} ];
+  List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashto", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "Italian", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"}, {"display": "Turkish", "langx":"Turk", "message": "the library source for Turkish", "attribute": "Her Şey Bir Merhaba ile Başlar! By Jeannette Okur license_type: CC BY-SA"}];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
   bool _isAdLoaded = false; // Private field for ad loaded state
@@ -1152,58 +1152,7 @@ class Referencer extends ChangeNotifier {
      "foldername": folderName
     };
   }
-  // ==========================================
-  // SOURCE FROM FIREBASE (Realtime Database)
-  // ==========================================
-  Future<void> sourceFromFirebase() async {
-    try {
-      DataSnapshot snapshot = await ref.get();
-      
-      if (snapshot.exists && snapshot.value != null) {
-        // Use a temporary list so we don't clear lemmyx if the parse fails
-        List<Map<String, dynamic>> tempList = [];
-        final rawData = snapshot.value;
 
-        // Handle if Firebase stored it as a Dictionary (Map)
-        if (rawData is Map) {
-          rawData.forEach((key, value) {
-            if (value is Map) {
-              Map<String, dynamic> safeMap = {};
-              value.forEach((vKey, vValue) {
-                safeMap[vKey.toString()] = vValue;
-              });
-              tempList.add(safeMap);
-            }
-          });
-        } 
-        // Handle if Firebase stored it as an Array (List)
-        else if (rawData is List) {
-          for (var item in rawData) {
-            if (item is Map) {
-              Map<String, dynamic> safeMap = {};
-              item.forEach((vKey, vValue) {
-                safeMap[vKey.toString()] = vValue;
-              });
-              tempList.add(safeMap);
-            }
-          }
-        }
-
-        // Apply the newly parsed data
-        if (tempList.isNotEmpty) {
-          lemmyx.clear();
-          lemmyx.addAll(tempList);
-          notifyListeners();
-        }
-      }
-    } catch (e) {
-      print("Error sourcing data: $e");
-    }
-  }
-
-  // ==========================================
-  // SAVE TO FIREBASE (Realtime Database)
-  // ==========================================
   Future<void> saveToFirebase() async {
     try {
       Map<String, dynamic> updates = {};
@@ -1806,7 +1755,7 @@ class Referencer extends ChangeNotifier {
     };
 
     // Pass the item in, and tell it NOT to save back to Firebase!
-    lemmyx.clear();
+  //  lemmyx.clear();
     addToLemmyx(formattedItem, false);
     notifyListeners(); // Notify UI that loading has finished
   }
