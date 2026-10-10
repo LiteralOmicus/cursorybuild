@@ -1806,6 +1806,7 @@ class Referencer extends ChangeNotifier {
     };
 
     // Pass the item in, and tell it NOT to save back to Firebase!
+    lemmyx.clear();
     addToLemmyx(formattedItem, false);
     notifyListeners(); // Notify UI that loading has finished
   }
