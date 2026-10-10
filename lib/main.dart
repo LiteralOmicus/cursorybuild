@@ -1258,7 +1258,7 @@ class Referencer extends ChangeNotifier {
           'uid': uid, // Just the uid now!
          'filename': 'source',
         }),
-      ).timeout(const Duration(seconds: 15)); // Add a timeout to prevent infinite hangs
+      ).timeout(const Duration(seconds: 90)); // Add a timeout to prevent infinite hangs
 
       // Handle the specific ValueError exceptions raised by your Python script
       if (getUrlResponse.statusCode == 429) {
