@@ -1742,7 +1742,9 @@ class Referencer extends ChangeNotifier {
     _isLoading = false;
     if (info['info'] != null && info['info']['languages'] != null) {
       //List<dynamic> rawLanguages = info['info']['languages'];
-        List<dynamic> rawLanguages = (info['info']['languages'] as List).where((item) => item != null).toList();
+      //  List<dynamic> rawLanguages = (info['info']['languages'] as List).where((item) => item != null).toList();
+     final langsMap = info['info']['languages'] as Map;
+     List<dynamic> rawLanguages = langsMap.values.where((item) => item != null).toList();
       
       // 3. Extract and enforce the strict lemmyx formatting
       rawLanguages.forEach((item) {
