@@ -1745,6 +1745,7 @@ class Referencer extends ChangeNotifier {
       
       // 3. Extract and enforce the strict lemmyx formatting
       rawLanguages.forEach((item) {
+        if (item == null) return;
         final mapItem = Map<String, dynamic>.from(item as Map);
     
     Map<String, dynamic> formattedItem = {
