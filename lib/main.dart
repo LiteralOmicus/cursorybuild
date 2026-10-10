@@ -1741,7 +1741,8 @@ class Referencer extends ChangeNotifier {
     }
     _isLoading = false;
     if (info['info'] != null && info['info']['languages'] != null) {
-      List<dynamic> rawLanguages = info['info']['languages'];
+      //List<dynamic> rawLanguages = info['info']['languages'];
+        List<dynamic> rawLanguages = (info['info']['languages'] as List).where((item) => item != null).toList();
       
       // 3. Extract and enforce the strict lemmyx formatting
       rawLanguages.forEach((item) {
@@ -1758,10 +1759,21 @@ class Referencer extends ChangeNotifier {
     // Pass the item in, and tell it NOT to save back to Firebase!
   //  lemmyx.clear();
     addToLemmyx(formattedItem, false);
-    notifyListeners(); // Notify UI that loading has finished
+   // notifyListeners(); // Notify UI that loading has finished
   }
     );
+     notifyListeners();
         }
+     else {
+snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("THIS LICENSE XIS NOT ACCEPTED!"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
+     }
      
     }
                                                );
