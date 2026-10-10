@@ -2477,9 +2477,13 @@ class SignInState extends State<SignIn> {
                                     );
 } else {
   await context.read<Referencer>().changi(); 
-  Navigator.of(context).push(
-      MaterialPageRoute(builder: (context) => MyHomePage())
-    );
+  await Future.delayed(const Duration(seconds: 10));
+  if (!mounted) return;
+
+          // 3. Safely route to MyHomePage and destroy the login screen behind it
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => MyHomePage())
+          );
 }
       }
     }
@@ -6240,9 +6244,12 @@ return formattedVocab;
                 await FirebaseAuth.instance.signOut();
 
             //  }
-        {Navigator.of(context).push(MaterialPageRoute(
-        builder: (context) => SignIn())
-        );
+        {
+         //NO MOUNTED CHECK?
+         Navigator.of(context).pushAndRemoveUntil(
+  MaterialPageRoute(builder: (context) => SignIn()),
+  (Route<dynamic> route) => false, // Returning false strips away all previous screens
+);
         }
         // context.read<AuthenticationService>().signOut();
         }
