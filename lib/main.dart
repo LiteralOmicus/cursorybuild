@@ -3062,6 +3062,7 @@ specificDataYouNeed = processFetchedData(masterDocument);
       );
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
      tier = downloadedLessonData.keys.take(5).toList();
+     quiccfunk();
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
