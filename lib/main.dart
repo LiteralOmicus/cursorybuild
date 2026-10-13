@@ -2786,7 +2786,7 @@ class _MyHomePageState extends State<MyHomePage> {
  //   final rawLessons = context.read<Referencer>().info["lessons"];
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
    // THIS WRKED BUT NOT 4 change
- //   quiccfunk();
+    quiccfunk();
     dontroller = TextEditingController();
    WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<Referencer>().addListener(_onReferencerStateChanged);
@@ -3155,7 +3155,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         .of(context)
         .size
         .height;
-    quiccfunk();
+   // quiccfunk();
     List lemmyx = context.watch<Referencer>().lemmyx;
     return Scaffold(
         appBar: AppBar(
