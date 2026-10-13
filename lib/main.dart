@@ -2781,11 +2781,12 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     //context.read<Referencer>().getReady();
     //fanalexp = assigner(context.read<Referencer>().getExp());
-  //ANONBLACK
+  //ANONBLACKN
    // final aLessons = context.read<Referencer>().info["lessons"];
  //   final rawLessons = context.read<Referencer>().info["lessons"];
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
-    quiccfunk();
+   // THIS WRKED BUT NOT 4 change
+ //   quiccfunk();
     dontroller = TextEditingController();
    WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<Referencer>().addListener(_onReferencerStateChanged);
@@ -3011,7 +3012,7 @@ Future<List<String>> fetchSpecificResource(BuildContext context, String resource
      
      if (vocabResponse.statusCode != 200) {
        // This will throw the raw XML straight to your phone's SnackBar
-       throw Exception("GCS REJECTED VOCAB:\n${vocabResponse.body}");
+    //   throw Exception("GCS REJECTED VOCAB:\n${vocabResponse.body}");
      }
      //Map<String, dynamic> vocabData = jsonDecode(vocabResponse.body);
      //Map<String, dynamic> downloadedLessonData = jsonDecode(lessonResponse.body);
@@ -3062,7 +3063,7 @@ specificDataYouNeed = processFetchedData(masterDocument);
       );
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
      tier = downloadedLessonData.keys.take(5).toList();
-     quiccfunk();
+    // quiccfunk();
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
@@ -3148,6 +3149,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         .of(context)
         .size
         .height;
+    quiccfunk();
     List lemmyx = context.watch<Referencer>().lemmyx;
     return Scaffold(
         appBar: AppBar(
