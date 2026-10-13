@@ -2809,8 +2809,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void quiccfunk() {
     for (var i in tier) {
+     var safeLesson = (i >= 0 && i < lessonmaker.length) 
+        ? lessonmaker[i] 
+        : "SOMETHINGWENTWRONG";
       Routes.add(HiFlutterApp(
-          seeker: i, fun: lessonmaker[i]));
+          seeker: i, fun: safeLesson));
     }
   }
 
@@ -3062,8 +3065,11 @@ specificDataYouNeed = processFetchedData(masterDocument);
         ),
       );
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
-     tier = downloadedLessonData.keys.take(5).toList();
-    // quiccfunk();
+     setState(() {
+    tier = downloadedLessonData.keys.take(5).toList();
+    quiccfunk();
+  });
+     
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
