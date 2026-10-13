@@ -1047,6 +1047,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
+  tier = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'],
   List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashto", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "Italian", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"}, {"display": "Turkish", "langx":"Turk", "message": "the library source for Turkish", "attribute": "Her Şey Bir Merhaba ile Başlar! By Jeannette Okur license_type: CC BY-SA"}];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
@@ -2786,7 +2787,7 @@ class _MyHomePageState extends State<MyHomePage> {
  //   final rawLessons = context.read<Referencer>().info["lessons"];
   //  final List aLessons = (rawLessons is List) ? rawLessons : ["test"];
    // THIS WRKED BUT NOT 4 change
-    quiccfunk();
+//   quiccfunk();
     dontroller = TextEditingController();
    WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<Referencer>().addListener(_onReferencerStateChanged);
@@ -3065,11 +3066,8 @@ specificDataYouNeed = processFetchedData(masterDocument);
         ),
       );
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
-     setState(() {
-    tier = downloadedLessonData.keys.take(5).toList();
-    quiccfunk();
-  });
      
+     context.read<Referencer>().updateTierList([1, 2, 3]);
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
@@ -3155,10 +3153,22 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
         .of(context)
         .size
         .height;
-   // quiccfunk();
+    
     List lemmyx = context.watch<Referencer>().lemmyx;
+   final currentTier = context.watch<Referencer>().tier;
+
+  // 2. CRITICAL: Wipe the slate clean before rebuilding the routes!
+  Routes.clear();
+
+  // 3. Run your quiccfunk logic directly inline based on the fresh data
+  for (var i in currentTier) {
+    Routes.add(HiFlutterApp(
+      seeker: i, 
+      fun: lessonmaker[i] ?? fallbackLesson // Protect against nulls
+    ));
+  }
     return Scaffold(
-        appBar: AppBar(
+        appBar: AppBar
           actions: [
 
             IconButton(
@@ -3339,11 +3349,11 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
 
                                         //   },
                                         items: List<ListTile>.generate(
-                                            tier.length,
+                                            currentTier.length,
                                                 (i) =>
-                                            tier[i] != null
+                                            currentTier[i] != null
                                                 ? ListTile(title:
-                                            Text('${tier[i]}',
+                                            Text('${currentTier[i]}',
                                               style: TextStyle(
                                                   fontWeight: FontWeight.bold,
                                                   fontSize: 20),),
