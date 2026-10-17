@@ -1154,6 +1154,11 @@ class Referencer extends ChangeNotifier {
     };
   }
 
+ void updateTierList(List newTier) {
+  tier = newTier;
+  notifyListeners(); 
+}
+ 
   Future<void> saveToFirebase() async {
     try {
       Map<String, dynamic> updates = {};
@@ -3164,7 +3169,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
   for (var i in currentTier) {
     Routes.add(HiFlutterApp(
       seeker: i, 
-      fun: lessonmaker[i] ?? fallbackLesson // Protect against nulls
+      fun: lessonmaker[i] ?? "Lesson missing!"
     ));
   }
     return Scaffold(
