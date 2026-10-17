@@ -3072,7 +3072,7 @@ specificDataYouNeed = processFetchedData(masterDocument);
       );
       // ... parse your JSON and save to file ...------------------------------------------------------ 2151
      
-     context.read<Referencer>().updateTierList([1, 2, 3]);
+    // context.read<Referencer>().updateTierList([1, 2, 3]);
      //IDK WHEN TIER WILL SHOW UPDATED WHEN HOMEPAGE IS RFRESHED
      return specificDataYouNeed;
     } 
@@ -3652,6 +3652,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
               currentlyLoadingLemma = null; 
             });
             context.read<Referencer>().sendtoLessons(checkedLemmas.keys.toList());
+           context.read<Referencer>().updateTierList(["1", "2", "3"]);
           }
         }
         ),
