@@ -6041,6 +6041,28 @@ return formattedVocab;
 
         // --- Then delete the Firebase user ---
         await user.delete(); // Await the asynchronous deletion
+       final uri = Uri.https('https://buckethandx-220938151994.us-central1.run.app', '/submit-for-review');
+    
+    final response = await http.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'uid': user.uid // Passes the exact uid payload your Python script expects
+      }),
+    ).timeout(const Duration(seconds: 60));
+
+    if (response.statusCode != 200) {
+      snackbarKey.currentState?.showSnackBar(
+        SnackBar(
+          content: Text("The ball dropped from the cloud!"),
+          backgroundColor: Colors.redAccent,
+          behavior: SnackBarBehavior.floating, // Makes it look clean and modern
+          duration: const Duration(seconds: 5), // Gives them time to read it
+        ),
+      );
+    } else {
+      debugPrint('Successfully submitted for review.');
+    }
 
         // Account successfully deleted
         debugPrint('User account deleted.');
