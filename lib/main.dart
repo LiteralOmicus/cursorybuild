@@ -3173,7 +3173,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
     ));
   }
     return Scaffold(
-        appBar: AppBar
+        appBar: AppBar (
           actions: [
 
             IconButton(
