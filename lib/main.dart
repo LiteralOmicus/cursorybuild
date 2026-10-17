@@ -1710,6 +1710,7 @@ class Referencer extends ChangeNotifier {
     info = data; //['info'];
     anonTag = false;
     //alessons
+     updateTierList(["1", "2", "3"]);
     try {
       Lemx = data['lemmas'];
     }
@@ -2675,7 +2676,7 @@ class SignInState extends State<SignIn> {
 dynamic lessonmaker = jsonDecode(forEducation.all); 
 List tierkeeper = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'], ['accusative', 'dative', 'instrumental', 'genitive', 'prepositional'], ['impersonalconstructions', 'posessivepronouns', 'interrogativepronouns', 'sayingand', 'demonstrativepronouns', 'relativepronouns'], ['positional', 'aspect', 'irregularaspect', 'imperatives', 'howtosayIlike'], ['dativeforobligations', 'askingquestions', 'howtosayshopping', 'reflexiveverbs', 'reflexivepronouns'], ['verbsofmotion', 'futuretense', 'pasttense', 'timephrases', 'past&futureobligations', 'sayingbeforeandafter'], ['adjectives', 'shortformadjectives', 'howtosayif', 'adverbs', 'adverbsII'], ['HaII', 'Dativeadvanced', 'wordswithnuances', 'irregularverbs', 'makingcomparisons']];
 
-List tier = tierkeeper[0];
+//List tier = tierkeeper[0];
 
 String assigner(grade) {
   if (grade < 500) {tier = tierkeeper[0]; return "young buck";}
@@ -3169,7 +3170,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
   for (var i in currentTier) {
     Routes.add(HiFlutterApp(
       seeker: i, 
-      fun: lessonmaker[i] ?? "Lesson missing!"
+      fun: lessonmaker[i] ?? ["Lesson missing!"]
     ));
   }
     return Scaffold(
