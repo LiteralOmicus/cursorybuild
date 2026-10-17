@@ -3633,6 +3633,7 @@ Widget _buildStatusIcon(PipelineState currentState, PipelineState rowState) {
                   });
                 //I NEED THE CONTEXT.READ<REFERENCER> STATEMENTS HERE OR JUST THE SETSTATE
                   context.read<Referencer>().sendtoLessons(parsedData);
+                  context.read<Referencer>().updateTierList(["1", "2", "3"]);
                  
                }
             }).catchError((error) {
