@@ -1047,7 +1047,7 @@ enum PipelineState { idle, uploading, approving, downloading, done, error }
 
 class Referencer extends ChangeNotifier {
   // 1. Define the global list (change 'dynamic' to your actual data type if you have one)
-  tier = [['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'],
+  List tier = ['nouns', 'tohave', 'canI', 'verbintro', 'pronounintro'];
   List lemmyx =[{"display": "Russian/ Русский", "langx":"ru", "message": "the library source for Russian", "attribute": "Thanks to all my friends in Kazakhstan and Kyrgyzstan!"}, {"langx": "Pashto", "display": "Pashto", "message": "The library source for Pashto.", "attribute": "Beginning Pashto Textbook Revised Edition by Habibullah Tegey, Barbara Robson license: Public Domain"}, {"langx": "ItalianFSI", "display": "Italian", "message": "the library source for Italian", "attribute": "Italian FAST Course by Francesca Randazzo-Woodrow, Stephen Zappala, Egle Camozzo, Anna Fiore, Elizabeth Knutson license: Public Domain"}, {"langx": "Gerx", "display": "German", "message": "the library source for German.", "attribute": "German 101 by Rebecca Linam license_type: CC BY"}, {"langx": "Hindix", "display": "Hindi", "message": "the library source for Hindi.", "attribute": "Basic Hindi I by Rajiv Ranjan license: CC BY"}, {"display": "Turkish", "langx":"Turk", "message": "the library source for Turkish", "attribute": "Her Şey Bir Merhaba ile Başlar! By Jeannette Okur license_type: CC BY-SA"}];
 
   InterstitialAd? _interstitialAd; // Private field for the ad object
