@@ -1226,7 +1226,7 @@ class Referencer extends ChangeNotifier {
         'uid': uid
        // 'filename': 'source.pdf' // Hardcoded based on our earlier setup
       }),
-    ).timeout(const Duration(seconds: 120));
+    ).timeout(const Duration(seconds: 180));
     if (response.statusCode == 451) {
         snackbarKey.currentState?.showSnackBar(
         SnackBar(
