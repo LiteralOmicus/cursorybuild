@@ -6255,7 +6255,7 @@ return formattedVocab;
             //  }
             //  else {
                 Provider.of<Referencer>(context, listen: false).anonSet(true);
-                Provider.of<Referencer>(context).lemmyx.clear();
+                Provider.of<Referencer>(context, listen: false).lemmyx.clear();
                 await FirebaseAuth.instance.signOut();
 
             //  }
