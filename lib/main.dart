@@ -1325,7 +1325,7 @@ class Referencer extends ChangeNotifier {
       // Notify listeners so the AlertDialog title instantly changes from 
       // "Processing source.pdf" to "Processing [Actual Textbook Name]"
       await lBox.put(ULTIMATELANGUAGE, {});
-      addToLemmyx({"display":"$reglang", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense", "attribute": "placeholder"}, true);
+      addToLemmyx({"display":"$reglang", "langx": "$ULTIMATELANGUAGE", "message": "$slicedAuthor $slicedDocument $slicedLicense", "attribute": "$license"}, true);
       currentTaskState = PipelineState.idle;
       notifyListeners();
       //await _pollAndDownload(ULTIMATELANGUAGE);
