@@ -2448,7 +2448,7 @@ class SignInState extends State<SignIn> {
                                     );
 } else {
   await context.read<Referencer>().changi(); 
-  await Future.delayed(const Duration(seconds: 10));
+  await Future.delayed(const Duration(seconds: 5));
   if (!mounted) return;
 
           // 3. Safely route to MyHomePage and destroy the login screen behind it
@@ -6255,6 +6255,7 @@ return formattedVocab;
             //  }
             //  else {
                 Provider.of<Referencer>(context, listen: false).anonSet(true);
+                Provider.of<Referencer>(context).lemmyx.clear();
                 await FirebaseAuth.instance.signOut();
 
             //  }
